@@ -1,8 +1,24 @@
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
+pub struct LoadConfigRequest {
+    #[prost(string, tag = "1")]
+    pub config: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub file_path: ::prost::alloc::string::String,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct LoadConfigResponse {
+    #[prost(bool, tag = "1")]
+    pub success: bool,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
 pub struct StartRequest {
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub config_file_path: ::prost::alloc::string::String,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -15,6 +31,8 @@ pub struct StartResponse {
 pub struct StopRequest {
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub config_file_path: ::prost::alloc::string::String,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -27,6 +45,8 @@ pub struct StopResponse {
 pub struct RestartRequest {
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub config_file_path: ::prost::alloc::string::String,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -39,6 +59,8 @@ pub struct RestartResponse {
 pub struct StatusRequest {
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub config_file_path: ::prost::alloc::string::String,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -48,12 +70,15 @@ pub struct StatusResponse {
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct ListRequest {}
+pub struct ListRequest {
+    #[prost(string, tag = "1")]
+    pub project: ::prost::alloc::string::String,
+}
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListResponse {
-    #[prost(string, repeated, tag = "1")]
-    pub services: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    #[prost(message, repeated, tag = "1")]
+    pub services: ::prost::alloc::vec::Vec<super::super::objects::v1alpha1::Service>,
 }
 /// Generated client implementations.
 pub mod control_service_client {
@@ -123,6 +148,25 @@ pub mod control_service_client {
         pub fn accept_compressed(mut self, encoding: CompressionEncoding) -> Self {
             self.inner = self.inner.accept_compressed(encoding);
             self
+        }
+        pub async fn load_config(
+            &mut self,
+            request: impl tonic::IntoRequest<super::LoadConfigRequest>,
+        ) -> Result<tonic::Response<super::LoadConfigResponse>, tonic::Status> {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::new(
+                        tonic::Code::Unknown,
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/superviseur.v1alpha1.ControlService/LoadConfig",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
         }
         pub async fn start(
             &mut self,
@@ -228,6 +272,10 @@ pub mod control_service_server {
     /// Generated trait containing gRPC methods that should be implemented for use with ControlServiceServer.
     #[async_trait]
     pub trait ControlService: Send + Sync + 'static {
+        async fn load_config(
+            &self,
+            request: tonic::Request<super::LoadConfigRequest>,
+        ) -> Result<tonic::Response<super::LoadConfigResponse>, tonic::Status>;
         async fn start(
             &self,
             request: tonic::Request<super::StartRequest>,
@@ -308,6 +356,44 @@ pub mod control_service_server {
         fn call(&mut self, req: http::Request<B>) -> Self::Future {
             let inner = self.inner.clone();
             match req.uri().path() {
+                "/superviseur.v1alpha1.ControlService/LoadConfig" => {
+                    #[allow(non_camel_case_types)]
+                    struct LoadConfigSvc<T: ControlService>(pub Arc<T>);
+                    impl<
+                        T: ControlService,
+                    > tonic::server::UnaryService<super::LoadConfigRequest>
+                    for LoadConfigSvc<T> {
+                        type Response = super::LoadConfigResponse;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::LoadConfigRequest>,
+                        ) -> Self::Future {
+                            let inner = self.0.clone();
+                            let fut = async move { (*inner).load_config(request).await };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let inner = inner.0;
+                        let method = LoadConfigSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
                 "/superviseur.v1alpha1.ControlService/Start" => {
                     #[allow(non_camel_case_types)]
                     struct StartSvc<T: ControlService>(pub Arc<T>);

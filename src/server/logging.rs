@@ -1,11 +1,37 @@
-use crate::api::superviseur::v1alpha1::{
-    logging_service_server::LoggingService, LogRequest, LogResponse, TailRequest, TailResponse,
+use std::{
+    collections::HashMap,
+    sync::{Arc, Mutex},
+};
+
+use crate::{
+    api::superviseur::v1alpha1::{
+        logging_service_server::LoggingService, LogRequest, LogResponse, TailRequest, TailResponse,
+    },
+    superviseur::Superviseur,
+    types::{configuration::ConfigurationData, process::Process},
 };
 use tokio_stream::wrappers::ReceiverStream;
 use tonic::{Request, Response, Status};
 
-#[derive(Default)]
-pub struct Logging {}
+pub struct Logging {
+    superviseur: Superviseur,
+    processes: Arc<Mutex<Vec<(Process, String)>>>,
+    config_map: Arc<Mutex<HashMap<String, ConfigurationData>>>,
+}
+
+impl Logging {
+    pub fn new(
+        superviseur: Superviseur,
+        processes: Arc<Mutex<Vec<(Process, String)>>>,
+        config_map: Arc<Mutex<HashMap<String, ConfigurationData>>>,
+    ) -> Self {
+        Self {
+            superviseur,
+            processes,
+            config_map,
+        }
+    }
+}
 
 #[tonic::async_trait]
 impl LoggingService for Logging {
