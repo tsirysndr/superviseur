@@ -1,13 +1,23 @@
 use tonic::{Request, Response};
 
-use crate::api::superviseur::v1alpha1::{
-    control_service_server::ControlService, ListRequest, ListResponse, RestartRequest,
-    RestartResponse, StartRequest, StartResponse, StatusRequest, StatusResponse, StopRequest,
-    StopResponse,
+use crate::{
+    api::superviseur::v1alpha1::{
+        control_service_server::ControlService, ListRequest, ListResponse, RestartRequest,
+        RestartResponse, StartRequest, StartResponse, StatusRequest, StatusResponse, StopRequest,
+        StopResponse,
+    },
+    superviseur::Superviseur,
 };
 
-#[derive(Default)]
-pub struct Control {}
+pub struct Control {
+    superviseur: Superviseur,
+}
+
+impl Control {
+    pub fn new(superviseur: Superviseur) -> Self {
+        Self { superviseur }
+    }
+}
 
 #[tonic::async_trait]
 impl ControlService for Control {
