@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package superviseur.v1alpha1;
+
+message LogRequest {
+  string service = 1;
+}
+
+message LogResponse {
+  string service = 1;
+  string message = 2;
+  string timestamp = 3;
+}
+
+message TailRequest {
+  string service = 1;
+}
+
+message TailResponse {
+  string service = 1;
+  string message = 2;
+  string timestamp = 3;
+}
+
+service LoggingService {
+  rpc Log (LogRequest) returns (LogResponse) {}
+  rpc Tail (TailRequest) returns (stream TailResponse) {}
+}

@@ -1,0 +1,50 @@
+syntax = "proto3";
+
+package superviseur.v1alpha1;
+
+message StartRequest {
+  string name = 1;
+}
+
+message StartResponse {
+  bool success = 1;
+}
+
+message StopRequest {
+  string name = 1;
+}
+
+message StopResponse {
+  bool success = 1;
+}
+
+message RestartRequest {
+  string name = 1;
+}
+
+message RestartResponse {
+  bool success = 1;
+}
+
+message StatusRequest {
+  string name = 1;
+}
+
+message StatusResponse {
+  string status = 1;
+}
+
+message ListRequest {
+}
+
+message ListResponse {
+  repeated string services = 1;
+}
+
+service ControlService {
+  rpc Start (StartRequest) returns (StartResponse) {}
+  rpc Stop (StopRequest) returns (StopResponse) {}
+  rpc Restart (RestartRequest) returns (RestartResponse) {}
+  rpc Status (StatusRequest) returns (StatusResponse) {}
+  rpc List (ListRequest) returns (ListResponse) {}
+}
