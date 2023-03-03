@@ -2,8 +2,20 @@ syntax = "proto3";
 
 package superviseur.v1alpha1;
 
+import "objects/v1alpha1/service.proto";
+
+message LoadConfigRequest {
+  string config = 1;
+  string file_path = 2;
+}
+
+message LoadConfigResponse {
+  bool success = 1;
+}
+
 message StartRequest {
   string name = 1;
+  string config_file_path = 2;
 }
 
 message StartResponse {
@@ -12,6 +24,7 @@ message StartResponse {
 
 message StopRequest {
   string name = 1;
+  string config_file_path = 2;
 }
 
 message StopResponse {
@@ -20,6 +33,7 @@ message StopResponse {
 
 message RestartRequest {
   string name = 1;
+  string config_file_path = 2;
 }
 
 message RestartResponse {
@@ -28,6 +42,7 @@ message RestartResponse {
 
 message StatusRequest {
   string name = 1;
+  string config_file_path = 2;
 }
 
 message StatusResponse {
@@ -35,13 +50,15 @@ message StatusResponse {
 }
 
 message ListRequest {
+  string project = 1;
 }
 
 message ListResponse {
-  repeated string services = 1;
+  repeated objects.v1alpha1.Service services = 1;
 }
 
 service ControlService {
+  rpc LoadConfig (LoadConfigRequest) returns (LoadConfigResponse) {}
   rpc Start (StartRequest) returns (StartResponse) {}
   rpc Stop (StopRequest) returns (StopResponse) {}
   rpc Restart (RestartRequest) returns (RestartResponse) {}
