@@ -44,7 +44,6 @@ pub enum SuperviseurCommand {
     Start(Service, String),
     Stop(Service, String),
     Restart(Service, String),
-    Status(String),
 }
 
 #[derive(Debug)]
@@ -83,11 +82,22 @@ impl SuperviseurInternal {
     fn handle_load(&self, service: Service, project: String) -> Result<(), Error> {
         let mut processes = self.processes.lock().unwrap();
 
-        // skip if already loaded
-        if processes
-            .iter()
-            .any(|(p, key)| p.name == service.name && key == &project)
+        // update and skip if already loaded
+        if let Some(process) = processes
+            .iter_mut()
+            .find(|(p, key)| p.name == service.name && key == &project)
+            .map(|(p, _)| p)
         {
+            process.name = service.name;
+            process.command = service.command;
+            process.description = service.description;
+            process.working_dir = service.working_dir;
+            process.env = service.env;
+            process.project = project.clone();
+            process.r#type = service.r#type;
+            process.auto_restart = service.autorestart;
+            process.stdout = service.stdout;
+            process.stderr = service.stderr;
             return Ok(());
         }
 
@@ -137,7 +147,10 @@ impl SuperviseurInternal {
             .unwrap()
             .0;
         process.pid = Some(child.id());
-        process.state = State::Running;
+        self.event_tx
+            .send(ProcessEvent::Started(service.name.clone(), project.clone()))
+            .unwrap();
+
         process.up_time = Some(chrono::Utc::now());
         let service_key = format!("{}-{}", project, service.name);
         self.childs
@@ -216,17 +229,12 @@ impl SuperviseurInternal {
         self.handle_start(service, project)
     }
 
-    fn handle_status(&self, name: String) -> Result<(), Error> {
-        todo!()
-    }
-
     fn handle_command(&mut self, cmd: SuperviseurCommand) -> Result<(), Error> {
         match cmd {
             SuperviseurCommand::Load(service, project) => self.handle_load(service, project),
             SuperviseurCommand::Start(service, project) => self.handle_start(service, project),
             SuperviseurCommand::Stop(service, project) => self.handle_stop(service, project),
             SuperviseurCommand::Restart(service, project) => self.handle_restart(service, project),
-            SuperviseurCommand::Status(name) => self.handle_status(name),
         }
     }
     fn handle_event(&mut self, event: ProcessEvent) -> Result<(), Error> {

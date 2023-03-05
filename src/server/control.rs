@@ -85,18 +85,31 @@ impl ControlService for Control {
         }
 
         let config = config_map.get(&path).unwrap();
-        let service = config
-            .services
-            .iter()
-            .find(|s| s.name == name)
-            .ok_or_else(|| tonic::Status::not_found("Service not found"))?;
 
-        self.cmd_tx
-            .send(SuperviseurCommand::Start(
-                service.clone(),
-                config.project.clone(),
-            ))
-            .map_err(|e| tonic::Status::internal(e.to_string()))?;
+        if name.len() > 0 {
+            let service = config
+                .services
+                .iter()
+                .find(|s| s.name == name)
+                .ok_or_else(|| tonic::Status::not_found("Service not found"))?;
+
+            self.cmd_tx
+                .send(SuperviseurCommand::Start(
+                    service.clone(),
+                    config.project.clone(),
+                ))
+                .map_err(|e| tonic::Status::internal(e.to_string()))?;
+            return Ok(Response::new(StartResponse { success: true }));
+        }
+
+        for service in &config.services {
+            self.cmd_tx
+                .send(SuperviseurCommand::Start(
+                    service.clone(),
+                    config.project.clone(),
+                ))
+                .map_err(|e| tonic::Status::internal(e.to_string()))?;
+        }
 
         Ok(Response::new(StartResponse { success: true }))
     }
@@ -116,18 +129,31 @@ impl ControlService for Control {
 
         let config = config_map.get(&path).unwrap();
 
-        let service = config
-            .services
-            .iter()
-            .find(|s| s.name == name)
-            .ok_or_else(|| tonic::Status::not_found("Service not found"))?;
+        if name.len() > 0 {
+            let service = config
+                .services
+                .iter()
+                .find(|s| s.name == name)
+                .ok_or_else(|| tonic::Status::not_found("Service not found"))?;
 
-        self.cmd_tx
-            .send(SuperviseurCommand::Stop(
-                service.clone(),
-                config.project.clone(),
-            ))
-            .unwrap();
+            self.cmd_tx
+                .send(SuperviseurCommand::Stop(
+                    service.clone(),
+                    config.project.clone(),
+                ))
+                .unwrap();
+            return Ok(Response::new(StopResponse { success: true }));
+        }
+
+        for service in &config.services {
+            self.cmd_tx
+                .send(SuperviseurCommand::Stop(
+                    service.clone(),
+                    config.project.clone(),
+                ))
+                .unwrap();
+        }
+
         Ok(Response::new(StopResponse { success: true }))
     }
 
@@ -146,18 +172,31 @@ impl ControlService for Control {
 
         let config = config_map.get(&path).unwrap();
 
-        let service = config
-            .services
-            .iter()
-            .find(|s| s.name == name)
-            .ok_or_else(|| tonic::Status::not_found("Service not found"))?;
+        if name.len() > 0 {
+            let service = config
+                .services
+                .iter()
+                .find(|s| s.name == name)
+                .ok_or_else(|| tonic::Status::not_found("Service not found"))?;
 
-        self.cmd_tx
-            .send(SuperviseurCommand::Restart(
-                service.clone(),
-                config.project.clone(),
-            ))
-            .map_err(|e| tonic::Status::internal(e.to_string()))?;
+            self.cmd_tx
+                .send(SuperviseurCommand::Restart(
+                    service.clone(),
+                    config.project.clone(),
+                ))
+                .map_err(|e| tonic::Status::internal(e.to_string()))?;
+            return Ok(Response::new(RestartResponse { success: true }));
+        }
+
+        for service in &config.services {
+            self.cmd_tx
+                .send(SuperviseurCommand::Restart(
+                    service.clone(),
+                    config.project.clone(),
+                ))
+                .map_err(|e| tonic::Status::internal(e.to_string()))?;
+        }
+
         Ok(Response::new(RestartResponse { success: true }))
     }
 
