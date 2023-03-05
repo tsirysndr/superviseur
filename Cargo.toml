@@ -1,9 +1,9 @@
 [package]
 name = "superviseur"
-version = "0.1.0"
+version = "0.1.0-alpha.1"
 edition = "2021"
 repository = "https://github.com/tsirysndr/superviseur"
-license = "MIT"
+license = "MPL-2.0"
 readme = "README.md"
 authors = ["Tsiry Sandratraina <tsiry.sndr@aol.com>"]
 categories = ["command-line-utilities"]

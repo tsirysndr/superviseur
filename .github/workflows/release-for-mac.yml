@@ -1,0 +1,53 @@
+on:
+  release:
+    types: [created]
+
+jobs:
+  release:
+    name: release x86_64-apple-darwin
+    runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: x86_64-apple-darwin
+            archive: tar.gz tar.xz
+          - target: aarch64-apple-darwin
+            archive: tar.gz tar.xz
+
+    steps:
+      - name: Installing needed dependencies
+        run: brew install protobuf
+      - name: Installing Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: ${{ matrix.target }}
+          override: true
+      - name: Checking out sources
+        uses: actions/checkout@v1
+      - name: Running cargo build
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          toolchain: stable
+          args: --release --target ${{ matrix.target }}
+      - name: Install aarch64-apple-darwin toolchain
+        if: matrix.target == 'aarch64-apple-darwin'
+        run: rustup target add aarch64-apple-darwin
+      - name: Set env
+        run: echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+      - name: Packaging final binary
+        shell: bash
+        run: |
+          cd target/${{ matrix.target }}/release
+          tar czvf superviseur_${{ env.RELEASE_VERSION }}_${{ matrix.target }}.tar.gz tunein
+          shasum -a 256 superviseur_${{ env.RELEASE_VERSION }}_${{ matrix.target }}.tar.gz > superviseur_${{ env.RELEASE_VERSION }}_${{ matrix.target }}.tar.gz.sha256
+      - name: Releasing assets
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            target/${{ matrix.target }}/release/superviseur_${{ env.RELEASE_VERSION }}_${{ matrix.target }}.tar.gz
+            target/${{ matrix.target }}/release/superviseur_${{ env.RELEASE_VERSION }}_${{ matrix.target }}.tar.gz.sha256
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
