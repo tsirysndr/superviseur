@@ -703,32 +703,34 @@ pub mod control_service_server {
 pub struct LogRequest {
     #[prost(string, tag = "1")]
     pub service: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub config_file_path: ::prost::alloc::string::String,
+    #[prost(bool, tag = "3")]
+    pub follow: bool,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct LogResponse {
     #[prost(string, tag = "1")]
-    pub service: ::prost::alloc::string::String,
-    #[prost(string, tag = "2")]
-    pub message: ::prost::alloc::string::String,
-    #[prost(string, tag = "3")]
-    pub timestamp: ::prost::alloc::string::String,
+    pub line: ::prost::alloc::string::String,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct TailRequest {
     #[prost(string, tag = "1")]
     pub service: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub config_file_path: ::prost::alloc::string::String,
+    #[prost(uint32, tag = "3")]
+    pub lines: u32,
+    #[prost(bool, tag = "4")]
+    pub follow: bool,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct TailResponse {
     #[prost(string, tag = "1")]
-    pub service: ::prost::alloc::string::String,
-    #[prost(string, tag = "2")]
-    pub message: ::prost::alloc::string::String,
-    #[prost(string, tag = "3")]
-    pub timestamp: ::prost::alloc::string::String,
+    pub line: ::prost::alloc::string::String,
 }
 /// Generated client implementations.
 pub mod logging_service_client {
@@ -802,7 +804,10 @@ pub mod logging_service_client {
         pub async fn log(
             &mut self,
             request: impl tonic::IntoRequest<super::LogRequest>,
-        ) -> Result<tonic::Response<super::LogResponse>, tonic::Status> {
+        ) -> Result<
+            tonic::Response<tonic::codec::Streaming<super::LogResponse>>,
+            tonic::Status,
+        > {
             self.inner
                 .ready()
                 .await
@@ -816,7 +821,7 @@ pub mod logging_service_client {
             let path = http::uri::PathAndQuery::from_static(
                 "/superviseur.v1alpha1.LoggingService/Log",
             );
-            self.inner.unary(request.into_request(), path, codec).await
+            self.inner.server_streaming(request.into_request(), path, codec).await
         }
         pub async fn tail(
             &mut self,
@@ -849,10 +854,16 @@ pub mod logging_service_server {
     /// Generated trait containing gRPC methods that should be implemented for use with LoggingServiceServer.
     #[async_trait]
     pub trait LoggingService: Send + Sync + 'static {
+        /// Server streaming response type for the Log method.
+        type LogStream: futures_core::Stream<
+                Item = Result<super::LogResponse, tonic::Status>,
+            >
+            + Send
+            + 'static;
         async fn log(
             &self,
             request: tonic::Request<super::LogRequest>,
-        ) -> Result<tonic::Response<super::LogResponse>, tonic::Status>;
+        ) -> Result<tonic::Response<Self::LogStream>, tonic::Status>;
         /// Server streaming response type for the Tail method.
         type TailStream: futures_core::Stream<
                 Item = Result<super::TailResponse, tonic::Status>,
@@ -928,10 +939,12 @@ pub mod logging_service_server {
                     struct LogSvc<T: LoggingService>(pub Arc<T>);
                     impl<
                         T: LoggingService,
-                    > tonic::server::UnaryService<super::LogRequest> for LogSvc<T> {
+                    > tonic::server::ServerStreamingService<super::LogRequest>
+                    for LogSvc<T> {
                         type Response = super::LogResponse;
+                        type ResponseStream = T::LogStream;
                         type Future = BoxFuture<
-                            tonic::Response<Self::Response>,
+                            tonic::Response<Self::ResponseStream>,
                             tonic::Status,
                         >;
                         fn call(
@@ -955,7 +968,7 @@ pub mod logging_service_server {
                                 accept_compression_encodings,
                                 send_compression_encodings,
                             );
-                        let res = grpc.unary(method, req).await;
+                        let res = grpc.server_streaming(method, req).await;
                         Ok(res)
                     };
                     Box::pin(fut)

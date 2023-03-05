@@ -55,11 +55,14 @@ A simple process supervisor"#,
         .subcommand(
             Command::new("log")
                 .arg(arg!(<name> "The name of the process to get the log of"))
+                .arg(arg!(--follow -f "Follow the log"))
                 .about("Get the log of a process"),
         )
         .subcommand(
             Command::new("tail")
                 .arg(arg!(<name> "The name of the process to tail the log of"))
+                .arg(arg!(--follow -f "Follow the log"))
+                .arg(arg!(--lines -n [lines] "The number of lines to tail"))
                 .about("Tail the log of a process"),
         )
         .subcommand(
@@ -111,11 +114,15 @@ async fn main() -> Result<(), Error> {
         Some(("ps", _)) => execute_ps().await?,
         Some(("log", args)) => {
             let name = args.value_of("name");
-            execute_log(name.unwrap()).await?;
+            let follow = args.is_present("follow");
+            execute_log(name.unwrap(), follow).await?;
         }
         Some(("tail", args)) => {
             let name = args.value_of("name");
-            execute_tail(name.unwrap()).await?;
+            let follow = args.is_present("follow");
+            let lines = args.value_of("lines");
+            let lines = lines.map(|l| l.parse::<usize>().unwrap()).unwrap_or(10);
+            execute_tail(name.unwrap(), follow, lines).await?;
         }
         Some(("config", args)) => {
             let name = args.value_of("name");
