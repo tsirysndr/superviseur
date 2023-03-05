@@ -47,7 +47,7 @@ message StatusRequest {
 }
 
 message StatusResponse {
-  string status = 1;
+  objects.v1alpha1.Process process = 1;
 }
 
 message ListRequest {

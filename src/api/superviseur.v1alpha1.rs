@@ -65,8 +65,8 @@ pub struct StatusRequest {
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct StatusResponse {
-    #[prost(string, tag = "1")]
-    pub status: ::prost::alloc::string::String,
+    #[prost(message, optional, tag = "1")]
+    pub process: ::core::option::Option<super::super::objects::v1alpha1::Process>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]

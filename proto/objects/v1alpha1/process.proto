@@ -4,8 +4,17 @@ package objects.v1alpha1;
 
 message Process {
   string name = 1;
-  uint32 pid = 2;
-  uint32 ppid = 3;
-  string command = 4;
-  string up_time = 5;
+  string description = 2;
+  uint32 pid = 3;
+  uint32 ppid = 4;
+  string command = 5;
+  string up_time = 6;
+  string state = 7;
+  string working_directory = 8;
+  string project = 9;
+  string type = 10;
+  string log_file = 11;
+  string stderr_file = 12;
+  bool auto_restart = 13;
+  repeated string env = 14;
 }

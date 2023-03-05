@@ -1,5 +1,6 @@
-use std::{collections::HashMap, fmt::Display};
+use std::{collections::HashMap, fmt::Display, str::FromStr};
 
+use anyhow::Error;
 use chrono::{DateTime, Duration, Utc};
 use tabled::Tabled;
 
@@ -24,6 +25,28 @@ pub enum State {
 impl Default for State {
     fn default() -> Self {
         State::Unknown
+    }
+}
+
+impl FromStr for State {
+    type Err = Error;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "Running" => Ok(State::Running),
+            "Sleeping" => Ok(State::Sleeping),
+            "Waiting" => Ok(State::Waiting),
+            "Zombie" => Ok(State::Zombie),
+            "Stopped" => Ok(State::Stopped),
+            "TracingStop" => Ok(State::TracingStop),
+            "Dead" => Ok(State::Dead),
+            "Wakekill" => Ok(State::Wakekill),
+            "Waking" => Ok(State::Waking),
+            "Parked" => Ok(State::Parked),
+            "Idle" => Ok(State::Idle),
+            "Locked" => Ok(State::Locked),
+            "WaitingForCpu" => Ok(State::WaitingForCpu),
+            _ => Err(Error::msg("Unknown state")),
+        }
     }
 }
 
@@ -52,6 +75,8 @@ impl Display for State {
 pub struct Process {
     #[tabled(rename = "NAME")]
     pub name: String,
+    #[tabled(skip)]
+    pub description: Option<String>,
     #[tabled(display_with = "display_option", rename = "PID")]
     pub pid: Option<u32>,
     #[tabled(skip)]
@@ -74,6 +99,16 @@ pub struct Process {
     pub port: Option<u16>,
     #[tabled(skip)]
     pub env: HashMap<String, String>,
+    #[tabled(skip)]
+    pub project: String,
+    #[tabled(rename = "TYPE")]
+    pub r#type: String,
+    #[tabled(skip)]
+    pub auto_restart: bool,
+    #[tabled(skip)]
+    pub stdout: String,
+    #[tabled(skip)]
+    pub stderr: String,
 }
 
 fn display_option<T: ToString>(value: &Option<T>) -> String {
@@ -90,7 +125,7 @@ fn display_up_time(value: &Option<DateTime<Utc>>) -> String {
     }
 }
 
-fn format_duration(duration: Duration) -> String {
+pub fn format_duration(duration: Duration) -> String {
     if duration < Duration::seconds(60) {
         return format!("{} seconds ago", duration.num_seconds());
     }
