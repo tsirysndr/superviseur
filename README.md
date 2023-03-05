@@ -46,7 +46,7 @@ SUBCOMMANDS:
 Superviseur uses a server-client architecture. The server is responsible for managing the processes, while the client is responsible for communicating with the server.
 
 ```bash
-superviseur serve
+superviseur daemon
 ```
 
 ### Initialize a new project
