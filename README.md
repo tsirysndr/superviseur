@@ -1,5 +1,19 @@
 # Superviseur
 
+<p>
+  <a href="LICENSE" target="./LICENSE">
+    <img alt="License: MPL-2.0" src="https://img.shields.io/badge/License-MPL-blue.svg" />
+  </a>
+  <a href="https://crates.io/crates/superviseur" target="_blank">
+    <img src="https://img.shields.io/crates/v/superviseur.svg" />
+  </a>
+  
+  <a href="https://crates.io/crates/superviseur" target="_blank">
+    <img src="https://img.shields.io/crates/dr/superviseur" />
+  </a>
+</p>
+
+
 A simple process supervisor for UNIX-like systems. Currently only supports running executables, but I plan to add support for managing wasm and docker containers in the future.
 
 Project Status: 🐲 Unstable, alpha-ish quality.
