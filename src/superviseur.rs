@@ -95,6 +95,7 @@ impl SuperviseurInternal {
             Process {
                 name: service.name,
                 command: service.command,
+                description: service.description,
                 pid: None,
                 uid: None,
                 gid: None,
@@ -105,6 +106,11 @@ impl SuperviseurInternal {
                 up_time: None,
                 port: None,
                 env: service.env,
+                project: project.clone(),
+                r#type: service.r#type,
+                auto_restart: service.autorestart,
+                stdout: service.stdout,
+                stderr: service.stderr,
             },
             project,
         ));

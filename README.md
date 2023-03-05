@@ -84,6 +84,24 @@ superviseur start demo
 
 Start the service by running the `start` command.
 
+### Check the status
+
+```bash
+superviseur status demo
+```
+Output:
+```
+● demo - Demo service
+       Active: Running since 2023-03-05 16:08:38.617625 UTC; 5 seconds ago
+          PID: 16646
+      Command: echo hello $NAME
+    Directory: /tmp
+          Log: /tmp/demo-stdout.log
+       Stderr: /tmp/demo-stderr.log
+  AutoRestart: false
+         Type: exec
+         Envs: NAME=world
+```
 
 ## 📝 License
 [MPL](LICENSE)

@@ -18,6 +18,7 @@ use crate::{
     },
     superviseur::{Superviseur, SuperviseurCommand},
     types::{
+        self,
         configuration::ConfigurationData,
         process::{Process, State},
     },
@@ -162,9 +163,47 @@ impl ControlService for Control {
 
     async fn status(
         &self,
-        _request: Request<StatusRequest>,
+        request: Request<StatusRequest>,
     ) -> Result<Response<StatusResponse>, tonic::Status> {
-        unimplemented!()
+        let request = request.into_inner();
+        let path = request.config_file_path;
+        let name = request.name;
+        let config_map = self.config_map.lock().unwrap();
+
+        if !config_map.contains_key(&path) {
+            return Err(tonic::Status::not_found("Config file not found"));
+        }
+
+        let config = config_map.get(&path).unwrap();
+
+        let service = config
+            .services
+            .iter()
+            .find(|s| s.name == name)
+            .ok_or_else(|| tonic::Status::not_found("Service not found"))?;
+
+        let processes = self.processes.lock().unwrap();
+        let process = processes
+            .iter()
+            .find(|(p, _)| p.name == name && p.project == config.project)
+            .map(|(p, _)| p.clone())
+            .unwrap_or(Process {
+                name: name.clone(),
+                project: config.project.clone(),
+                r#type: service.r#type.clone(),
+                state: types::process::State::Stopped,
+                command: service.command.clone(),
+                description: service.description.clone(),
+                working_dir: service.working_dir.clone(),
+                env: service.env.clone(),
+                auto_restart: service.autorestart,
+                stdout: service.stdout.clone(),
+                stderr: service.stderr.clone(),
+                ..Default::default()
+            });
+        Ok(Response::new(StatusResponse {
+            process: Some(process.into()),
+        }))
     }
 
     async fn list(
