@@ -41,7 +41,7 @@ jobs:
         shell: bash
         run: |
           cd target/x86_64-unknown-linux-gnu/release
-          tar czvf superviseur_${{ env.RELEASE_VERSION }}_x86_64-unknown-linux-gnu.tar.gz tunein
+          tar czvf superviseur_${{ env.RELEASE_VERSION }}_x86_64-unknown-linux-gnu.tar.gz superviseur
           shasum -a 256 superviseur_${{ env.RELEASE_VERSION }}_x86_64-unknown-linux-gnu.tar.gz > superviseur_${{ env.RELEASE_VERSION }}_x86_64-unknown-linux-gnu.tar.gz.sha256
       - name: Releasing assets
         if: matrix.target == 'x86_64-unknown-linux-gnu'

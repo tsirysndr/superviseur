@@ -41,7 +41,7 @@ jobs:
         shell: bash
         run: |
           cd target/${{ matrix.target }}/release
-          tar czvf superviseur_${{ env.RELEASE_VERSION }}_${{ matrix.target }}.tar.gz tunein
+          tar czvf superviseur_${{ env.RELEASE_VERSION }}_${{ matrix.target }}.tar.gz superviseur
           shasum -a 256 superviseur_${{ env.RELEASE_VERSION }}_${{ matrix.target }}.tar.gz > superviseur_${{ env.RELEASE_VERSION }}_${{ matrix.target }}.tar.gz.sha256
       - name: Releasing assets
         uses: softprops/action-gh-release@v1
