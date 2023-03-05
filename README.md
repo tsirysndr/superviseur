@@ -25,9 +25,10 @@ SUBCOMMANDS:
     config     Get the config of a process
     help       Print this message or the help of the given subcommand(s)
     init       Initialize the superviseur config
-    list       List all processes
+    list       List all services [aliases: ls]
     log        Get the log of a process
     new        Create a new service config
+    ps         List all running processes
     restart    Restart all processes or a specific one
     serve      Start the superviseur server
     start      Start all processes or a specific one
