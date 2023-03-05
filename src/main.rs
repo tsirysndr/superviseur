@@ -3,8 +3,8 @@ use clap::{arg, Command};
 use superviseur::{
     cmd::{
         config::execute_config, init::execute_init, list::execute_list, log::execute_log,
-        new::execute_new, restart::execute_restart, start::execute_start, status::execute_status,
-        stop::execute_stop, tail::execute_tail,
+        new::execute_new, ps::execute_ps, restart::execute_restart, start::execute_start,
+        status::execute_status, stop::execute_stop, tail::execute_tail,
     },
     server,
     types::configuration::ConfigFormat,
@@ -46,7 +46,12 @@ A simple process supervisor"#,
                 .arg(arg!(<name> "The name of the process to get the status of"))
                 .about("Get the status of a process"),
         )
-        .subcommand(Command::new("list").about("List all processes"))
+        .subcommand(
+            Command::new("list")
+                .visible_alias("ls")
+                .about("List all services"),
+        )
+        .subcommand(Command::new("ps").about("List all running processes"))
         .subcommand(
             Command::new("log")
                 .arg(arg!(<name> "The name of the process to get the log of"))
@@ -101,6 +106,7 @@ async fn main() -> Result<(), Error> {
             execute_status(name.unwrap()).await?;
         }
         Some(("list", _)) => execute_list().await?,
+        Some(("ps", _)) => execute_ps().await?,
         Some(("log", args)) => {
             let name = args.value_of("name");
             execute_log(name.unwrap()).await?;

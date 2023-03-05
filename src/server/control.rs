@@ -10,13 +10,17 @@ use crate::{
     api::{
         objects::v1alpha1::Service,
         superviseur::v1alpha1::{
-            control_service_server::ControlService, ListRequest, ListResponse, LoadConfigRequest,
+            control_service_server::ControlService, ListRequest, ListResponse,
+            ListRunningProcessesRequest, ListRunningProcessesResponse, LoadConfigRequest,
             LoadConfigResponse, RestartRequest, RestartResponse, StartRequest, StartResponse,
             StatusRequest, StatusResponse, StopRequest, StopResponse,
         },
     },
     superviseur::{Superviseur, SuperviseurCommand},
-    types::{configuration::ConfigurationData, process::Process},
+    types::{
+        configuration::ConfigurationData,
+        process::{Process, State},
+    },
 };
 
 pub struct Control {
@@ -194,6 +198,21 @@ impl ControlService for Control {
             }
         }
 
+        Ok(Response::new(list_response))
+    }
+
+    async fn list_running_processes(
+        &self,
+        _request: Request<ListRunningProcessesRequest>,
+    ) -> Result<Response<ListRunningProcessesResponse>, tonic::Status> {
+        let processes = self.processes.lock().unwrap();
+        let list_response = ListRunningProcessesResponse {
+            processes: processes
+                .iter()
+                .filter(|(p, _)| p.state == State::Running)
+                .map(|(p, _)| Into::into(p.clone()))
+                .collect(),
+        };
         Ok(Response::new(list_response))
     }
 }

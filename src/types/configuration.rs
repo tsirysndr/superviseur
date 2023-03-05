@@ -21,6 +21,7 @@ pub struct Service {
     pub depends_on: Vec<String>,
     pub env: HashMap<String, String>,
     pub autostart: bool,
+    pub autorestart: bool,
     pub namespace: Option<String>,
     pub port: u16,
     pub stdout: String,
