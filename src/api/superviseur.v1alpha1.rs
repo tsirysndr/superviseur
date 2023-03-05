@@ -72,7 +72,7 @@ pub struct StatusResponse {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListRequest {
     #[prost(string, tag = "1")]
-    pub project: ::prost::alloc::string::String,
+    pub config_file_path: ::prost::alloc::string::String,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]

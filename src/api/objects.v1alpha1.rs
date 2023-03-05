@@ -4,6 +4,8 @@ pub struct Service {
     #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
     #[prost(string, tag = "2")]
+    pub command: ::prost::alloc::string::String,
+    #[prost(string, tag = "3")]
     pub namespace: ::prost::alloc::string::String,
     #[prost(string, tag = "4")]
     pub r#type: ::prost::alloc::string::String,
