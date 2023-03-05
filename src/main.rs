@@ -85,6 +85,7 @@ A simple process supervisor"#,
                 .arg(arg!([port] "The port to listen on").default_value("5476"))
                 .about("Start the superviseur server"),
         )
+        .subcommand(Command::new("daemon").about("Start the superviseur daemon"))
         .subcommand(Command::new("up").about("Start all services"))
         .subcommand(Command::new("down").about("Stop all services"))
 }
@@ -139,8 +140,9 @@ async fn main() -> Result<(), Error> {
         Some(("serve", args)) => {
             let port = args.value_of("port").unwrap();
             let port = port.parse::<u16>().unwrap();
-            server::exec(port).await?;
+            server::exec(port, true).await?;
         }
+        Some(("daemon", _)) => server::exec(5476, false).await?,
         Some(("up", _)) => execute_start(None).await?,
         Some(("down", _)) => execute_stop(None).await?,
         _ => println!("No subcommand was used"),

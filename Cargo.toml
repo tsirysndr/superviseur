@@ -29,10 +29,11 @@ toml = "0.7.2"
 bat = "0.22.1"
 futures-util = "0.3.26"
 sysinfo = "0.28.1"
-tokio-stream = "0.1.12"
+tokio-stream = { version = "0.1.12", features = ["net"] }
 tabled = "0.10.0"
 nix = "0.26.2"
 chrono = "0.4.23"
+tower = "0.4.13"
 
 [build-dependencies]
 tonic-build = "0.8"
