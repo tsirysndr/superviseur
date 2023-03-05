@@ -88,13 +88,31 @@ async fn main() -> Result<(), Error> {
             let name = args.value_of("name");
             execute_start(name).await?;
         }
-        Some(("stop", _)) => execute_stop(),
-        Some(("restart", _)) => execute_restart(),
-        Some(("status", _)) => execute_status(),
-        Some(("list", _)) => execute_list(),
-        Some(("log", _)) => execute_log(),
-        Some(("tail", _)) => execute_tail(),
-        Some(("config", _)) => execute_config(),
+        Some(("stop", args)) => {
+            let name = args.value_of("name");
+            execute_stop(name).await?;
+        }
+        Some(("restart", args)) => {
+            let name = args.value_of("name");
+            execute_restart(name).await?;
+        }
+        Some(("status", args)) => {
+            let name = args.value_of("name");
+            execute_status(name.unwrap()).await?;
+        }
+        Some(("list", _)) => execute_list().await?,
+        Some(("log", args)) => {
+            let name = args.value_of("name");
+            execute_log(name.unwrap()).await?;
+        }
+        Some(("tail", args)) => {
+            let name = args.value_of("name");
+            execute_tail(name.unwrap()).await?;
+        }
+        Some(("config", args)) => {
+            let name = args.value_of("name");
+            execute_config(name.unwrap());
+        }
         Some(("init", args)) => match args.is_present("toml") {
             true => execute_init(ConfigFormat::TOML),
             false => execute_init(ConfigFormat::HCL),

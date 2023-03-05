@@ -50,7 +50,7 @@ message StatusResponse {
 }
 
 message ListRequest {
-  string project = 1;
+  string config_file_path = 1;
 }
 
 message ListResponse {

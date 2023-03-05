@@ -1,4 +1,5 @@
 use std::{
+    collections::HashMap,
     io::{BufRead, Write},
     pin::Pin,
     sync::{Arc, Mutex},
@@ -9,6 +10,10 @@ use std::{
 
 use anyhow::Error;
 use futures::Future;
+use nix::{
+    sys::signal::{self, Signal},
+    unistd::Pid,
+};
 use tokio::sync::mpsc;
 
 use crate::types::{
@@ -44,6 +49,7 @@ pub enum SuperviseurCommand {
 struct SuperviseurInternal {
     commands: Arc<Mutex<mpsc::UnboundedReceiver<SuperviseurCommand>>>,
     processes: Arc<Mutex<Vec<(Process, String)>>>,
+    childs: Arc<Mutex<HashMap<String, i32>>>,
 }
 
 impl SuperviseurInternal {
@@ -54,6 +60,7 @@ impl SuperviseurInternal {
         Self {
             commands,
             processes,
+            childs: Arc::new(Mutex::new(HashMap::new())),
         }
     }
 
@@ -88,7 +95,7 @@ impl SuperviseurInternal {
         Ok(())
     }
 
-    fn handle_start(&self, service: Service, project: String) -> Result<(), Error> {
+    fn handle_start(&mut self, service: Service, project: String) -> Result<(), Error> {
         let child = std::process::Command::new("sh")
             .arg("-c")
             .arg(&service.command)
@@ -107,6 +114,11 @@ impl SuperviseurInternal {
             .0;
         process.pid = Some(child.id());
         process.state = State::Running;
+        let service_key = format!("{}-{}", project, service.name);
+        self.childs
+            .lock()
+            .unwrap()
+            .insert(service_key, child.id() as i32);
 
         thread::spawn(move || {
             // write stdout to file
@@ -133,7 +145,22 @@ impl SuperviseurInternal {
     }
 
     fn handle_stop(&self, service: Service, project: String) -> Result<(), Error> {
-        todo!()
+        let mut childs = self.childs.lock().unwrap();
+        let service_key = format!("{}-{}", project, service.name);
+        let pid = childs.get(&service_key).unwrap();
+        signal::kill(Pid::from_raw(*pid), Signal::SIGTERM)?;
+        childs.remove(&service_key);
+
+        // update process state
+        let mut processes = self.processes.lock().unwrap();
+        let mut process = &mut processes
+            .iter_mut()
+            .find(|(p, key)| p.name == service.name && key == &project)
+            .unwrap()
+            .0;
+        process.state = State::Stopped;
+
+        Ok(())
     }
 
     fn handle_restart(&self, service: Service, project: String) -> Result<(), Error> {
@@ -144,7 +171,7 @@ impl SuperviseurInternal {
         todo!()
     }
 
-    fn handle_command(&self, cmd: SuperviseurCommand) -> Result<(), Error> {
+    fn handle_command(&mut self, cmd: SuperviseurCommand) -> Result<(), Error> {
         match cmd {
             SuperviseurCommand::Load(service, project) => self.handle_load(service, project),
             SuperviseurCommand::Start(service, project) => self.handle_start(service, project),
@@ -158,7 +185,7 @@ impl SuperviseurInternal {
 impl Future for SuperviseurInternal {
     type Output = ();
 
-    fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
+    fn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
         loop {
             let cmd = match self.commands.lock().unwrap().poll_recv(cx) {
                 Poll::Ready(Some(cmd)) => Some(cmd),

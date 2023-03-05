@@ -61,7 +61,7 @@ impl ControlService for Control {
         for service in config.services {
             self.cmd_tx
                 .send(SuperviseurCommand::Load(service, config.project.clone()))
-                .unwrap();
+                .map_err(|e| tonic::Status::internal(e.to_string()))?;
         }
 
         Ok(Response::new(LoadConfigResponse { success: true }))
@@ -91,23 +91,69 @@ impl ControlService for Control {
                 service.clone(),
                 config.project.clone(),
             ))
-            .unwrap();
+            .map_err(|e| tonic::Status::internal(e.to_string()))?;
 
         Ok(Response::new(StartResponse { success: true }))
     }
 
     async fn stop(
         &self,
-        _request: Request<StopRequest>,
+        request: Request<StopRequest>,
     ) -> Result<Response<StopResponse>, tonic::Status> {
-        unimplemented!()
+        let request = request.into_inner();
+        let path = request.config_file_path;
+        let name = request.name;
+        let config_map = self.config_map.lock().unwrap();
+
+        if !config_map.contains_key(&path) {
+            return Err(tonic::Status::not_found("Config file not found"));
+        }
+
+        let config = config_map.get(&path).unwrap();
+
+        let service = config
+            .services
+            .iter()
+            .find(|s| s.name == name)
+            .ok_or_else(|| tonic::Status::not_found("Service not found"))?;
+
+        self.cmd_tx
+            .send(SuperviseurCommand::Stop(
+                service.clone(),
+                config.project.clone(),
+            ))
+            .unwrap();
+        Ok(Response::new(StopResponse { success: true }))
     }
 
     async fn restart(
         &self,
-        _request: Request<RestartRequest>,
+        request: Request<RestartRequest>,
     ) -> Result<Response<RestartResponse>, tonic::Status> {
-        unimplemented!()
+        let request = request.into_inner();
+        let path = request.config_file_path;
+        let name = request.name;
+        let config_map = self.config_map.lock().unwrap();
+
+        if !config_map.contains_key(&path) {
+            return Err(tonic::Status::not_found("Config file not found"));
+        }
+
+        let config = config_map.get(&path).unwrap();
+
+        let service = config
+            .services
+            .iter()
+            .find(|s| s.name == name)
+            .ok_or_else(|| tonic::Status::not_found("Service not found"))?;
+
+        self.cmd_tx
+            .send(SuperviseurCommand::Restart(
+                service.clone(),
+                config.project.clone(),
+            ))
+            .map_err(|e| tonic::Status::internal(e.to_string()))?;
+        Ok(Response::new(RestartResponse { success: true }))
     }
 
     async fn status(
@@ -122,17 +168,32 @@ impl ControlService for Control {
         request: Request<ListRequest>,
     ) -> Result<Response<ListResponse>, tonic::Status> {
         let request = request.into_inner();
-        let _project = request.project;
+        let path = request.config_file_path;
+        let config_map = self.config_map.lock().unwrap();
+
+        if !config_map.contains_key(&path) {
+            return Err(tonic::Status::not_found("Config file not found"));
+        }
+
+        let config = config_map.get(&path).unwrap();
+        let services = config.services.clone();
+        let mut list_response = ListResponse {
+            services: services.into_iter().map(Service::from).collect(),
+        };
+
         let processes = self.processes.lock().unwrap();
-        Ok(Response::new(ListResponse {
-            services: processes
+        for service in list_response.services.iter_mut() {
+            let process = processes
                 .iter()
-                .map(|(p, _)| Service {
-                    name: p.name.clone(),
-                    status: p.state.to_string(),
-                    ..Default::default()
-                })
-                .collect::<Vec<Service>>(),
-        }))
+                .find(|(p, _)| p.name == service.name)
+                .map(|(p, _)| p);
+            if let Some(process) = process {
+                service.status = process.state.to_string().to_uppercase();
+            } else {
+                service.status = "STOPPED".to_string();
+            }
+        }
+
+        Ok(Response::new(list_response))
     }
 }
