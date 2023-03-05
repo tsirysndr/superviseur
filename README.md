@@ -22,19 +22,21 @@ OPTIONS:
     -V, --version    Print version information
 
 SUBCOMMANDS:
-    config     Get the config of a process
+    config     Get the config of a service
+    down       Stop all services
     help       Print this message or the help of the given subcommand(s)
     init       Initialize the superviseur config
     list       List all services [aliases: ls]
     log        Get the log of a process
     new        Create a new service config
     ps         List all running processes
-    restart    Restart all processes or a specific one
+    restart    Restart all services or a specific one
     serve      Start the superviseur server
-    start      Start all processes or a specific one
-    status     Get the status of a process
-    stop       Stop all processes or a specific one
+    start      Start all services or a specific one
+    status     Get the status of a service
+    stop       Stop all services or a specific one
     tail       Tail the log of a process
+    up         Start all services
 ```
 
 ## 📚 Getting Started
@@ -61,14 +63,15 @@ services = [
   {
     "name" = "demo"
     "type" = "exec"
-    "command" = "echo hello $NAME"
+    "command" = "ping $GITHUB_DOMAIN"
     "working_dir" = "/tmp"
-    "description" = "Demo service"
+    "description" = "Ping Service Example"
     "depends_on" = []
     "env" = {
-      "NAME" = "world"
+      "GITHUB_DOMAIN" = "github.com"
     }
     "autostart" = true
+    "autorestart" = false
     "namespace" = "demo_namespace"
     "port" = 5060
     "stdout" = "/tmp/demo-stdout.log"
@@ -92,17 +95,18 @@ superviseur status demo
 ```
 Output:
 ```
-● demo - Demo service
-       Active: Running since 2023-03-05 16:08:38.617625 UTC; 5 seconds ago
-          PID: 16646
-      Command: echo hello $NAME
-    Directory: /tmp
-          Log: /tmp/demo-stdout.log
-       Stderr: /tmp/demo-stderr.log
-  AutoRestart: false
-         Type: exec
-         Envs: NAME=world
+● demo - Ping Service Example
+        Active: Running since 2023-03-05 19:17:56.512455 UTC; 17 seconds ago
+           PID: 30887
+       Command: ping $GITHUB_DOMAIN
+     Directory: /tmp
+           Log: /tmp/demo-stdout.log
+        Stderr: /tmp/demo-stderr.log
+   AutoRestart: false
+          Type: exec
+          Envs: GITHUB_DOMAIN=github.com
 ```
+
 
 ## 📝 License
 [MPL](LICENSE)
