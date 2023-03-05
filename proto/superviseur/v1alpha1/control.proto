@@ -3,6 +3,7 @@ syntax = "proto3";
 package superviseur.v1alpha1;
 
 import "objects/v1alpha1/service.proto";
+import "objects/v1alpha1/process.proto";
 
 message LoadConfigRequest {
   string config = 1;
@@ -53,6 +54,14 @@ message ListRequest {
   string config_file_path = 1;
 }
 
+message ListRunningProcessesRequest {
+  string config_file_path = 1;
+}
+
+message ListRunningProcessesResponse {
+  repeated objects.v1alpha1.Process processes = 1;
+}
+
 message ListResponse {
   repeated objects.v1alpha1.Service services = 1;
 }
@@ -64,4 +73,5 @@ service ControlService {
   rpc Restart (RestartRequest) returns (RestartResponse) {}
   rpc Status (StatusRequest) returns (StatusResponse) {}
   rpc List (ListRequest) returns (ListResponse) {}
+  rpc ListRunningProcesses (ListRunningProcessesRequest) returns (ListRunningProcessesResponse) {}
 }

@@ -19,6 +19,7 @@ pub fn execute_new(cfg_format: ConfigFormat) {
             depends_on: vec![],
             env,
             autostart: true,
+            autorestart: false,
             namespace: Some("demo_namespace".to_string()),
             port: 5060,
             stdout: "/tmp/demo-stdout.log".to_string(),

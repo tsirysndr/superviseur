@@ -38,7 +38,8 @@ pub async fn exec(port: u16) -> Result<(), Error> {
     let (cmd_tx, cmd_rx) = tokio::sync::mpsc::unbounded_channel();
     let processes = Arc::new(Mutex::new(vec![] as Vec<(Process, String)>));
     let cmd_rx = Arc::new(Mutex::new(cmd_rx));
-    let superviseur = Superviseur::new(cmd_rx, processes.clone());
+
+    let superviseur = Superviseur::new(cmd_rx, cmd_tx.clone(), processes.clone());
 
     Server::builder()
         .accept_http1(true)

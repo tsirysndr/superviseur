@@ -27,10 +27,11 @@ pub struct Superviseur {}
 impl Superviseur {
     pub fn new(
         cmd_rx: Arc<Mutex<mpsc::UnboundedReceiver<SuperviseurCommand>>>,
+        cmd_tx: mpsc::UnboundedSender<SuperviseurCommand>,
         processes: Arc<Mutex<Vec<(Process, String)>>>,
     ) -> Self {
         thread::spawn(move || {
-            let internal = SuperviseurInternal::new(cmd_rx, processes);
+            let internal = SuperviseurInternal::new(cmd_rx, cmd_tx, processes);
             futures::executor::block_on(internal);
         });
         Self {}
@@ -46,8 +47,18 @@ pub enum SuperviseurCommand {
     Status(String),
 }
 
+#[derive(Debug)]
+pub enum ProcessEvent {
+    Started(String, String),
+    Stopped(String, String),
+    Restarted(String, String),
+}
+
 struct SuperviseurInternal {
     commands: Arc<Mutex<mpsc::UnboundedReceiver<SuperviseurCommand>>>,
+    events: mpsc::UnboundedReceiver<ProcessEvent>,
+    event_tx: mpsc::UnboundedSender<ProcessEvent>,
+    cmd_tx: mpsc::UnboundedSender<SuperviseurCommand>,
     processes: Arc<Mutex<Vec<(Process, String)>>>,
     childs: Arc<Mutex<HashMap<String, i32>>>,
 }
@@ -55,10 +66,15 @@ struct SuperviseurInternal {
 impl SuperviseurInternal {
     pub fn new(
         commands: Arc<Mutex<mpsc::UnboundedReceiver<SuperviseurCommand>>>,
+        cmd_tx: mpsc::UnboundedSender<SuperviseurCommand>,
         processes: Arc<Mutex<Vec<(Process, String)>>>,
     ) -> Self {
+        let (event_tx, events) = mpsc::unbounded_channel();
         Self {
             commands,
+            events,
+            event_tx,
+            cmd_tx,
             processes,
             childs: Arc::new(Mutex::new(HashMap::new())),
         }
@@ -86,7 +102,7 @@ impl SuperviseurInternal {
                 state: State::Stopped,
                 cpu: None,
                 mem: None,
-                time: None,
+                up_time: None,
                 port: None,
                 env: service.env,
             },
@@ -96,11 +112,13 @@ impl SuperviseurInternal {
     }
 
     fn handle_start(&mut self, service: Service, project: String) -> Result<(), Error> {
-        let child = std::process::Command::new("sh")
+        let envs = service.env.clone();
+        let working_dir = service.working_dir.clone();
+        let mut child = std::process::Command::new("sh")
             .arg("-c")
             .arg(&service.command)
-            .current_dir(service.working_dir)
-            .envs(service.env)
+            .current_dir(working_dir)
+            .envs(envs)
             .stdout(std::process::Stdio::piped())
             .stderr(std::process::Stdio::piped())
             .spawn()
@@ -114,16 +132,23 @@ impl SuperviseurInternal {
             .0;
         process.pid = Some(child.id());
         process.state = State::Running;
+        process.up_time = Some(chrono::Utc::now());
         let service_key = format!("{}-{}", project, service.name);
         self.childs
             .lock()
             .unwrap()
             .insert(service_key, child.id() as i32);
 
+        let stdout = child.stdout.take().unwrap();
+        let stderr = child.stderr.take().unwrap();
+
+        let cloned_service = service.clone();
+
         thread::spawn(move || {
+            let service = cloned_service;
             // write stdout to file
             let mut log_file = std::fs::File::create(service.stdout).unwrap();
-            let stdout = child.stdout.unwrap();
+
             let stdout = std::io::BufReader::new(stdout);
             for line in stdout.lines() {
                 let line = line.unwrap();
@@ -133,12 +158,31 @@ impl SuperviseurInternal {
 
             // write stderr to file
             let mut err_file = std::fs::File::create(service.stderr).unwrap();
-            let stderr = child.stderr.unwrap();
             let stderr = std::io::BufReader::new(stderr);
             for line in stderr.lines() {
                 let line = line.unwrap();
                 err_file.write_all(line.as_bytes()).unwrap();
             }
+        });
+
+        let cmd_tx = self.cmd_tx.clone();
+        let event_tx = self.event_tx.clone();
+        thread::spawn(move || {
+            let _status = child.wait().unwrap();
+            // println!("child exited with status: {}", status);
+            if service.autorestart {
+                cmd_tx
+                    .send(SuperviseurCommand::Start(service.clone(), project.clone()))
+                    .unwrap();
+
+                event_tx
+                    .send(ProcessEvent::Restarted(service.name, project))
+                    .unwrap();
+                return;
+            }
+            event_tx
+                .send(ProcessEvent::Stopped(service.name, project))
+                .unwrap();
         });
 
         Ok(())
@@ -147,24 +191,23 @@ impl SuperviseurInternal {
     fn handle_stop(&self, service: Service, project: String) -> Result<(), Error> {
         let mut childs = self.childs.lock().unwrap();
         let service_key = format!("{}-{}", project, service.name);
-        let pid = childs.get(&service_key).unwrap();
-        signal::kill(Pid::from_raw(*pid), Signal::SIGTERM)?;
-        childs.remove(&service_key);
+        match childs.get(&service_key) {
+            Some(pid) => {
+                signal::kill(Pid::from_raw(*pid), Signal::SIGTERM)?;
+                childs.remove(&service_key);
 
-        // update process state
-        let mut processes = self.processes.lock().unwrap();
-        let mut process = &mut processes
-            .iter_mut()
-            .find(|(p, key)| p.name == service.name && key == &project)
-            .unwrap()
-            .0;
-        process.state = State::Stopped;
-
-        Ok(())
+                self.event_tx
+                    .send(ProcessEvent::Stopped(service.name, project))
+                    .unwrap();
+                Ok(())
+            }
+            None => Ok(()),
+        }
     }
 
-    fn handle_restart(&self, service: Service, project: String) -> Result<(), Error> {
-        todo!()
+    fn handle_restart(&mut self, service: Service, project: String) -> Result<(), Error> {
+        self.handle_stop(service.clone(), project.clone())?;
+        self.handle_start(service, project)
     }
 
     fn handle_status(&self, name: String) -> Result<(), Error> {
@@ -179,6 +222,36 @@ impl SuperviseurInternal {
             SuperviseurCommand::Restart(service, project) => self.handle_restart(service, project),
             SuperviseurCommand::Status(name) => self.handle_status(name),
         }
+    }
+    fn handle_event(&mut self, event: ProcessEvent) -> Result<(), Error> {
+        let mut processes = self.processes.lock().unwrap();
+        match event {
+            ProcessEvent::Started(service_name, project) => {
+                let mut process = &mut processes
+                    .iter_mut()
+                    .find(|(p, key)| p.name == service_name && key == &project)
+                    .unwrap()
+                    .0;
+                process.state = State::Running;
+            }
+            ProcessEvent::Stopped(service_name, project) => {
+                let mut process = &mut processes
+                    .iter_mut()
+                    .find(|(p, key)| p.name == service_name && key == &project)
+                    .unwrap()
+                    .0;
+                process.state = State::Stopped;
+            }
+            ProcessEvent::Restarted(service_name, project) => {
+                let mut process = &mut processes
+                    .iter_mut()
+                    .find(|(p, key)| p.name == service_name && key == &project)
+                    .unwrap()
+                    .0;
+                process.state = State::Running;
+            }
+        }
+        Ok(())
     }
 }
 
@@ -195,6 +268,18 @@ impl Future for SuperviseurInternal {
 
             if let Some(cmd) = cmd {
                 if let Err(e) = self.handle_command(cmd) {
+                    println!("{:?}", e);
+                }
+            }
+
+            let event = match self.events.poll_recv(cx) {
+                Poll::Ready(Some(event)) => Some(event),
+                Poll::Ready(None) => return Poll::Ready(()), // client has disconnected - shut down.
+                _ => None,
+            };
+
+            if let Some(event) = event {
+                if let Err(e) = self.handle_event(event) {
                     println!("{:?}", e);
                 }
             }

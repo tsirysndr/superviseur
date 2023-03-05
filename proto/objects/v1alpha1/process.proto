@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package objects.v1alpha1;
+
+message Process {
+  string name = 1;
+  uint32 pid = 2;
+  uint32 ppid = 3;
+  string command = 4;
+  string up_time = 5;
+}

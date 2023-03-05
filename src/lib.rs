@@ -13,7 +13,7 @@ pub mod api {
     pub mod objects {
         use crate::types;
 
-        use self::v1alpha1::Service;
+        use self::v1alpha1::{Process, Service};
 
         #[path = "objects.v1alpha1.rs"]
         pub mod v1alpha1;
@@ -38,6 +38,30 @@ pub mod api {
                     depends_on: service.depends_on,
                     command: service.command,
                     r#type: service.r#type,
+                    ..Default::default()
+                }
+            }
+        }
+
+        impl Into<types::process::Process> for Process {
+            fn into(self) -> types::process::Process {
+                types::process::Process {
+                    name: self.name,
+                    pid: Some(self.pid),
+                    command: self.command,
+                    up_time: self.up_time.parse().ok(),
+                    ..Default::default()
+                }
+            }
+        }
+
+        impl From<types::process::Process> for Process {
+            fn from(process: types::process::Process) -> Self {
+                Self {
+                    name: process.name,
+                    pid: process.pid.unwrap(),
+                    command: process.command,
+                    up_time: process.up_time.map(|t| t.to_rfc3339()).unwrap_or_default(),
                     ..Default::default()
                 }
             }
