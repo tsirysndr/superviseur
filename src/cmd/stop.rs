@@ -16,18 +16,12 @@ pub async fn execute_stop(name: Option<&str>) -> Result<(), Error> {
 
     client.load_config(request).await?;
 
-    match name {
-        Some(name) => {
-            let request = tonic::Request::new(StopRequest {
-                name: name.to_string(),
-                config_file_path: current_dir.to_str().unwrap().to_string(),
-            });
+    let request = tonic::Request::new(StopRequest {
+        name: name.unwrap_or_default().to_string(),
+        config_file_path: current_dir.to_str().unwrap().to_string(),
+    });
 
-            client.stop(request).await?;
-        }
-        None => {
-            unimplemented!("Stop all services")
-        }
-    }
+    client.stop(request).await?;
+
     Ok(())
 }

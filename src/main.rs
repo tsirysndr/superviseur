@@ -28,23 +28,23 @@ A simple process supervisor"#,
         )
         .subcommand(
             Command::new("start")
-                .arg(arg!([name] "The name of the process to start"))
-                .about("Start all processes or a specific one"),
+                .arg(arg!([name] "The name of the service to start"))
+                .about("Start all services or a specific one"),
         )
         .subcommand(
             Command::new("stop")
-                .arg(arg!([name] "The name of the process to stop"))
-                .about("Stop all processes or a specific one"),
+                .arg(arg!([name] "The name of the service to stop"))
+                .about("Stop all services or a specific one"),
         )
         .subcommand(
             Command::new("restart")
-                .arg(arg!([name] "The name of the process to restart"))
-                .about("Restart all processes or a specific one"),
+                .arg(arg!([name] "The name of the service to restart"))
+                .about("Restart all services or a specific one"),
         )
         .subcommand(
             Command::new("status")
-                .arg(arg!(<name> "The name of the process to get the status of"))
-                .about("Get the status of a process"),
+                .arg(arg!(<name> "The name of the service to get the status of"))
+                .about("Get the status of a service"),
         )
         .subcommand(
             Command::new("list")
@@ -64,8 +64,8 @@ A simple process supervisor"#,
         )
         .subcommand(
             Command::new("config")
-                .arg(arg!(<name> "The name of the process to get the config of"))
-                .about("Get the config of a process"),
+                .arg(arg!(<name> "The name of the service to get the config of"))
+                .about("Get the config of a service"),
         )
         .subcommand(
             Command::new("init")
@@ -82,6 +82,8 @@ A simple process supervisor"#,
                 .arg(arg!([port] "The port to listen on").default_value("5476"))
                 .about("Start the superviseur server"),
         )
+        .subcommand(Command::new("up").about("Start all services"))
+        .subcommand(Command::new("down").about("Stop all services"))
 }
 
 #[tokio::main]
@@ -132,6 +134,8 @@ async fn main() -> Result<(), Error> {
             let port = port.parse::<u16>().unwrap();
             server::exec(port).await?;
         }
+        Some(("up", _)) => execute_start(None).await?,
+        Some(("down", _)) => execute_stop(None).await?,
         _ => println!("No subcommand was used"),
     }
     Ok(())
