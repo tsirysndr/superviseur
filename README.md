@@ -76,6 +76,14 @@ services = [
 ]
 ```
 
+### Start the service
+
+```bash
+superviseur start demo
+```
+
+Start the service by running the `start` command.
+
 
 ## 📝 License
 [MPL](LICENSE)
