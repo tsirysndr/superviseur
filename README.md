@@ -107,6 +107,35 @@ Output:
           Envs: GITHUB_DOMAIN=github.com
 ```
 
+### Show running processes
+
+```bash
+superviseur ps
+```
+
+Output:
+```
+ NAME   PID     STATUS             COMMAND               TYPE 
+ demo   31200   Up 4 seconds ago   ping $GITHUB_DOMAIN   exec 
+```
+
+### Stop the service
+
+```bash
+superviseur stop demo
+```
+
+### Show all services
+
+```bash
+superviseur ls
+```
+
+Output:
+```
+ NAME   STATUS    COMMAND                 TYPE 
+ demo   STOPPED   "ping $GITHUB_DOMAIN"   exec 
+```
 
 ## 📝 License
 [MPL](LICENSE)
