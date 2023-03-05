@@ -6,16 +6,16 @@ use crate::types::configuration::{ConfigFormat, ConfigurationData, Service};
 
 pub fn execute_new(cfg_format: ConfigFormat) {
     let mut env = HashMap::new();
-    env.insert("NAME".to_string(), "world".to_string());
+    env.insert("GITHUB_DOMAIN".to_string(), "github.com".to_string());
 
     let config = ConfigurationData {
         project: "demo".to_string(),
         services: vec![Service {
             name: "demo".to_string(),
             r#type: "exec".to_string(),
-            command: "echo hello $NAME".to_string(),
+            command: "ping $GITHUB_DOMAIN".to_string(),
             working_dir: "/tmp".to_string(),
-            description: Some("Demo service".to_string()),
+            description: Some("Ping Service Example".to_string()),
             depends_on: vec![],
             env,
             autostart: true,
