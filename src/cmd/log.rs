@@ -21,7 +21,7 @@ pub async fn execute_log(name: &str, follow: bool) -> Result<(), Error> {
             Error::msg(format!("Cannot connect to the Superviseur daemon at unix:{}. Is the superviseur daemon running?", UNIX_SOCKET_PATH)))?;
 
     // let mut client = ControlServiceClient::connect("http://127.0.0.1:5476").await?;
-    let mut client = ControlServiceClient::new(channel);
+    let mut client = ControlServiceClient::new(channel.clone());
 
     let request = tonic::Request::new(LoadConfigRequest {
         config,
@@ -30,7 +30,8 @@ pub async fn execute_log(name: &str, follow: bool) -> Result<(), Error> {
 
     client.load_config(request).await?;
 
-    let mut client = LoggingServiceClient::connect("http://127.0.0.1:5476").await?;
+    // let mut client = LoggingServiceClient::connect("http://127.0.0.1:5476").await?;
+    let mut client = LoggingServiceClient::new(channel);
 
     let request = tonic::Request::new(LogRequest {
         service: name.to_string(),
