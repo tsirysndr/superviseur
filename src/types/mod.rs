@@ -4,3 +4,5 @@ pub mod service;
 pub mod status;
 
 pub const UNIX_SOCKET_PATH: &str = "//tmp/superviseur.sock";
+
+pub const SUPERFILE: &str = "Superfile.hcl";
