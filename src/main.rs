@@ -145,7 +145,7 @@ async fn main() -> Result<(), Error> {
         Some(("daemon", _)) => server::exec(5476, false).await?,
         Some(("up", _)) => execute_start(None).await?,
         Some(("down", _)) => execute_stop(None).await?,
-        _ => println!("No subcommand was used"),
+        _ => cli().print_help()?,
     }
     Ok(())
 }
