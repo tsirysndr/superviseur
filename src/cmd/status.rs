@@ -9,12 +9,13 @@ use crate::{
     api::superviseur::v1alpha1::{
         control_service_client::ControlServiceClient, LoadConfigRequest, StatusRequest,
     },
-    types::{process::format_duration, UNIX_SOCKET_PATH},
+    types::{process::format_duration, UNIX_SOCKET_PATH, SUPERFILE}, config::verify_if_config_file_is_present,
 };
 
 pub async fn execute_status(name: &str) -> Result<(), Error> {
+    verify_if_config_file_is_present()?;
     let current_dir = std::env::current_dir()?;
-    let config = std::fs::read_to_string(current_dir.join("Superfile.hcl"))?;
+    let config = std::fs::read_to_string(current_dir.join(SUPERFILE))?;
     let channel = Endpoint::try_from("http://[::]:50051")?
     .connect_with_connector(service_fn(move |_: Uri| UnixStream::connect( UNIX_SOCKET_PATH)))
         .await
