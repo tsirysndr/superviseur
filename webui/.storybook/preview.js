@@ -1,3 +1,7 @@
+import "@fontsource/ubuntu";
+import "reactflow/dist/style.css";
+import "../src/index.css";
+
 export const parameters = {
   actions: { argTypesRegex: "^on[A-Z].*" },
   controls: {
@@ -6,4 +10,4 @@ export const parameters = {
       date: /Date$/,
     },
   },
-}
+};
