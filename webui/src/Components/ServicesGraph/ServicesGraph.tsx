@@ -1,4 +1,5 @@
-import { FC, useState } from "react";
+import { Drawer } from "baseui/drawer";
+import { FC, useRef, useState } from "react";
 import Graph from "react-graph-vis";
 import { Edge } from "../../Types/Edge";
 import { Node } from "../../Types/Node";
@@ -45,12 +46,13 @@ const options = {
   },
 };
 
-interface ServicesGraphProps {
+export interface ServicesGraphProps {
   nodes: Node[];
   edges: Edge[];
 }
 
 const ServicesGraph: FC<ServicesGraphProps> = (props) => {
+  const [isOpen, setIsOpen] = useState(false);
   const createNode = (x: number, y: number) => {
     setState(({ graph: { nodes, edges }, ...rest }) => {
       return {
@@ -70,10 +72,8 @@ const ServicesGraph: FC<ServicesGraphProps> = (props) => {
     },
     events: {
       select: ({ nodes, edges }: any) => {
-        console.log("Selected nodes:");
-        console.log(nodes);
-        console.log("Selected edges:");
-        console.log(edges);
+        if (nodes.length === 0) return;
+        setIsOpen(true);
       },
       doubleClick: ({ pointer: { canvas } }: any) => {
         createNode(canvas.x, canvas.y);
@@ -81,15 +81,29 @@ const ServicesGraph: FC<ServicesGraphProps> = (props) => {
     },
   });
   const { graph, events } = state;
+  const graphRef = useRef<any>();
 
   return (
-    <div style={{ height: "100vh", width: "100vw" }}>
-      <Graph
-        graph={graph}
-        options={options}
-        events={events}
-        style={{ height: "640px" }}
-      />
+    <div style={{ height: "calc(100vh - 60px)", width: "100vw" }}>
+      <Graph graph={graph} options={options} events={events} ref={graphRef} />
+      <Drawer
+        isOpen={isOpen}
+        autoFocus
+        onClose={() => {
+          setIsOpen(false);
+          graphRef.current.Network.unselectAll();
+        }}
+        overrides={{
+          Backdrop: {
+            style: ({ $theme }) => ({
+              outline: `${$theme.colors.warning200} solid`,
+              // backgroundColor: $theme.colors.warning200,
+            }),
+          },
+        }}
+      >
+        <div>drawer content</div>
+      </Drawer>
     </div>
   );
 };
