@@ -1,6 +1,7 @@
-import { FC, useEffect, useRef, useState } from "react";
+import { FC, useState } from "react";
 import Graph from "react-graph-vis";
-import { Service } from "../../Types/Service";
+import { Edge } from "../../Types/Edge";
+import { Node } from "../../Types/Node";
 
 const options = {
   layout: {
@@ -44,51 +45,28 @@ const options = {
   },
 };
 
-function vw(percent: number) {
-  var w = Math.max(
-    document.documentElement.clientWidth,
-    window.innerWidth || 0
-  );
-  return (percent * w) / 100;
-}
-
 interface ServicesGraphProps {
-  services: Service[];
+  nodes: Node[];
+  edges: Edge[];
 }
 
-const ServicesGraph: FC<ServicesGraphProps> = ({ services }) => {
+const ServicesGraph: FC<ServicesGraphProps> = (props) => {
   const createNode = (x: number, y: number) => {
-    setState(({ graph: { nodes, edges }, counter, ...rest }) => {
-      const id = counter + 1;
-      const from = Math.floor(Math.random() * (counter - 1)) + 1;
+    setState(({ graph: { nodes, edges }, ...rest }) => {
       return {
         graph: {
           nodes: [...nodes],
-          edges: [...edges, { from, to: id }],
+          edges: [...edges],
         },
-        counter: id,
         ...rest,
       };
     });
   };
 
   const [state, setState] = useState({
-    counter: 5,
     graph: {
-      nodes: [
-        { id: 1, label: "Running\n<b>Service A</b>" },
-        { id: 2, label: "Running\n<b>Service B</b>" },
-        { id: 3, label: "Running\n<b>Service C</b>" },
-        { id: 4, label: "Running\n<b>Service D</b>" },
-        { id: 5, label: "Running\n<b>Service E</b>" },
-        { id: 6, label: "Running\n<b>Service F</b>" },
-      ],
-      edges: [
-        { from: 1, to: 2 },
-        { from: 1, to: 3 },
-        { from: 1, to: 4 },
-        { from: 2, to: 5 },
-      ],
+      nodes: props.nodes,
+      edges: props.edges,
     },
     events: {
       select: ({ nodes, edges }: any) => {
@@ -96,7 +74,6 @@ const ServicesGraph: FC<ServicesGraphProps> = ({ services }) => {
         console.log(nodes);
         console.log("Selected edges:");
         console.log(edges);
-        //  alert("Selected node: " + nodes);
       },
       doubleClick: ({ pointer: { canvas } }: any) => {
         createNode(canvas.x, canvas.y);
@@ -115,6 +92,11 @@ const ServicesGraph: FC<ServicesGraphProps> = ({ services }) => {
       />
     </div>
   );
+};
+
+ServicesGraph.defaultProps = {
+  nodes: [],
+  edges: [],
 };
 
 export default ServicesGraph;
