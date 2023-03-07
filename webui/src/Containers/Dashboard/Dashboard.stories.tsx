@@ -1,19 +1,19 @@
 import { ComponentMeta, ComponentStory } from "@storybook/react";
-import ServicesGraph, { ServicesGraphProps } from "./ServicesGraph";
+import Dashboard, { DashboardProps } from "./Dashboard";
 
 export default {
-  title: "Components/ServicesGraph",
-  component: ServicesGraph,
+  title: "Containers/Dashboard",
+  component: Dashboard,
   argTypes: {},
-} as ComponentMeta<typeof ServicesGraph>;
+} as ComponentMeta<typeof Dashboard>;
 
-const Template: ComponentStory<typeof ServicesGraph> = (
-  args: ServicesGraphProps
-) => <ServicesGraph {...args} />;
+const Template: ComponentStory<typeof Dashboard> = (args: DashboardProps) => (
+  <Dashboard {...args} />
+);
 
 export const Default = Template.bind({});
 
-Default.args = {
+export const services = {
   nodes: [
     {
       id: "d548aa8c-2f30-4e53-b938-a4db74de6f58",
@@ -58,4 +58,8 @@ Default.args = {
       to: "1ab8c29a-54d0-442b-aa9c-923695f3d50f",
     },
   ],
+};
+
+Default.args = {
+  services,
 };
