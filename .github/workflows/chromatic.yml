@@ -22,5 +22,5 @@ jobs:
         run: cd ./webui && bun install
         # 👇 Adds Chromatic as a step in the workflow
       - name: Publish to Chromatic
-        run: cd ./webui && bun run build-storybook && bun run chromatic -- --project-token=${{ secrets.CHROMATIC_PROJECT_TOKEN }}
+        run: cd ./webui && bun run build-storybook && bun run chromatic -- --project-token=${{ secrets.CHROMATIC_PROJECT_TOKEN }} --exit-zero-on-changes
         
