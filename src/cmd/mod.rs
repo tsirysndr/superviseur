@@ -9,3 +9,4 @@ pub mod start;
 pub mod status;
 pub mod stop;
 pub mod tail;
+pub mod ui;

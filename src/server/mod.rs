@@ -5,32 +5,22 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use anyhow::Error;
-use owo_colors::OwoColorize;
-use tokio::net::UnixListener;
-use tokio_stream::wrappers::UnixListenerStream;
-use tonic::transport::Server;
-
 use crate::{
     api::superviseur::v1alpha1::{
         control_service_server::ControlServiceServer, logging_service_server::LoggingServiceServer,
     },
     server::{control::Control, logging::Logging},
     superviseur::Superviseur,
-    types::{process::Process, UNIX_SOCKET_PATH},
+    types::{process::Process, BANNER, UNIX_SOCKET_PATH},
 };
+use anyhow::Error;
+use owo_colors::OwoColorize;
+use tokio::net::UnixListener;
+use tokio_stream::wrappers::UnixListenerStream;
+use tonic::transport::Server;
 
 pub mod control;
 pub mod logging;
-
-const BANNER: &str = r#"
-         _____                             _                     
-        / ___/__  ______  ___  ______   __(_)_______  __  _______
-        \__ \/ / / / __ \/ _ \/ ___/ | / / / ___/ _ \/ / / / ___/
-       ___/ / /_/ / /_/ /  __/ /   | |/ / (__  )  __/ /_/ / /    
-      /____/\__,_/ .___/\___/_/    |___/_/____/\___/\__,_/_/     
-                /_/                                              
-      "#;
 
 pub async fn exec(port: u16, serve: bool) -> Result<(), Error> {
     let addr: SocketAddr = format!("0.0.0.0:{}", port).parse().unwrap();
