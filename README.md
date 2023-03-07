@@ -11,8 +11,11 @@
   <a href="https://crates.io/crates/superviseur" target="_blank">
     <img src="https://img.shields.io/crates/dr/superviseur" />
   </a>
-</p>
 
+  <a href="https://640724a8e12e5a011d6d59fb-iuxafqcikd.chromatic.com/" target="_blank">
+  <img src="https://raw.githubusercontent.com/storybooks/brand/master/badge/badge-storybook.svg" />
+  </a>
+</p>
 <p style="margin-top: 20px; margin-bottom: 50px;">
 <img src="./preview.png" width="100%" />
 </p>
