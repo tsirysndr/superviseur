@@ -13,6 +13,10 @@
   </a>
 </p>
 
+<p style="margin-top: 20px; margin-bottom: 50px;">
+<img src="./preview.png" width="100%" />
+</p>
+
 
 A simple process supervisor for UNIX-like systems. Currently only supports running executables, but I plan to add support for managing wasm and docker containers in the future.
 
