@@ -6,6 +6,8 @@ const Container = styled.div`
   background-color: #000;
   display: flex;
   flex-direction: column;
+  height: 100%;
+  overflow-y: auto;
 `;
 
 const LineNumber = styled.span<{ displayLineNumber?: boolean }>`
@@ -32,6 +34,7 @@ const Line = styled.span`
   display: flex;
   flex-direction: row;
   align-items: center;
+  height: 20px;
   &:hover {
     background-color: #191919;
   }
