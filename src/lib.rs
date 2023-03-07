@@ -3,6 +3,7 @@ pub mod config;
 pub mod server;
 pub mod superviseur;
 pub mod types;
+pub mod webui;
 pub mod api {
     #[path = ""]
     pub mod superviseur {

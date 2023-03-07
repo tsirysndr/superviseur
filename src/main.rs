@@ -4,7 +4,7 @@ use superviseur::{
     cmd::{
         config::execute_config, init::execute_init, list::execute_list, log::execute_log,
         new::execute_new, ps::execute_ps, restart::execute_restart, start::execute_start,
-        status::execute_status, stop::execute_stop, tail::execute_tail,
+        status::execute_status, stop::execute_stop, tail::execute_tail, ui::execute_ui,
     },
     server,
     types::configuration::ConfigFormat,
@@ -88,6 +88,7 @@ A simple process supervisor"#,
         .subcommand(Command::new("daemon").about("Start the superviseur daemon"))
         .subcommand(Command::new("up").about("Start all services"))
         .subcommand(Command::new("down").about("Stop all services"))
+        .subcommand(Command::new("ui").about("Start the superviseur ui"))
 }
 
 #[tokio::main]
@@ -145,6 +146,7 @@ async fn main() -> Result<(), Error> {
         Some(("daemon", _)) => server::exec(5476, false).await?,
         Some(("up", _)) => execute_start(None).await?,
         Some(("down", _)) => execute_stop(None).await?,
+        Some(("ui", _)) => execute_ui().await?,
         _ => cli().print_help()?,
     }
     Ok(())

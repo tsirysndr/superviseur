@@ -34,6 +34,10 @@ tabled = "0.10.0"
 nix = "0.26.2"
 chrono = "0.4.23"
 tower = "0.4.13"
+actix-web = "4.3.1"
+rust-embed = { version = "6.6.0", features = ["debug-embed", "actix"] }
+mime_guess = "2.0.4"
+open = "3.4.0"
 
 [build-dependencies]
 tonic-build = "0.8"
