@@ -3,6 +3,7 @@ import { FC, useRef, useState } from "react";
 import Graph from "react-graph-vis";
 import { Edge } from "../../Types/Edge";
 import { Node } from "../../Types/Node";
+import ServiceDetails from "../ServiceDetails";
 
 const options = {
   layout: {
@@ -18,7 +19,8 @@ const options = {
     font: {
       multi: true,
       size: 12.5,
-      color: "#292828ac",
+      color: "#5b5b5bac",
+      face: "RockfordSansMedium",
       bold: {
         mod: "",
         size: 14,
@@ -52,6 +54,7 @@ export interface ServicesGraphProps {
 }
 
 const ServicesGraph: FC<ServicesGraphProps> = (props) => {
+  const [selectedNode, setSelectedNode] = useState<string | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const createNode = (x: number, y: number) => {
     setState(({ graph: { nodes, edges }, ...rest }) => {
@@ -73,6 +76,7 @@ const ServicesGraph: FC<ServicesGraphProps> = (props) => {
     events: {
       select: ({ nodes, edges }: any) => {
         if (nodes.length === 0) return;
+        setSelectedNode(nodes[0]);
         setIsOpen(true);
       },
       doubleClick: ({ pointer: { canvas } }: any) => {
@@ -102,7 +106,7 @@ const ServicesGraph: FC<ServicesGraphProps> = (props) => {
           },
         }}
       >
-        <div>drawer content</div>
+        <ServiceDetails nodes={props.nodes} selectedNode={selectedNode} />
       </Drawer>
     </div>
   );
