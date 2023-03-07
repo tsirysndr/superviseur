@@ -31,11 +31,13 @@
     "@types/react": "^18.0.28",
     "@types/react-dom": "^18.0.11",
     "baseui": "^12.2.0",
+    "chromatic": "^6.17.1",
     "google-protobuf": "^3.21.2",
     "grpc-web": "^1.4.2",
     "lodash": "^4.17.21",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-graph-vis": "^1.0.7",
     "react-scripts": "5.0.1",
     "reactflow": "^11.5.6",
     "styled-components": "^5.3.8",
@@ -50,7 +52,8 @@
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "storybook": "start-storybook -p 6006 -s public",
-    "build-storybook": "build-storybook -s public"
+    "build-storybook": "build-storybook -s public",
+    "chromatic": "chromatic"
   },
   "eslintConfig": {
     "extends": [
