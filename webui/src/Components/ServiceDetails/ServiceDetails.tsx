@@ -4,7 +4,7 @@ import { Node } from "../../Types/Node";
 import { Terminal } from "@styled-icons/fa-solid/Terminal";
 import { Tabs, Tab } from "baseui/tabs-motion";
 import Log from "../Log";
-import { lines } from "../Log/Log.stories";
+import { lines } from "../../Mocks/Lines";
 
 const DrawerHeader = styled.div`
   display: flex;
