@@ -12,7 +12,7 @@
     <img src="https://img.shields.io/crates/dr/superviseur" />
   </a>
 
-  <a href="https://640724a8e12e5a011d6d59fb-iuxafqcikd.chromatic.com/" target="_blank">
+  <a href="https://feat-webui--640724a8e12e5a011d6d59fb.chromatic.com" target="_blank">
   <img src="https://raw.githubusercontent.com/storybooks/brand/master/badge/badge-storybook.svg" />
   </a>
 </p>
