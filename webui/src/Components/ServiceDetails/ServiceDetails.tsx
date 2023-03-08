@@ -20,7 +20,7 @@ const ServiceName = styled.div`
 `;
 
 const Container = styled.div`
-  height: 100%;
+  height: calc(100% - 129px);
 `;
 export interface ServiceDetailsProps {
   nodes: Node[];
