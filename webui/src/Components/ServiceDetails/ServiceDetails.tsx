@@ -70,6 +70,7 @@ const ServiceDetails: FC<ServiceDetailsProps> = (props) => {
           <Log lines={lines} />
         </Tab>
         <Tab title="Variables"></Tab>
+        <Tab title="Settings"></Tab>
       </Tabs>
     </Container>
   );
