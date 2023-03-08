@@ -5,6 +5,10 @@ import { Terminal } from "@styled-icons/fa-solid/Terminal";
 import { Tabs, Tab } from "baseui/tabs-motion";
 import Log from "../Log";
 import { lines } from "../../Mocks/Lines";
+import Variables from "../Variables";
+import Settings from "../Settings";
+import Status from "../Status";
+import { variables } from "../../Mocks/Variables";
 
 const DrawerHeader = styled.div`
   display: flex;
@@ -52,7 +56,9 @@ const ServiceDetails: FC<ServiceDetailsProps> = (props) => {
           },
         }}
       >
-        <Tab title="Status"></Tab>
+        <Tab title="Status">
+          <Status />
+        </Tab>
         <Tab
           title="Log"
           overrides={{
@@ -69,8 +75,38 @@ const ServiceDetails: FC<ServiceDetailsProps> = (props) => {
         >
           <Log lines={lines} />
         </Tab>
-        <Tab title="Variables"></Tab>
-        <Tab title="Settings"></Tab>
+        <Tab
+          title="Variables"
+          overrides={{
+            TabPanel: {
+              style: {
+                paddingLeft: "0px",
+                paddingRight: "0px",
+                paddingBottom: "0px",
+                paddingTop: "16px",
+                height: "100%",
+              },
+            },
+          }}
+        >
+          <Variables variables={variables} />
+        </Tab>
+        <Tab
+          title="Settings"
+          overrides={{
+            TabPanel: {
+              style: {
+                paddingLeft: "0px",
+                paddingRight: "0px",
+                paddingBottom: "0px",
+                paddingTop: "16px",
+                height: "100%",
+              },
+            },
+          }}
+        >
+          <Settings />
+        </Tab>
       </Tabs>
     </Container>
   );
