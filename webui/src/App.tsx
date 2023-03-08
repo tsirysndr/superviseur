@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Dashboard from "./Containers/Dashboard";
-import { services } from "./Containers/Dashboard/Dashboard.stories";
+import { services } from "./Mocks/Services";
 
 function App() {
   return (

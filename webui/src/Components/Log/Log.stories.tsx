@@ -1,4 +1,5 @@
 import { ComponentMeta, ComponentStory } from "@storybook/react";
+import { lines } from "../../Mocks/Lines";
 import Log from "./Log";
 
 export default {
@@ -13,12 +14,6 @@ export default {
 const Template: ComponentStory<typeof Log> = (args) => <Log {...args} />;
 
 export const Default = Template.bind({});
-
-export const lines = [
-  "/dev/rdisk1s5s1: fsck_apfs started at Wed Feb 15 20:38:24 2023",
-  "/dev/rdisk1s5s1: ** QUICKCHECK ONLY; FILESYSTEM CLEAN",
-  "/dev/rdisk1s5s1: fsck_apfs completed at Wed Feb 15 20:38:24 2023",
-];
 
 Default.args = {
   lines,
