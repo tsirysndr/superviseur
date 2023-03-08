@@ -9,6 +9,7 @@ import Variables from "../Variables";
 import Settings from "../Settings";
 import Status from "../Status";
 import { variables } from "../../Mocks/Variables";
+import { statuses } from "../../Mocks/ServiceStatuses";
 
 const DrawerHeader = styled.div`
   display: flex;
@@ -57,7 +58,7 @@ const ServiceDetails: FC<ServiceDetailsProps> = (props) => {
         }}
       >
         <Tab title="Status">
-          <Status />
+          <Status statuses={statuses} />
         </Tab>
         <Tab
           title="Log"
