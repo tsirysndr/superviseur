@@ -26,7 +26,7 @@ const StatusName = styled.div`
   display: flex;
   justify-content: flex-end;
   margin-right: 20px;
-  color: #b03aff;
+  color: #630be2;
 `;
 
 const StatusValue = styled.div`
