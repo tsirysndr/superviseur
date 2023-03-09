@@ -2,7 +2,6 @@ import styled from "@emotion/styled";
 import { Input } from "baseui/input";
 import { Select, Value } from "baseui/select";
 import { FC, useState } from "react";
-import { services } from "../../Mocks/Services";
 import { Checkbox } from "baseui/checkbox";
 import { SettingsList } from "../../Types/Settings";
 
@@ -34,7 +33,10 @@ const InputStyles = {
   Root: {
     style: {
       height: "34px",
-      borderRadius: "2px",
+      borderTop: "none",
+      borderLeft: "none",
+      borderRight: "none",
+      borderRadius: "0px",
       backgroundColor: "#fff",
     },
   },
@@ -112,7 +114,10 @@ const Settings: FC<SettingsProps> = ({ settings }) => {
                   ControlContainer: {
                     style: {
                       minHeight: "34px",
-                      borderRadius: "2px",
+                      borderTop: "none",
+                      borderLeft: "none",
+                      borderRight: "none",
+                      borderRadius: "0px",
                       backgroundColor: "#fff",
                       padding: "0px",
                       paddingLeft: "10px",
