@@ -86,7 +86,6 @@ const Variables: FC<VariablesProps> = ({ variables }) => {
                     height: "34px",
                     borderRadius: "2px",
                     marginRight: "10px",
-                    fontSize: "14px",
                   },
                 },
                 Input: {

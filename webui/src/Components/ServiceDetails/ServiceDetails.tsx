@@ -10,6 +10,7 @@ import Settings from "../Settings";
 import Status from "../Status";
 import { variables } from "../../Mocks/Variables";
 import { statuses } from "../../Mocks/ServiceStatuses";
+import { settings } from "../../Mocks/Settings";
 
 const DrawerHeader = styled.div`
   display: flex;
@@ -25,7 +26,7 @@ const ServiceName = styled.div`
 `;
 
 const Container = styled.div`
-  height: calc(100% - 129px);
+  height: calc(100% - 150px);
 `;
 export interface ServiceDetailsProps {
   nodes: Node[];
@@ -106,7 +107,7 @@ const ServiceDetails: FC<ServiceDetailsProps> = (props) => {
             },
           }}
         >
-          <Settings />
+          <Settings settings={settings} />
         </Tab>
       </Tabs>
     </Container>

@@ -1,4 +1,5 @@
 import { ComponentMeta, ComponentStory } from "@storybook/react";
+import { settings } from "../../Mocks/Settings";
 import Settings from "./Settings";
 
 export default {
@@ -13,4 +14,6 @@ const Template: ComponentStory<typeof Settings> = (args) => (
 
 export const Default = Template.bind({});
 
-Default.args = {};
+Default.args = {
+  settings,
+};
