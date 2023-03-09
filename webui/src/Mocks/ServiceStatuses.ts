@@ -22,7 +22,7 @@ export const statuses: ServiceStatus[] = [
     status: "/tmp/demo-stdout.log",
   },
   {
-    name: "Stderr",
+    name: "Errors",
     status: "/tmp/demo-stderr.log",
   },
   {
