@@ -1,4 +1,4 @@
-import { FC, useState } from "react";
+import { FC, useEffect, useState } from "react";
 import { Input, SIZE } from "baseui/input";
 import styled from "@emotion/styled";
 import { SearchOutline } from "@styled-icons/evaicons-outline/SearchOutline";
@@ -35,7 +35,13 @@ const Settings = styled.div`
 interface NavbarProps {}
 
 const Navbar: FC<NavbarProps> = () => {
-  const { control, handleSubmit } = useForm();
+  const { control, watch } = useForm();
+  useEffect(() => {
+    const subscription = watch((value, { name, type }) =>
+      console.log(value, name, type)
+    );
+    return () => subscription.unsubscribe();
+  }, [watch]);
   return (
     <Container>
       <Logo>Superviseur</Logo>
