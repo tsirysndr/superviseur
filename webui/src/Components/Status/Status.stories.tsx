@@ -57,4 +57,7 @@ Stopped.args = {
       status: "exec",
     },
   ],
+  onStart: () => {},
+  onRestart: () => {},
+  onStop: () => {},
 };

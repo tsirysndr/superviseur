@@ -1,4 +1,4 @@
-import { Button, KIND, SHAPE } from "baseui/button";
+import { Button, SHAPE } from "baseui/button";
 import { FC, useState } from "react";
 import { Plus } from "@styled-icons/bootstrap/Plus";
 import { Ellipsis } from "@styled-icons/fa-solid/Ellipsis";
@@ -6,6 +6,7 @@ import styled from "@emotion/styled";
 import { EnvironmentVariable } from "../../Types/EnvironmentVariable";
 import { uniqueId } from "lodash";
 import { Input } from "baseui/input";
+import { useForm, Controller } from "react-hook-form";
 
 const Title = styled.div``;
 
@@ -75,52 +76,81 @@ export interface VariablesProps {
 }
 
 const Variables: FC<VariablesProps> = ({ variables }) => {
+  const { control, handleSubmit, reset } = useForm();
   const [showNewVariableInput, setShowNewVariableInput] =
     useState<boolean>(false);
   const [newVariableName, setNewVariableName] = useState<string>("");
   const [newVariableValue, setNewVariableValue] = useState<string>("");
+  const onAdd = () => {
+    handleSubmit(
+      (data) => {
+        console.log(data);
+        setShowNewVariableInput(false);
+        reset();
+      },
+      (x) => {
+        console.log(">>", x);
+      }
+    )();
+  };
   return (
     <div style={{ height: "100%" }}>
       <Header>
         {showNewVariableInput && (
           <>
-            <Input
-              placeholder="NEW VARIABLE"
-              overrides={{
-                Root: {
-                  style: {
-                    height: "34px",
-                    borderRadius: "2px",
-                    marginRight: "10px",
-                  },
-                },
-                Input: {
-                  style: {
-                    fontSize: "14px",
-                  },
-                },
-              }}
+            <Controller
+              render={({ field }) => (
+                <Input
+                  {...field}
+                  placeholder="NEW VARIABLE"
+                  overrides={{
+                    Root: {
+                      style: {
+                        height: "34px",
+                        borderRadius: "2px",
+                        marginRight: "10px",
+                      },
+                    },
+                    Input: {
+                      style: {
+                        fontSize: "14px",
+                      },
+                    },
+                  }}
+                />
+              )}
+              name="name"
+              control={control}
+              rules={{ required: true }}
             />
-            <Input
-              placeholder="VALUE"
-              overrides={{
-                Root: {
-                  style: {
-                    height: "34px",
-                    borderRadius: "2px",
-                    marginRight: "10px",
-                    fontSize: "14px",
-                  },
-                },
-                Input: {
-                  style: {
-                    fontSize: "14px",
-                  },
-                },
-              }}
+            <Controller
+              render={({ field }) => (
+                <Input
+                  {...field}
+                  placeholder="VALUE"
+                  overrides={{
+                    Root: {
+                      style: {
+                        height: "34px",
+                        borderRadius: "2px",
+                        marginRight: "10px",
+                        fontSize: "14px",
+                      },
+                    },
+                    Input: {
+                      style: {
+                        fontSize: "14px",
+                      },
+                    },
+                  }}
+                />
+              )}
+              name="value"
+              control={control}
+              rules={{ required: true }}
             />
             <Button
-              onClick={() => setShowNewVariableInput(false)}
+              onClick={onAdd}
               overrides={{
                 BaseButton: {
                   style: {

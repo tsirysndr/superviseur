@@ -4,6 +4,7 @@ import styled from "@emotion/styled";
 import { SearchOutline } from "@styled-icons/evaicons-outline/SearchOutline";
 import { Github } from "@styled-icons/evaicons-solid/Github";
 import { Feedback } from "@styled-icons/remix-line/Feedback";
+import { useForm, Controller } from "react-hook-form";
 
 const Container = styled.div`
   display: flex;
@@ -34,54 +35,60 @@ const Settings = styled.div`
 interface NavbarProps {}
 
 const Navbar: FC<NavbarProps> = () => {
-  const [value, setValue] = useState("");
+  const { control, handleSubmit } = useForm();
   return (
     <Container>
       <Logo>Superviseur</Logo>
-      <Input
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
-        placeholder="Search for a service ..."
-        clearOnEscape
-        size={SIZE.default}
-        startEnhancer={() => <SearchOutline size={20} color="#f9f9f9c6" />}
-        overrides={{
-          Root: {
-            style: {
-              width: "400px",
-              height: "35px",
-              borderWidth: "0px",
-              borderRadius: "2px",
-              backgroundColor: "#5a10c5",
-            },
-          },
-          Input: {
-            style: {
-              color: "#fff",
-              caretColor: "#fff",
-              "::placeholder": {
-                color: "#f9f9f990",
+      <Controller
+        render={({ field }) => (
+          <Input
+            {...(field as any)}
+            placeholder="Search for a service ..."
+            clearOnEscape
+            size={SIZE.default}
+            startEnhancer={() => <SearchOutline size={20} color="#f9f9f9c6" />}
+            overrides={{
+              Root: {
+                style: {
+                  width: "400px",
+                  height: "35px",
+                  borderWidth: "0px",
+                  borderRadius: "2px",
+                  backgroundColor: "#5a10c5",
+                },
               },
-              ":-ms-input-placeholder": {
-                color: "#f9f9f990",
+              Input: {
+                style: {
+                  color: "#fff",
+                  caretColor: "#fff",
+                  "::placeholder": {
+                    color: "#f9f9f990",
+                  },
+                  ":-ms-input-placeholder": {
+                    color: "#f9f9f990",
+                  },
+                  "::-ms-input-placeholder": {
+                    color: "#f9f9f990",
+                  },
+                },
               },
-              "::-ms-input-placeholder": {
-                color: "#f9f9f990",
+              InputContainer: {
+                style: {
+                  backgroundColor: "#5a10c5",
+                },
               },
-            },
-          },
-          InputContainer: {
-            style: {
-              backgroundColor: "#5a10c5",
-            },
-          },
-          StartEnhancer: {
-            style: {
-              paddingLeft: "0px",
-              backgroundColor: "#5a10c5",
-            },
-          },
-        }}
+              StartEnhancer: {
+                style: {
+                  paddingLeft: "0px",
+                  backgroundColor: "#5a10c5",
+                },
+              },
+            }}
+          />
+        )}
+        control={control}
+        name="search"
+        rules={{ required: true }}
       />
       <Settings>
         <a
