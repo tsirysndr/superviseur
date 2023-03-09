@@ -6,6 +6,7 @@ import { ServiceStatus } from "../../Types/ServiceStatus";
 import { StopFill } from "@styled-icons/bootstrap/StopFill";
 import { Reload } from "@styled-icons/ionicons-outline/Reload";
 import { Play } from "@styled-icons/fa-solid/Play";
+import _ from "lodash";
 
 const Container = styled.div``;
 
@@ -62,9 +63,13 @@ const parseStatus = (status: ServiceStatus) => {
 
 export interface StatusProps {
   statuses: ServiceStatus[];
+  onRestart: () => void;
+  onStop: () => void;
+  onStart: () => void;
 }
 
-const Status: FC<StatusProps> = ({ statuses }) => {
+const Status: FC<StatusProps> = (props) => {
+  const { statuses, onRestart, onStop, onStart } = props;
   const status = statuses.find((status) => status.name === "Active")?.status;
   return (
     <Container>
@@ -72,6 +77,7 @@ const Status: FC<StatusProps> = ({ statuses }) => {
         {status?.startsWith("Running") && (
           <>
             <Button
+              onClick={onStop}
               startEnhancer={() => <StopFill size={16} color="#630be2" />}
               overrides={{
                 BaseButton: {
@@ -101,6 +107,7 @@ const Status: FC<StatusProps> = ({ statuses }) => {
               Stop
             </Button>
             <Button
+              onClick={onRestart}
               startEnhancer={() => <Reload size={14} color="#fff" />}
               overrides={{
                 BaseButton: {
@@ -132,6 +139,7 @@ const Status: FC<StatusProps> = ({ statuses }) => {
         {!status?.startsWith("Running") && (
           <>
             <Button
+              onClick={onStart}
               startEnhancer={() => <Play size={14} color="#fff" />}
               overrides={{
                 BaseButton: {
@@ -163,7 +171,7 @@ const Status: FC<StatusProps> = ({ statuses }) => {
       </Actions>
       <StatusTable>
         {statuses.map((status) => (
-          <StatusRow>
+          <StatusRow key={_.uniqueId()}>
             <StatusName>{status.name} :</StatusName>
             {status.name !== "Active" && (
               <StatusValue>{status.status}</StatusValue>

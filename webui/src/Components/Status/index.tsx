@@ -1,3 +1,3 @@
-import Status from "./Status";
+import StatusWithData from "./StatusWithData";
 
-export default Status;
+export default StatusWithData;

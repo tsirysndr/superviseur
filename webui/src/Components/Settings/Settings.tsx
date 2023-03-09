@@ -3,7 +3,9 @@ import { Input } from "baseui/input";
 import { Select, Value } from "baseui/select";
 import { FC, useState } from "react";
 import { Checkbox } from "baseui/checkbox";
-import { SettingsList } from "../../Types/Settings";
+import { SettingsList, Settings as SettingsData } from "../../Types/Settings";
+import { useForm, Controller } from "react-hook-form";
+import _ from "lodash";
 
 const Container = styled.div`
   padding-top: 20px;
@@ -22,7 +24,7 @@ const SettingsValue = styled.div`
   flex: 1;
 `;
 
-const SettingsRow = styled.div`
+const SettingsRowContainer = styled.div`
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -52,26 +54,39 @@ const InputStyles = {
   },
 };
 
-export interface SettingsProps {
-  settings?: SettingsList;
+export interface SettingsRowProps {
+  settings: SettingsData;
 }
 
-const Settings: FC<SettingsProps> = ({ settings }) => {
+const SettingsRow: FC<SettingsRowProps> = ({ settings }) => {
+  const { control, handleSubmit } = useForm({
+    defaultValues: {
+      [settings.name]: settings.value,
+    },
+  });
   const [selectedValue, setSelectedValue] = useState<Value>();
   const [autoRestart, setAutoRestart] = useState(false);
+
   return (
-    <Container>
-      {settings!.map((item) => (
-        <SettingsRow>
-          <SettingsName>{item.name} :</SettingsName>
-          <SettingsValue>
-            {!item.activable && !item.multi && (
-              <Input overrides={InputStyles} value={item.value as any} />
+    <SettingsRowContainer>
+      <SettingsName>{settings.name} :</SettingsName>
+      <SettingsValue>
+        {!settings.activable && !settings.multi && (
+          <Controller
+            render={({ field }) => (
+              <Input {...(field as any)} overrides={InputStyles} />
             )}
-            {item.activable && (
+            control={control}
+            name={settings.name}
+            defaultValue={settings.value}
+          />
+        )}
+        {settings.activable && (
+          <Controller
+            render={({ field }) => (
               <Checkbox
-                checked={autoRestart}
-                onChange={() => setAutoRestart(!autoRestart)}
+                checked={field.value as boolean}
+                onChange={() => field.onChange(!field.value)}
                 overrides={{
                   Label: {
                     style: {
@@ -90,15 +105,24 @@ const Settings: FC<SettingsProps> = ({ settings }) => {
                 }}
               />
             )}
-            {item.multi && (
+            control={control}
+            name={settings.name}
+            defaultValue={settings.value}
+          />
+        )}
+        {settings.multi && (
+          <Controller
+            render={({ field }) => (
               <Select
+                {...(field as any)}
                 creatable
                 multi
-                options={item.initialValues!}
+                options={settings.initialValues!}
                 labelKey="label"
                 valueKey="id"
-                onChange={({ value }) => setSelectedValue(value)}
-                value={selectedValue}
+                onChange={({ value }) => {
+                  field.onChange(value);
+                }}
                 overrides={{
                   Tag: {
                     props: {
@@ -131,8 +155,25 @@ const Settings: FC<SettingsProps> = ({ settings }) => {
                 }}
               />
             )}
-          </SettingsValue>
-        </SettingsRow>
+            control={control}
+            name={settings.name}
+            defaultValue={settings.value}
+          />
+        )}
+      </SettingsValue>
+    </SettingsRowContainer>
+  );
+};
+
+export interface SettingsProps {
+  settings?: SettingsList;
+}
+
+const Settings: FC<SettingsProps> = ({ settings }) => {
+  return (
+    <Container>
+      {settings!.map((item) => (
+        <SettingsRow settings={item} key={_.uniqueId()} />
       ))}
     </Container>
   );
