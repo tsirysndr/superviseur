@@ -11,6 +11,9 @@ const options = {
   },
   edges: {
     color: "#000000",
+    font: {
+      face: "RockfordSansLight",
+    },
   },
   nodes: {
     shape: "box",
