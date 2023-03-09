@@ -11,12 +11,12 @@ const Container = styled.div`
   align-items: center;
   justify-content: space-between;
   padding: 10px;
-  background-color: #fff;
+  background-color: #630be2;
   height: 40px;
 `;
 
 const Logo = styled.div`
-  color: #31fff3;
+  color: #fff;
   font-weight: bold;
   width: 130px;
   text-align: center;
@@ -44,26 +44,41 @@ const Navbar: FC<NavbarProps> = () => {
         placeholder="Search for a service ..."
         clearOnEscape
         size={SIZE.default}
-        startEnhancer={() => <SearchOutline size={20} color="#b3b3b3" />}
+        startEnhancer={() => <SearchOutline size={20} color="#f9f9f9c6" />}
         overrides={{
           Root: {
             style: {
               width: "400px",
               height: "35px",
               borderWidth: "0px",
-              borderRadius: "18px",
-              backgroundColor: "#f1f3f4c2",
+              borderRadius: "2px",
+              backgroundColor: "#5a10c5",
+            },
+          },
+          Input: {
+            style: {
+              color: "#fff",
+              caretColor: "#fff",
+              "::placeholder": {
+                color: "#f9f9f990",
+              },
+              ":-ms-input-placeholder": {
+                color: "#f9f9f990",
+              },
+              "::-ms-input-placeholder": {
+                color: "#f9f9f990",
+              },
             },
           },
           InputContainer: {
             style: {
-              backgroundColor: "#f1f3f4c2",
+              backgroundColor: "#5a10c5",
             },
           },
           StartEnhancer: {
             style: {
               paddingLeft: "0px",
-              backgroundColor: "#f1f3f4c2",
+              backgroundColor: "#5a10c5",
             },
           },
         }}
@@ -76,7 +91,7 @@ const Navbar: FC<NavbarProps> = () => {
           style={{ marginRight: "20px" }}
           title="Report a bug"
         >
-          <Feedback size={24} color="#000" />
+          <Feedback size={24} color="#fff" />
         </a>
         <a
           href="https://github.com/tsirysndr/superviseur"
@@ -84,7 +99,7 @@ const Navbar: FC<NavbarProps> = () => {
           rel="noreferrer"
           title="View on Github"
         >
-          <Github size={24} color="#000" />
+          <Github size={24} color="#fff" />
         </a>
       </Settings>
     </Container>
