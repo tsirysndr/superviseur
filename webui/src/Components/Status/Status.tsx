@@ -22,7 +22,7 @@ const StatusRow = styled.div`
 `;
 
 const StatusName = styled.div`
-  width: 80px;
+  width: 90px;
   display: flex;
   justify-content: flex-end;
   margin-right: 20px;
@@ -164,7 +164,7 @@ const Status: FC<StatusProps> = ({ statuses }) => {
       <StatusTable>
         {statuses.map((status) => (
           <StatusRow>
-            <StatusName>{status.name}:</StatusName>
+            <StatusName>{status.name} :</StatusName>
             {status.name !== "Active" && (
               <StatusValue>{status.status}</StatusValue>
             )}
