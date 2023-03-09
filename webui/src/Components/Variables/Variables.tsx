@@ -62,10 +62,10 @@ const ButtonStyles = {
         backgroundColor: "#fff",
       },
     },
-    StartEnhancer: {
-      style: {
-        marginRight: "0px",
-      },
+  },
+  StartEnhancer: {
+    style: {
+      marginRight: "3px",
     },
   },
 };
