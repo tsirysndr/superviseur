@@ -1,10 +1,12 @@
 import styled from "@emotion/styled";
 import { Input } from "baseui/input";
 import { Select, Value } from "baseui/select";
-import { FC, useState } from "react";
+import { FC, useEffect, useState } from "react";
 import { Checkbox } from "baseui/checkbox";
 import { SettingsList, Settings as SettingsData } from "../../Types/Settings";
 import { useForm, Controller } from "react-hook-form";
+import { Check2 } from "@styled-icons/bootstrap/Check2";
+import { CloseOutline } from "@styled-icons/evaicons-outline/CloseOutline";
 import _ from "lodash";
 
 const Container = styled.div`
@@ -31,6 +33,12 @@ const SettingsRowContainer = styled.div`
   margin-bottom: 25px;
 `;
 
+const CheckButton = styled.button`
+  border: none;
+  background-color: transparent;
+  cursor: pointer;
+`;
+
 const InputStyles = {
   Root: {
     style: {
@@ -52,6 +60,11 @@ const InputStyles = {
       backgroundColor: "#fff",
     },
   },
+  EndEnhancer: {
+    style: {
+      backgroundColor: "#fff",
+    },
+  },
 };
 
 export interface SettingsRowProps {
@@ -59,13 +72,40 @@ export interface SettingsRowProps {
 }
 
 const SettingsRow: FC<SettingsRowProps> = ({ settings }) => {
-  const { control, handleSubmit } = useForm({
+  const [showSaveButtons, setShowSaveButtons] = useState<boolean>(false);
+  const { control, handleSubmit, reset, watch } = useForm({
     defaultValues: {
       [settings.name]: settings.value,
     },
   });
-  const [selectedValue, setSelectedValue] = useState<Value>();
-  const [autoRestart, setAutoRestart] = useState(false);
+
+  useEffect(() => {
+    const subscription = watch((value, { name, type }) => {
+      if (type === "change") {
+        setShowSaveButtons(true);
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [watch]);
+
+  const onSave = () => {
+    handleSubmit(
+      (data) => {
+        console.log(data);
+        setShowSaveButtons(false);
+      },
+      (x) => {
+        console.log(">>", x);
+      }
+    )();
+  };
+
+  const onDiscard = () => {
+    setShowSaveButtons(false);
+    reset({
+      [settings.name]: settings.value,
+    });
+  };
 
   return (
     <SettingsRowContainer>
@@ -74,11 +114,29 @@ const SettingsRow: FC<SettingsRowProps> = ({ settings }) => {
         {!settings.activable && !settings.multi && (
           <Controller
             render={({ field }) => (
-              <Input {...(field as any)} overrides={InputStyles} />
+              <Input
+                {...(field as any)}
+                overrides={InputStyles}
+                endEnhancer={() => (
+                  <>
+                    {showSaveButtons && (
+                      <>
+                        <CheckButton onClick={onSave}>
+                          <Check2 size={20} color="#000" />
+                        </CheckButton>
+                        <CheckButton onClick={onDiscard}>
+                          <CloseOutline size={20} color="#000" />
+                        </CheckButton>
+                      </>
+                    )}
+                  </>
+                )}
+              />
             )}
             control={control}
             name={settings.name}
             defaultValue={settings.value}
+            rules={{ required: true }}
           />
         )}
         {settings.activable && (
@@ -166,7 +224,8 @@ const SettingsRow: FC<SettingsRowProps> = ({ settings }) => {
 };
 
 export interface SettingsProps {
-  settings?: SettingsList;
+  settings: SettingsList;
+  onSave: (data: SettingsData) => void;
 }
 
 const Settings: FC<SettingsProps> = ({ settings }) => {
