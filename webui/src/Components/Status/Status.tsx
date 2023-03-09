@@ -1,7 +1,11 @@
 import { css } from "@emotion/react";
 import styled from "@emotion/styled";
+import { Button } from "baseui/button";
 import { FC } from "react";
 import { ServiceStatus } from "../../Types/ServiceStatus";
+import { StopFill } from "@styled-icons/bootstrap/StopFill";
+import { Reload } from "@styled-icons/ionicons-outline/Reload";
+import { Play } from "@styled-icons/fa-solid/Play";
 
 const Container = styled.div``;
 
@@ -29,6 +33,13 @@ const StatusValue = styled.div`
   flex: 1;
 `;
 
+const Actions = styled.div`
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-end;
+`;
+
 const CurrentStatus = styled.span<{ color: string }>`
   ${({ color }) =>
     css`
@@ -54,8 +65,102 @@ export interface StatusProps {
 }
 
 const Status: FC<StatusProps> = ({ statuses }) => {
+  const status = statuses.find((status) => status.name === "Active")?.status;
   return (
     <Container>
+      <Actions>
+        {status?.startsWith("Running") && (
+          <>
+            <Button
+              startEnhancer={() => <StopFill size={16} color="#630be2" />}
+              overrides={{
+                BaseButton: {
+                  style: {
+                    height: "30px",
+                    width: "80px",
+                    fontSize: "12px",
+                    padding: "0px",
+                    backgroundColor: "#fff",
+                    color: "#630be2",
+                    fontFamily: "RockfordSansMedium",
+                    marginRight: "10px",
+                    borderRadius: "2px",
+                    border: "2px solid #630be2",
+                    ":hover": {
+                      backgroundColor: "#fff",
+                    },
+                  },
+                },
+                StartEnhancer: {
+                  style: {
+                    marginRight: "8px",
+                  },
+                },
+              }}
+            >
+              Stop
+            </Button>
+            <Button
+              startEnhancer={() => <Reload size={14} color="#fff" />}
+              overrides={{
+                BaseButton: {
+                  style: {
+                    height: "30px",
+                    width: "80px",
+                    fontSize: "12px",
+                    padding: "0px",
+                    fontFamily: "RockfordSansMedium",
+                    backgroundColor: "#630be2",
+                    color: "#fff",
+                    borderRadius: "2px",
+                    ":hover": {
+                      backgroundColor: "#630be2",
+                    },
+                  },
+                },
+                StartEnhancer: {
+                  style: {
+                    marginRight: "8px",
+                  },
+                },
+              }}
+            >
+              Restart
+            </Button>
+          </>
+        )}
+        {!status?.startsWith("Running") && (
+          <>
+            <Button
+              startEnhancer={() => <Play size={14} color="#fff" />}
+              overrides={{
+                BaseButton: {
+                  style: {
+                    height: "30px",
+                    width: "80px",
+                    fontSize: "12px",
+                    padding: "0px",
+                    fontFamily: "RockfordSansMedium",
+                    backgroundColor: "#630be2",
+                    color: "#fff",
+                    borderRadius: "2px",
+                    ":hover": {
+                      backgroundColor: "#630be2",
+                    },
+                  },
+                },
+                StartEnhancer: {
+                  style: {
+                    marginRight: "8px",
+                  },
+                },
+              }}
+            >
+              Start
+            </Button>
+          </>
+        )}
+      </Actions>
       <StatusTable>
         {statuses.map((status) => (
           <StatusRow>
