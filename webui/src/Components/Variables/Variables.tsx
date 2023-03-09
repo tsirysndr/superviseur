@@ -51,14 +51,20 @@ const ButtonStyles = {
   BaseButton: {
     style: {
       height: "30px",
-      width: "135px",
+      width: "122px",
       fontSize: "12px",
       padding: "0px",
-      backgroundColor: "#ab28fc14",
-      color: "#b03aff",
+      backgroundColor: "#fff",
+      color: "#630be2",
       fontFamily: "RockfordSansMedium",
+      border: "2px solid #630be2",
       ":hover": {
-        backgroundColor: "#ab28fc14",
+        backgroundColor: "#fff",
+      },
+    },
+    StartEnhancer: {
+      style: {
+        marginRight: "0px",
       },
     },
   },
@@ -123,8 +129,12 @@ const Variables: FC<VariablesProps> = ({ variables }) => {
                     fontSize: "12px",
                     padding: "0px",
                     fontFamily: "RockfordSansMedium",
-                    borderRadius: "5px",
+                    borderRadius: "2px",
                     marginRight: "10px",
+                    backgroundColor: "#630be2",
+                    ":hover": {
+                      backgroundColor: "#630be2",
+                    },
                   },
                 },
               }}
@@ -133,7 +143,6 @@ const Variables: FC<VariablesProps> = ({ variables }) => {
             </Button>
             <Button
               onClick={() => setShowNewVariableInput(false)}
-              kind={KIND.secondary}
               overrides={{
                 BaseButton: {
                   style: {
@@ -142,7 +151,13 @@ const Variables: FC<VariablesProps> = ({ variables }) => {
                     fontSize: "12px",
                     padding: "0px",
                     fontFamily: "RockfordSansMedium",
-                    borderRadius: "5px",
+                    borderRadius: "2px",
+                    color: "#630be2",
+                    backgroundColor: "#fff",
+                    border: "2px solid #630be2",
+                    ":hover": {
+                      backgroundColor: "#fff",
+                    },
                   },
                 },
               }}
@@ -157,7 +172,7 @@ const Variables: FC<VariablesProps> = ({ variables }) => {
             <Button
               onClick={() => setShowNewVariableInput(true)}
               shape={SHAPE.pill}
-              startEnhancer={() => <Plus size={24} color="#b03aff" />}
+              startEnhancer={() => <Plus size={24} color="#630be2" />}
               overrides={ButtonStyles}
             >
               New Variable
