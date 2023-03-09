@@ -106,7 +106,7 @@ const ServiceDetails: FC<ServiceDetailsProps> = (props) => {
             },
           }}
         >
-          <Settings settings={settings} />
+          <Settings />
         </Tab>
       </Tabs>
     </Container>
