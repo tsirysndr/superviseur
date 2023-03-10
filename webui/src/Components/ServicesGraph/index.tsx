@@ -1,3 +1,3 @@
-import ServicesGraph from "./ServicesGraph";
+import ServicesGraphWithData from "./ServicesGraphWithData";
 
-export default ServicesGraph;
+export default ServicesGraphWithData;

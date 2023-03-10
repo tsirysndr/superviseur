@@ -1,26 +1,16 @@
 import { FC } from "react";
 import Navbar from "../../Components/Navbar";
 import ServicesGraph from "../../Components/ServicesGraph";
-import { ServicesGraphProps } from "../../Components/ServicesGraph/ServicesGraph";
 
-export interface DashboardProps {
-  services?: ServicesGraphProps;
-}
+export interface DashboardProps {}
 
-const Dashboard: FC<DashboardProps> = ({ services }) => {
+const Dashboard: FC<DashboardProps> = () => {
   return (
     <div>
       <Navbar />
-      {services && <ServicesGraph {...services} />}
+      <ServicesGraph />
     </div>
   );
-};
-
-Dashboard.defaultProps = {
-  services: {
-    nodes: [],
-    edges: [],
-  },
 };
 
 export default Dashboard;

@@ -57,7 +57,8 @@ export interface ServicesGraphProps {
 }
 
 const ServicesGraph: FC<ServicesGraphProps> = (props) => {
-  const [selectedNode, setSelectedNode] = useState<string | null>(null);
+  const [selectedNode, setSelectedNode] =
+    useState<string | undefined>(undefined);
   const [isOpen, setIsOpen] = useState(false);
   const createNode = (x: number, y: number) => {
     setState(({ graph: { nodes, edges }, ...rest }) => {
@@ -109,7 +110,7 @@ const ServicesGraph: FC<ServicesGraphProps> = (props) => {
           },
         }}
       >
-        <ServiceDetails nodes={props.nodes} selectedNode={selectedNode} />
+        <ServiceDetails selectedNode={selectedNode} />
       </Drawer>
     </div>
   );

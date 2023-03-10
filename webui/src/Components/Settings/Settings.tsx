@@ -37,6 +37,10 @@ const CheckButton = styled.button`
   border: none;
   background-color: transparent;
   cursor: pointer;
+  :hover {
+    background-color: #cac9c92a;
+    border-radius: 4px;
+  }
 `;
 
 const InputStyles = {
@@ -48,6 +52,7 @@ const InputStyles = {
       borderRight: "none",
       borderRadius: "0px",
       backgroundColor: "#fff",
+      paddingRight: "0px",
     },
   },
   Input: {
