@@ -1,3 +1,3 @@
-import Log from "./Log";
+import LogWithData from "./LogWithData";
 
-export default Log;
+export default LogWithData;

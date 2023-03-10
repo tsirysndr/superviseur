@@ -1,3 +1,3 @@
-import Variables from "./Variables";
+import VariablesWithData from "./VariablesWithData";
 
-export default Variables;
+export default VariablesWithData;

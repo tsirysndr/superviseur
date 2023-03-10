@@ -1,3 +1,3 @@
-import Dashboard from "./Dashboard";
+import DashboardWithData from "./DashboardWithData";
 
-export default Dashboard;
+export default DashboardWithData;

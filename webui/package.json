@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@apollo/client": "^3.7.10",
     "@buf/tsiry_superviseurapis.bufbuild_connect-es": "^0.8.1-20230305211704-dea3def645e0.2",
     "@buf/tsiry_superviseurapis.bufbuild_connect-web": "^0.8.1-20230305211704-dea3def645e0.1",
     "@buf/tsiry_superviseurapis.grpc_web": "^1.4.2-20230305211704-dea3def645e0.2",
@@ -35,6 +36,7 @@
     "@types/react-dom": "^18.0.11",
     "baseui": "^12.2.0",
     "google-protobuf": "^3.21.2",
+    "graphql": "15.7.2",
     "grpc-web": "^1.4.2",
     "lodash": "^4.17.21",
     "react": "^18.2.0",
@@ -91,6 +93,11 @@
     "@babel/core": "7",
     "@babel/plugin-syntax-flow": "^7.18.6",
     "@babel/plugin-transform-react-jsx": "^7.21.0",
+    "@graphql-codegen/cli": "^3.2.2",
+    "@graphql-codegen/introspection": "2.2.1",
+    "@graphql-codegen/typescript": "2.7.5",
+    "@graphql-codegen/typescript-operations": "2.5.5",
+    "@graphql-codegen/typescript-react-apollo": "3.3.5",
     "@storybook/addon-actions": "^6.5.16",
     "@storybook/addon-essentials": "^6.5.16",
     "@storybook/addon-interactions": "^6.5.16",
@@ -103,9 +110,11 @@
     "@storybook/testing-library": "^0.0.13",
     "@testing-library/dom": "^9.0.0",
     "babel-plugin-named-exports-order": "^0.0.2",
-    "prop-types": "^15.8.1",
-    "webpack": "^5.75.0",
     "chromatic": "^6.17.1",
-    "cross-env": "^7.0.3"
+    "cross-env": "^7.0.3",
+    "msw": "^1.1.0",
+    "msw-storybook-addon": "^1.8.0",
+    "prop-types": "^15.8.1",
+    "webpack": "^5.75.0"
   }
 }

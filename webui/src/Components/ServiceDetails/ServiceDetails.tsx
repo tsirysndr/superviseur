@@ -4,7 +4,6 @@ import { Node } from "../../Types/Node";
 import { Terminal } from "@styled-icons/fa-solid/Terminal";
 import { Tabs, Tab } from "baseui/tabs-motion";
 import Log from "../Log";
-import { lines } from "../../Mocks/Lines";
 import Variables from "../Variables";
 import Settings from "../Settings";
 import Status from "../Status";
@@ -28,7 +27,7 @@ const Container = styled.div`
 `;
 export interface ServiceDetailsProps {
   nodes: Node[];
-  selectedNode: string | null;
+  selectedNode?: string;
 }
 
 const ServiceDetails: FC<ServiceDetailsProps> = (props) => {
@@ -73,7 +72,7 @@ const ServiceDetails: FC<ServiceDetailsProps> = (props) => {
             },
           }}
         >
-          <Log lines={lines} />
+          <Log />
         </Tab>
         <Tab
           title="Variables"
@@ -89,7 +88,7 @@ const ServiceDetails: FC<ServiceDetailsProps> = (props) => {
             },
           }}
         >
-          <Variables variables={variables} />
+          <Variables />
         </Tab>
         <Tab
           title="Settings"
@@ -114,7 +113,6 @@ const ServiceDetails: FC<ServiceDetailsProps> = (props) => {
 
 ServiceDetails.defaultProps = {
   nodes: [],
-  selectedNode: null,
 };
 
 export default ServiceDetails;
