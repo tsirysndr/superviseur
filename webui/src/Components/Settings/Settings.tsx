@@ -116,7 +116,7 @@ const SettingsRow: FC<SettingsRowProps> = ({ settings }) => {
     <SettingsRowContainer>
       <SettingsName>{settings.name} :</SettingsName>
       <SettingsValue>
-        {!settings.activable && !settings.multi && (
+        {!settings.activable && !settings.multi && !settings.selectable && (
           <Controller
             render={({ field }) => (
               <Input
@@ -180,6 +180,55 @@ const SettingsRow: FC<SettingsRowProps> = ({ settings }) => {
                 {...(field as any)}
                 creatable
                 multi
+                options={settings.initialValues!}
+                labelKey="label"
+                valueKey="id"
+                onChange={({ value }) => {
+                  field.onChange(value);
+                }}
+                overrides={{
+                  Tag: {
+                    props: {
+                      overrides: {
+                        Root: {
+                          style: {
+                            backgroundColor: "#b03aff",
+                          },
+                        },
+                      },
+                    },
+                  },
+                  ControlContainer: {
+                    style: {
+                      minHeight: "34px",
+                      borderTop: "none",
+                      borderLeft: "none",
+                      borderRight: "none",
+                      borderRadius: "0px",
+                      backgroundColor: "#fff",
+                      padding: "0px",
+                      paddingLeft: "10px",
+                    },
+                  },
+                  Input: {
+                    style: {
+                      fontSize: "14px",
+                    },
+                  },
+                }}
+              />
+            )}
+            control={control}
+            name={settings.name}
+            defaultValue={settings.value}
+          />
+        )}
+        {settings.selectable && !settings.multi && (
+          <Controller
+            render={({ field }) => (
+              <Select
+                {...(field as any)}
+                clearable={false}
                 options={settings.initialValues!}
                 labelKey="label"
                 valueKey="id"
