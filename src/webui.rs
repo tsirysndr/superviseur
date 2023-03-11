@@ -1,8 +1,20 @@
-use std::{thread, time::Duration};
-
-use actix_web::{web, App, HttpResponse, HttpServer, Responder};
+use actix_cors::Cors;
+use actix_web::{
+    guard,
+    http::header::HOST,
+    web::{self, Data},
+    App, HttpRequest, HttpResponse, HttpServer, Responder, Result,
+};
+use async_graphql::{http::GraphiQLSource, Schema};
+use async_graphql_actix_web::{GraphQLRequest, GraphQLResponse, GraphQLSubscription};
 use mime_guess::from_path;
 use rust_embed::RustEmbed;
+use std::{thread, time::Duration};
+
+use crate::graphql::{
+    schema::{Mutation, Query, Subscription},
+    SuperviseurSchema,
+};
 
 #[derive(RustEmbed)]
 #[folder = "webui/build/"]
@@ -31,14 +43,78 @@ async fn _index_spa() -> impl Responder {
     handle_embedded_file("index.html")
 }
 
+#[actix_web::post("/graphql")]
+async fn index_graphql(
+    schema: web::Data<SuperviseurSchema>,
+    req: GraphQLRequest,
+) -> GraphQLResponse {
+    schema.execute(req.into_inner()).await.into()
+}
+
+#[actix_web::get("/graphiql")]
+async fn index_graphiql(req: HttpRequest) -> Result<HttpResponse> {
+    let host = req
+        .headers()
+        .get(HOST)
+        .unwrap()
+        .to_str()
+        .unwrap()
+        .split(":")
+        .next()
+        .unwrap();
+
+    const PORT: u16 = 5478;
+    let graphql_endpoint = format!("http://{}:{}/graphql", host, PORT);
+    let ws_endpoint = format!("ws://{}:{}/graphql", host, PORT);
+    Ok(HttpResponse::Ok()
+        .content_type("text/html; charset=utf-8")
+        .body(
+            GraphiQLSource::build()
+                .endpoint(&graphql_endpoint)
+                .subscription_endpoint(&ws_endpoint)
+                .finish(),
+        ))
+}
+
+async fn index_ws(
+    schema: web::Data<SuperviseurSchema>,
+    req: HttpRequest,
+    payload: web::Payload,
+) -> Result<HttpResponse> {
+    GraphQLSubscription::new(Schema::clone(&*schema)).start(&req, payload)
+}
+
 pub async fn start_webui() -> std::io::Result<()> {
     let addr = format!("0.0.0.0:{}", 5478);
     thread::spawn(move || {
         thread::sleep(Duration::from_secs(2));
         open::that("http://localhost:5478").unwrap();
     });
-    HttpServer::new(move || App::new().service(index).service(dist))
-        .bind(addr)?
-        .run()
-        .await
+
+    let schema = Schema::build(
+        Query::default(),
+        Mutation::default(),
+        Subscription::default(),
+    )
+    .finish();
+
+    HttpServer::new(move || {
+        let cors = Cors::permissive();
+        App::new()
+            .app_data(Data::new(schema.clone()))
+            .wrap(cors)
+            .service(index_graphql)
+            .service(index_graphiql)
+            .service(
+                web::resource("/graphql")
+                    .guard(guard::Get())
+                    .guard(guard::Header("upgrade", "websocket"))
+                    .to(index_ws),
+            )
+            .service(index)
+            .service(dist)
+    })
+    .bind(addr)?
+    .run()
+    .await
 }
