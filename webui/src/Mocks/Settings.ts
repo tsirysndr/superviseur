@@ -25,9 +25,19 @@ export const settings: Settings[] = [
   },
   {
     name: "Type",
-    value: "exec",
+    value: [
+      {
+        id: "exec",
+        label: "exec",
+      },
+    ],
     multi: false,
     activable: false,
+    initialValues: [
+      { id: "exec", label: "exec" } as any,
+      { id: "wasm", label: "wasm" } as any,
+      { id: "docker", label: "docker" } as any,
+    ],
     selectable: true,
   },
   {
