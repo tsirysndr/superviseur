@@ -37,6 +37,7 @@
     "baseui": "^12.2.0",
     "google-protobuf": "^3.21.2",
     "graphql": "15.7.2",
+    "graphql-tag": "^2.12.6",
     "grpc-web": "^1.4.2",
     "lodash": "^4.17.21",
     "react": "^18.2.0",
@@ -59,7 +60,8 @@
     "eject": "react-scripts eject",
     "storybook": "start-storybook -p 6006 -s public",
     "build-storybook": "build-storybook -s public",
-    "chromatic": "chromatic"
+    "chromatic": "chromatic",
+    "graphql:generate": "graphql-codegen --config codegen.yml"
   },
   "eslintConfig": {
     "extends": [
