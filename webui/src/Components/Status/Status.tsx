@@ -30,8 +30,17 @@ const StatusName = styled.div`
   color: #630be2;
 `;
 
-const StatusValue = styled.div`
+const StatusValue = styled.div<{ terminal?: boolean }>`
   flex: 1;
+  ${(props) =>
+    props.terminal &&
+    css`
+      background-color: #000;
+      color: #fff;
+      font-family: monospace;
+      padding-left: 10px;
+      padding-right: 10px;
+    `}
 `;
 
 const Actions = styled.div`
@@ -174,7 +183,9 @@ const Status: FC<StatusProps> = (props) => {
           <StatusRow key={_.uniqueId()}>
             <StatusName>{status.name} :</StatusName>
             {status.name !== "Active" && (
-              <StatusValue>{status.status}</StatusValue>
+              <StatusValue terminal={status.name.toLowerCase() === "command"}>
+                {status.status}
+              </StatusValue>
             )}
             {status.name === "Active" && parseStatus(status)}
           </StatusRow>
