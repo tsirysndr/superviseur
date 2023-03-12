@@ -50,6 +50,7 @@ const Navbar: FC<NavbarProps> = () => {
           <Input
             {...(field as any)}
             placeholder="Search for a service ..."
+            clearable
             clearOnEscape
             size={SIZE.default}
             startEnhancer={() => <SearchOutline size={20} color="#f9f9f9c6" />}
@@ -87,6 +88,11 @@ const Navbar: FC<NavbarProps> = () => {
                 style: {
                   paddingLeft: "0px",
                   backgroundColor: "#5a10c5",
+                },
+              },
+              ClearIconContainer: {
+                style: {
+                  color: "#fff",
                 },
               },
             }}
