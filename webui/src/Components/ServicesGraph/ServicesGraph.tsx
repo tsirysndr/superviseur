@@ -1,9 +1,11 @@
+import styled from "@emotion/styled";
 import { Drawer } from "baseui/drawer";
 import { FC, useRef, useState } from "react";
 import Graph from "react-graph-vis";
 import { Edge } from "../../Types/Edge";
 import { Node } from "../../Types/Node";
 import ServiceDetails from "../ServiceDetails";
+import Background from "./Background";
 
 const options = {
   layout: {
@@ -51,6 +53,11 @@ const options = {
   },
 };
 
+const Container = styled.div`
+  height: calc(100vh - 60px);
+  width: 100vw;
+`;
+
 export interface ServicesGraphProps {
   nodes: Node[];
   edges: Edge[];
@@ -92,7 +99,16 @@ const ServicesGraph: FC<ServicesGraphProps> = (props) => {
   const graphRef = useRef<any>();
 
   return (
-    <div style={{ height: "calc(100vh - 60px)", width: "100vw" }}>
+    <Container>
+      <div
+        style={{
+          position: "absolute",
+          width: "100%",
+          height: "100%",
+        }}
+      >
+        <Background />
+      </div>
       <Graph graph={graph} options={options} events={events} ref={graphRef} />
       <Drawer
         isOpen={isOpen}
@@ -112,7 +128,7 @@ const ServicesGraph: FC<ServicesGraphProps> = (props) => {
       >
         <ServiceDetails selectedNode={selectedNode} />
       </Drawer>
-    </div>
+    </Container>
   );
 };
 
