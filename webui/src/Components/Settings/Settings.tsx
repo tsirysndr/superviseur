@@ -1,6 +1,6 @@
 import styled from "@emotion/styled";
 import { Input } from "baseui/input";
-import { Select, Value } from "baseui/select";
+import { Select } from "baseui/select";
 import { FC, useEffect, useState } from "react";
 import { Checkbox } from "baseui/checkbox";
 import { SettingsList, Settings as SettingsData } from "../../Types/Settings";
