@@ -61,6 +61,7 @@ const ButtonStyles = {
       border: "2px solid #630be2",
       ":hover": {
         backgroundColor: "#fff",
+        opacity: 0.6,
       },
     },
   },
@@ -164,6 +165,7 @@ const Variables: FC<VariablesProps> = ({ variables }) => {
                     backgroundColor: "#630be2",
                     ":hover": {
                       backgroundColor: "#630be2",
+                      opacity: 0.8,
                     },
                   },
                 },
@@ -187,6 +189,7 @@ const Variables: FC<VariablesProps> = ({ variables }) => {
                     border: "2px solid #630be2",
                     ":hover": {
                       backgroundColor: "#fff",
+                      opacity: 0.6,
                     },
                   },
                 },
