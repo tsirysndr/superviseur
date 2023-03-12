@@ -103,6 +103,7 @@ const Status: FC<StatusProps> = (props) => {
                     border: "2px solid #630be2",
                     ":hover": {
                       backgroundColor: "#fff",
+                      opacity: 0.6,
                     },
                   },
                 },
@@ -131,6 +132,7 @@ const Status: FC<StatusProps> = (props) => {
                     borderRadius: "2px",
                     ":hover": {
                       backgroundColor: "#630be2",
+                      opacity: 0.8,
                     },
                   },
                 },
