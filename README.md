@@ -24,6 +24,10 @@ Project Status: 🐲 Unstable, alpha-ish quality.
 ## 🚚 Installation
 
 ```bash
+# Install dependencies
+brew install protobuf # macOS
+sudo apt-get install -y protobuf-compiler # Ubuntu/Debian
+# Compile and install
 git clone https://github.com/tsirysndr/superviseur
 cd superviseur
 cargo install --path .
