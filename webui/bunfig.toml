@@ -1,0 +1,3 @@
+[install.scopes]
+# registry as string
+"@buf" = "https://buf.build/gen/npm/v1"

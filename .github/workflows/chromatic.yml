@@ -1,0 +1,26 @@
+name: 'Chromatic'
+
+on:
+  push:
+    paths:
+      - 'webui/**'
+      - '.github/workflows/chromatic.yml'
+  workflow_dispatch:
+
+# List of jobs
+jobs:
+  chromatic-deployment:
+    # Operating System
+    runs-on: ubuntu-latest
+    # Job steps
+    steps:
+      - uses: actions/checkout@v1
+      - uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+      - name: Install dependencies
+        run: cd ./webui && bun install
+        # 👇 Adds Chromatic as a step in the workflow
+      - name: Publish to Chromatic
+        run: cd ./webui && bun run build-storybook && bun run chromatic -- --project-token=${{ secrets.CHROMATIC_PROJECT_TOKEN }} --exit-zero-on-changes
+        
