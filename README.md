@@ -30,9 +30,10 @@ Project Status: 🐲 Unstable, alpha-ish quality.
 # Install dependencies
 brew install protobuf # macOS
 sudo apt-get install -y protobuf-compiler # Ubuntu/Debian
-# Compile and install
+curl -fsSL https://bun.sh/install | bash
+# Compile
 git clone https://github.com/tsirysndr/superviseur
-cd superviseur
+cd superviseur/webui && bun install && bun run build && cd ..
 cargo install --path .
 ```
 
