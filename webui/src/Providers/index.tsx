@@ -1,6 +1,7 @@
 import { FC } from "react";
 import ThemeProvider from "./ThemeProvider";
 import { MockedProvider } from "@apollo/client/testing";
+import { mocks } from "../Mocks";
 
 export type ProvidersProps = {
   children: React.ReactNode;
@@ -8,7 +9,7 @@ export type ProvidersProps = {
 
 const Providers: FC<ProvidersProps> = ({ children }) => {
   return (
-    <MockedProvider mocks={[]} addTypename={false}>
+    <MockedProvider mocks={mocks} addTypename={true}>
       <ThemeProvider>{children}</ThemeProvider>
     </MockedProvider>
   );

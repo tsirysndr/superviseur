@@ -1,8 +1,8 @@
 import { gql } from "@apollo/client";
 import { PROCESS_FRAGMENT, SERVICE_FRAGMENT } from "../Fragments";
 
-export const STATUS = gql`
-  query Status($id: ID!) {
+export const GET_STATUS = gql`
+  query GetStatus($id: ID!) {
     status(id: $id) {
       ...ProcessFragment
     }
@@ -10,8 +10,8 @@ export const STATUS = gql`
   ${PROCESS_FRAGMENT}
 `;
 
-export const PROCESSES = gql`
-  query Processes {
+export const GET_PROCESSES = gql`
+  query GetProcesses {
     processes {
       ...ProcessFragment
     }
@@ -19,9 +19,18 @@ export const PROCESSES = gql`
   ${PROCESS_FRAGMENT}
 `;
 
-export const SERVICES = gql`
-  query Services {
+export const GET_SERVICES = gql`
+  query GetServices {
     services {
+      ...ServiceFragment
+    }
+  }
+  ${SERVICE_FRAGMENT}
+`;
+
+export const GET_SERVICE = gql`
+  query GetService($id: ID!) {
+    service(id: $id) {
       ...ServiceFragment
     }
   }

@@ -1,50 +1,207 @@
-export const services = {
-  nodes: [
-    {
-      id: "d548aa8c-2f30-4e53-b938-a4db74de6f58",
-      label: "Running\n<b>Service A</b>",
+import {
+  GET_PROCESSES,
+  GET_SERVICE,
+  GET_SERVICES,
+  GET_STATUS,
+} from "../GraphQL/Control/Query";
+
+export const services = [
+  {
+    __typename: "Service",
+    id: "1",
+    name: "Service A",
+    command: "echo 'Hello World'",
+    description: "A simple service",
+    namespace: "default",
+    type: "exec",
+    status: "running",
+    dependsOn: ["2", "3", "5"],
+    env: ["NODE_ENV=dev", "PORT=3000"],
+    autoRestart: true,
+    workingDirectory: "/tmp",
+    logFile: "/tmp/demo-stdout.log",
+    stderrFile: "/tmp/demo-stderr.log",
+    port: "3000",
+  },
+  {
+    __typename: "Service",
+    id: "2",
+    name: "Service B",
+    command: "echo 'Hello World'",
+    description: "A simple service",
+    namespace: "default",
+    type: "exec",
+    status: "running",
+    dependsOn: ["6"],
+    env: ["NODE_ENV=dev", "PORT=3000"],
+    autoRestart: true,
+    workingDirectory: "/tmp",
+    logFile: "/tmp/demo-stdout.log",
+    stderrFile: "/tmp/demo-stderr.log",
+    port: "3000",
+  },
+  {
+    __typename: "Service",
+    id: "3",
+    name: "Service C",
+    command: "echo 'Hello World'",
+    description: "A simple service",
+    namespace: "default",
+    type: "exec",
+    status: "running",
+    dependsOn: [],
+    env: ["NODE_ENV=dev", "PORT=3000"],
+    autoRestart: true,
+    workingDirectory: "/tmp",
+    logFile: "/tmp/demo-stdout.log",
+    stderrFile: "/tmp/demo-stderr.log",
+    port: "3000",
+  },
+  {
+    __typename: "Service",
+    id: "4",
+    name: "Service D",
+    command: "echo 'Hello World'",
+    description: "A simple service",
+    namespace: "default",
+    type: "exec",
+    status: "running",
+    dependsOn: [],
+    env: ["NODE_ENV=dev", "PORT=3000"],
+    autoRestart: true,
+    workingDirectory: "/tmp",
+    logFile: "/tmp/demo-stdout.log",
+    stderrFile: "/tmp/demo-stderr.log",
+    port: "3000",
+  },
+  {
+    __typename: "Service",
+    id: "5",
+    name: "Service E",
+    command: "echo 'Hello World'",
+    description: "A simple service",
+    namespace: "default",
+    type: "exec",
+    status: "running",
+    dependsOn: [],
+    env: ["NODE_ENV=dev", "PORT=3000"],
+    autoRestart: true,
+    workingDirectory: "/tmp",
+    logFile: "/tmp/demo-stdout.log",
+    stderrFile: "/tmp/demo-stderr.log",
+    port: "3000",
+  },
+  {
+    __typename: "Service",
+    id: "6",
+    name: "Service F",
+    command: "echo 'Hello World'",
+    description: "A simple service",
+    namespace: "default",
+    type: "exec",
+    status: "running",
+    dependsOn: [],
+    env: ["NODE_ENV=dev", "PORT=3000"],
+    autoRestart: true,
+    workingDirectory: "/tmp",
+    logFile: "/tmp/demo-stdout.log",
+    stderrFile: "/tmp/demo-stderr.log",
+    port: "3000",
+  },
+];
+
+export const GetServicesMock = {
+  request: {
+    query: GET_SERVICES,
+  },
+  result: {
+    data: {
+      services,
     },
-    {
-      id: "0d37df29-67ff-4ce6-94c8-1f76f6df79b2",
-      label: "Running\n<b>Service B</b>",
+  },
+};
+
+export const GetServiceMock = {
+  request: {
+    query: GET_SERVICE,
+    variables: {
+      id: "1",
     },
-    {
-      id: "5f8def9f-bf38-4d33-8448-0032b97c67d6",
-      label: "Running\n<b>Service C</b>",
+  },
+  result: {
+    data: {
+      service: {
+        __typename: "Service",
+        id: "1",
+        name: "Service A",
+        command: "npm start",
+        description: "A simple service",
+        namespace: "default",
+        type: "exec",
+        status: "running",
+        dependsOn: ["Service B"],
+        env: ["NODE_ENV=dev", "PORT=3000"],
+        autoRestart: true,
+        workingDirectory: "/tmp",
+        logFile: "/tmp/demo-stdout.log",
+        stderrFile: "/tmp/demo-stderr.log",
+        port: "3000",
+      },
     },
-    {
-      id: "5c22f8ba-f3c6-431d-bf55-95ea5a0b4adf",
-      label: "Running\n<b>Service D</b>",
+  },
+};
+
+export const GetProcessesMock = {
+  request: {
+    query: GET_PROCESSES,
+  },
+  result: {
+    data: {
+      processes: [
+        {
+          __typename: "Process",
+          name: "Service A",
+          description: "A simple service",
+          pid: 123,
+          ppid: 1,
+          command: "echo 'Hello World'",
+          workingDirectory: "/home/user",
+          project: "project",
+          type: "exec",
+          logFile: "/tmp/logs/service-a-out.log",
+          stderrFile: "/tmp/logs/service-a-err.log",
+          autoRestart: true,
+          env: ["ENV=dev"],
+        },
+      ],
     },
-    {
-      id: "9507420d-a36d-46e2-8ede-d6892f885f36",
-      label: "Running\n<b>Service E</b>",
+  },
+};
+
+export const GetStatusMock = {
+  request: {
+    query: GET_STATUS,
+    variables: {
+      id: "1",
     },
-    {
-      id: "1ab8c29a-54d0-442b-aa9c-923695f3d50f",
-      label: "Running\n<b>Service F</b>",
+  },
+  result: {
+    data: {
+      status: {
+        __typename: "Process",
+        name: "Service A",
+        description: "A simple service",
+        pid: 123,
+        ppid: 1,
+        command: "echo 'Hello World'",
+        workingDirectory: "/home/user",
+        project: "project",
+        type: "exec",
+        logFile: "/tmp/logs/service-a-out.log",
+        stderrFile: "/tmp/logs/service-a-err.log",
+        autoRestart: true,
+        env: ["ENV=dev"],
+      },
     },
-  ],
-  edges: [
-    {
-      from: "d548aa8c-2f30-4e53-b938-a4db74de6f58",
-      to: "0d37df29-67ff-4ce6-94c8-1f76f6df79b2",
-      label: "depends on",
-    },
-    {
-      from: "d548aa8c-2f30-4e53-b938-a4db74de6f58",
-      to: "5f8def9f-bf38-4d33-8448-0032b97c67d6",
-      label: "depends on",
-    },
-    {
-      from: "d548aa8c-2f30-4e53-b938-a4db74de6f58",
-      to: "9507420d-a36d-46e2-8ede-d6892f885f36",
-      label: "depends on",
-    },
-    {
-      from: "0d37df29-67ff-4ce6-94c8-1f76f6df79b2",
-      to: "1ab8c29a-54d0-442b-aa9c-923695f3d50f",
-      label: "depends on",
-    },
-  ],
+  },
 };

@@ -62,6 +62,7 @@ export type Query = {
   __typename?: 'Query';
   logs: Log;
   processes: Array<Process>;
+  service: Service;
   services: Array<Service>;
   status: Process;
   tail: Log;
@@ -69,6 +70,11 @@ export type Query = {
 
 
 export type QueryLogsArgs = {
+  id: Scalars['ID'];
+};
+
+
+export type QueryServiceArgs = {
   id: Scalars['ID'];
 };
 
@@ -89,10 +95,15 @@ export type Service = {
   dependsOn: Array<Scalars['String']>;
   description: Scalars['String'];
   env: Array<Scalars['String']>;
+  id: Scalars['String'];
+  logFile: Scalars['String'];
   name: Scalars['String'];
   namespace: Scalars['String'];
+  port: Scalars['Int'];
   status: Scalars['String'];
+  stderrFile: Scalars['String'];
   type: Scalars['String'];
+  workingDirectory: Scalars['String'];
 };
 
 export type Subscription = {
@@ -132,26 +143,33 @@ export type RestartMutationVariables = Exact<{
 
 export type RestartMutation = { __typename?: 'Mutation', restart: { __typename?: 'Process', name: string, description: string, pid: number, ppid: number, command: string, workingDirectory: string, project: string, type: string, logFile: string, stderrFile: string, autoRestart: boolean, env: Array<string> } };
 
-export type StatusQueryVariables = Exact<{
+export type GetStatusQueryVariables = Exact<{
   id: Scalars['ID'];
 }>;
 
 
-export type StatusQuery = { __typename?: 'Query', status: { __typename?: 'Process', name: string, description: string, pid: number, ppid: number, command: string, workingDirectory: string, project: string, type: string, logFile: string, stderrFile: string, autoRestart: boolean, env: Array<string> } };
+export type GetStatusQuery = { __typename?: 'Query', status: { __typename?: 'Process', name: string, description: string, pid: number, ppid: number, command: string, workingDirectory: string, project: string, type: string, logFile: string, stderrFile: string, autoRestart: boolean, env: Array<string> } };
 
-export type ProcessesQueryVariables = Exact<{ [key: string]: never; }>;
-
-
-export type ProcessesQuery = { __typename?: 'Query', processes: Array<{ __typename?: 'Process', name: string, description: string, pid: number, ppid: number, command: string, workingDirectory: string, project: string, type: string, logFile: string, stderrFile: string, autoRestart: boolean, env: Array<string> }> };
-
-export type ServicesQueryVariables = Exact<{ [key: string]: never; }>;
+export type GetProcessesQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type ServicesQuery = { __typename?: 'Query', services: Array<{ __typename?: 'Service', name: string, command: string, description: string, namespace: string, type: string, status: string, dependsOn: Array<string>, env: Array<string>, autoRestart: boolean }> };
+export type GetProcessesQuery = { __typename?: 'Query', processes: Array<{ __typename?: 'Process', name: string, description: string, pid: number, ppid: number, command: string, workingDirectory: string, project: string, type: string, logFile: string, stderrFile: string, autoRestart: boolean, env: Array<string> }> };
+
+export type GetServicesQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetServicesQuery = { __typename?: 'Query', services: Array<{ __typename?: 'Service', id: string, name: string, command: string, description: string, namespace: string, type: string, status: string, dependsOn: Array<string>, env: Array<string>, autoRestart: boolean, workingDirectory: string, logFile: string, stderrFile: string, port: number }> };
+
+export type GetServiceQueryVariables = Exact<{
+  id: Scalars['ID'];
+}>;
+
+
+export type GetServiceQuery = { __typename?: 'Query', service: { __typename?: 'Service', id: string, name: string, command: string, description: string, namespace: string, type: string, status: string, dependsOn: Array<string>, env: Array<string>, autoRestart: boolean, workingDirectory: string, logFile: string, stderrFile: string, port: number } };
 
 export type ProcessFragmentFragment = { __typename?: 'Process', name: string, description: string, pid: number, ppid: number, command: string, workingDirectory: string, project: string, type: string, logFile: string, stderrFile: string, autoRestart: boolean, env: Array<string> };
 
-export type ServiceFragmentFragment = { __typename?: 'Service', name: string, command: string, description: string, namespace: string, type: string, status: string, dependsOn: Array<string>, env: Array<string>, autoRestart: boolean };
+export type ServiceFragmentFragment = { __typename?: 'Service', id: string, name: string, command: string, description: string, namespace: string, type: string, status: string, dependsOn: Array<string>, env: Array<string>, autoRestart: boolean, workingDirectory: string, logFile: string, stderrFile: string, port: number };
 
 export type GetLogsQueryVariables = Exact<{
   id: Scalars['ID'];
@@ -199,6 +217,7 @@ export const ProcessFragmentFragmentDoc = gql`
     `;
 export const ServiceFragmentFragmentDoc = gql`
     fragment ServiceFragment on Service {
+  id
   name
   command
   description
@@ -208,6 +227,10 @@ export const ServiceFragmentFragmentDoc = gql`
   dependsOn
   env
   autoRestart
+  workingDirectory
+  logFile
+  stderrFile
+  port
 }
     `;
 export const StartDocument = gql`
@@ -309,8 +332,8 @@ export function useRestartMutation(baseOptions?: Apollo.MutationHookOptions<Rest
 export type RestartMutationHookResult = ReturnType<typeof useRestartMutation>;
 export type RestartMutationResult = Apollo.MutationResult<RestartMutation>;
 export type RestartMutationOptions = Apollo.BaseMutationOptions<RestartMutation, RestartMutationVariables>;
-export const StatusDocument = gql`
-    query Status($id: ID!) {
+export const GetStatusDocument = gql`
+    query GetStatus($id: ID!) {
   status(id: $id) {
     ...ProcessFragment
   }
@@ -318,34 +341,34 @@ export const StatusDocument = gql`
     ${ProcessFragmentFragmentDoc}`;
 
 /**
- * __useStatusQuery__
+ * __useGetStatusQuery__
  *
- * To run a query within a React component, call `useStatusQuery` and pass it any options that fit your needs.
- * When your component renders, `useStatusQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * To run a query within a React component, call `useGetStatusQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetStatusQuery` returns an object from Apollo Client that contains loading, error, and data properties
  * you can use to render your UI.
  *
  * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
  *
  * @example
- * const { data, loading, error } = useStatusQuery({
+ * const { data, loading, error } = useGetStatusQuery({
  *   variables: {
  *      id: // value for 'id'
  *   },
  * });
  */
-export function useStatusQuery(baseOptions: Apollo.QueryHookOptions<StatusQuery, StatusQueryVariables>) {
+export function useGetStatusQuery(baseOptions: Apollo.QueryHookOptions<GetStatusQuery, GetStatusQueryVariables>) {
         const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<StatusQuery, StatusQueryVariables>(StatusDocument, options);
+        return Apollo.useQuery<GetStatusQuery, GetStatusQueryVariables>(GetStatusDocument, options);
       }
-export function useStatusLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<StatusQuery, StatusQueryVariables>) {
+export function useGetStatusLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetStatusQuery, GetStatusQueryVariables>) {
           const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<StatusQuery, StatusQueryVariables>(StatusDocument, options);
+          return Apollo.useLazyQuery<GetStatusQuery, GetStatusQueryVariables>(GetStatusDocument, options);
         }
-export type StatusQueryHookResult = ReturnType<typeof useStatusQuery>;
-export type StatusLazyQueryHookResult = ReturnType<typeof useStatusLazyQuery>;
-export type StatusQueryResult = Apollo.QueryResult<StatusQuery, StatusQueryVariables>;
-export const ProcessesDocument = gql`
-    query Processes {
+export type GetStatusQueryHookResult = ReturnType<typeof useGetStatusQuery>;
+export type GetStatusLazyQueryHookResult = ReturnType<typeof useGetStatusLazyQuery>;
+export type GetStatusQueryResult = Apollo.QueryResult<GetStatusQuery, GetStatusQueryVariables>;
+export const GetProcessesDocument = gql`
+    query GetProcesses {
   processes {
     ...ProcessFragment
   }
@@ -353,33 +376,33 @@ export const ProcessesDocument = gql`
     ${ProcessFragmentFragmentDoc}`;
 
 /**
- * __useProcessesQuery__
+ * __useGetProcessesQuery__
  *
- * To run a query within a React component, call `useProcessesQuery` and pass it any options that fit your needs.
- * When your component renders, `useProcessesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * To run a query within a React component, call `useGetProcessesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetProcessesQuery` returns an object from Apollo Client that contains loading, error, and data properties
  * you can use to render your UI.
  *
  * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
  *
  * @example
- * const { data, loading, error } = useProcessesQuery({
+ * const { data, loading, error } = useGetProcessesQuery({
  *   variables: {
  *   },
  * });
  */
-export function useProcessesQuery(baseOptions?: Apollo.QueryHookOptions<ProcessesQuery, ProcessesQueryVariables>) {
+export function useGetProcessesQuery(baseOptions?: Apollo.QueryHookOptions<GetProcessesQuery, GetProcessesQueryVariables>) {
         const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<ProcessesQuery, ProcessesQueryVariables>(ProcessesDocument, options);
+        return Apollo.useQuery<GetProcessesQuery, GetProcessesQueryVariables>(GetProcessesDocument, options);
       }
-export function useProcessesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<ProcessesQuery, ProcessesQueryVariables>) {
+export function useGetProcessesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetProcessesQuery, GetProcessesQueryVariables>) {
           const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<ProcessesQuery, ProcessesQueryVariables>(ProcessesDocument, options);
+          return Apollo.useLazyQuery<GetProcessesQuery, GetProcessesQueryVariables>(GetProcessesDocument, options);
         }
-export type ProcessesQueryHookResult = ReturnType<typeof useProcessesQuery>;
-export type ProcessesLazyQueryHookResult = ReturnType<typeof useProcessesLazyQuery>;
-export type ProcessesQueryResult = Apollo.QueryResult<ProcessesQuery, ProcessesQueryVariables>;
-export const ServicesDocument = gql`
-    query Services {
+export type GetProcessesQueryHookResult = ReturnType<typeof useGetProcessesQuery>;
+export type GetProcessesLazyQueryHookResult = ReturnType<typeof useGetProcessesLazyQuery>;
+export type GetProcessesQueryResult = Apollo.QueryResult<GetProcessesQuery, GetProcessesQueryVariables>;
+export const GetServicesDocument = gql`
+    query GetServices {
   services {
     ...ServiceFragment
   }
@@ -387,31 +410,66 @@ export const ServicesDocument = gql`
     ${ServiceFragmentFragmentDoc}`;
 
 /**
- * __useServicesQuery__
+ * __useGetServicesQuery__
  *
- * To run a query within a React component, call `useServicesQuery` and pass it any options that fit your needs.
- * When your component renders, `useServicesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * To run a query within a React component, call `useGetServicesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetServicesQuery` returns an object from Apollo Client that contains loading, error, and data properties
  * you can use to render your UI.
  *
  * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
  *
  * @example
- * const { data, loading, error } = useServicesQuery({
+ * const { data, loading, error } = useGetServicesQuery({
  *   variables: {
  *   },
  * });
  */
-export function useServicesQuery(baseOptions?: Apollo.QueryHookOptions<ServicesQuery, ServicesQueryVariables>) {
+export function useGetServicesQuery(baseOptions?: Apollo.QueryHookOptions<GetServicesQuery, GetServicesQueryVariables>) {
         const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<ServicesQuery, ServicesQueryVariables>(ServicesDocument, options);
+        return Apollo.useQuery<GetServicesQuery, GetServicesQueryVariables>(GetServicesDocument, options);
       }
-export function useServicesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<ServicesQuery, ServicesQueryVariables>) {
+export function useGetServicesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetServicesQuery, GetServicesQueryVariables>) {
           const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<ServicesQuery, ServicesQueryVariables>(ServicesDocument, options);
+          return Apollo.useLazyQuery<GetServicesQuery, GetServicesQueryVariables>(GetServicesDocument, options);
         }
-export type ServicesQueryHookResult = ReturnType<typeof useServicesQuery>;
-export type ServicesLazyQueryHookResult = ReturnType<typeof useServicesLazyQuery>;
-export type ServicesQueryResult = Apollo.QueryResult<ServicesQuery, ServicesQueryVariables>;
+export type GetServicesQueryHookResult = ReturnType<typeof useGetServicesQuery>;
+export type GetServicesLazyQueryHookResult = ReturnType<typeof useGetServicesLazyQuery>;
+export type GetServicesQueryResult = Apollo.QueryResult<GetServicesQuery, GetServicesQueryVariables>;
+export const GetServiceDocument = gql`
+    query GetService($id: ID!) {
+  service(id: $id) {
+    ...ServiceFragment
+  }
+}
+    ${ServiceFragmentFragmentDoc}`;
+
+/**
+ * __useGetServiceQuery__
+ *
+ * To run a query within a React component, call `useGetServiceQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetServiceQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetServiceQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useGetServiceQuery(baseOptions: Apollo.QueryHookOptions<GetServiceQuery, GetServiceQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetServiceQuery, GetServiceQueryVariables>(GetServiceDocument, options);
+      }
+export function useGetServiceLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetServiceQuery, GetServiceQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetServiceQuery, GetServiceQueryVariables>(GetServiceDocument, options);
+        }
+export type GetServiceQueryHookResult = ReturnType<typeof useGetServiceQuery>;
+export type GetServiceLazyQueryHookResult = ReturnType<typeof useGetServiceLazyQuery>;
+export type GetServiceQueryResult = Apollo.QueryResult<GetServiceQuery, GetServiceQueryVariables>;
 export const GetLogsDocument = gql`
     query GetLogs($id: ID!) {
   logs(id: $id) {

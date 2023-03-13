@@ -27,7 +27,7 @@ const LineNumber = styled.span<{ displayLineNumber?: boolean }>`
 
 const Line = styled.span`
   color: #fff;
-  font-family: Ubuntu;
+  font-family: Ubuntu, monospace;
   font-size: 12px;
   padding: 2px;
   padding-left: 10px;

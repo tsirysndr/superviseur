@@ -1,5 +1,100 @@
+import { Service } from "../Hooks/GraphQL";
 import { Settings } from "../Types/Settings";
 import { services } from "./Services";
+
+export const parseIntoSettings = (service: Service): Settings[] => {
+  return [
+    {
+      name: "Name",
+      value: service.name,
+      multi: false,
+      activable: false,
+      selectable: false,
+    },
+    {
+      name: "Command",
+      value: service.command,
+      multi: false,
+      activable: false,
+      selectable: false,
+    },
+    {
+      name: "Working Directory",
+      value: service.workingDirectory,
+      multi: false,
+      activable: false,
+      selectable: false,
+    },
+    {
+      name: "Type",
+      value: [
+        {
+          id: "exec",
+          label: "exec",
+        },
+      ],
+      multi: false,
+      activable: false,
+      initialValues: [
+        { id: "exec", label: "exec" } as any,
+        { id: "wasm", label: "wasm" } as any,
+        { id: "docker", label: "docker" } as any,
+      ],
+      selectable: true,
+    },
+    {
+      name: "Description",
+      value: service.description,
+      multi: false,
+      activable: false,
+      selectable: false,
+    },
+    {
+      name: "Depends on",
+      value: undefined,
+      multi: true,
+      activable: false,
+      initialValues: services
+        .filter((x) => x.id !== service.id)
+        .map(
+          (service) =>
+            ({
+              id: service.id,
+              label: service.name,
+            } as any)
+        ),
+      selectable: true,
+    },
+    {
+      name: "Log File",
+      value: service.logFile,
+      multi: false,
+      activable: false,
+      selectable: false,
+    },
+    {
+      name: "Error File",
+      value: service.stderrFile,
+      multi: false,
+      activable: false,
+      selectable: false,
+    },
+    {
+      name: "Port",
+      value: service.port,
+      multi: false,
+      activable: false,
+      selectable: false,
+    },
+    {
+      name: "AutoRestart",
+      value: service.autoRestart,
+      multi: false,
+      activable: true,
+      selectable: false,
+    },
+  ];
+};
 
 export const settings: Settings[] = [
   {
@@ -52,11 +147,11 @@ export const settings: Settings[] = [
     value: undefined,
     multi: true,
     activable: false,
-    initialValues: services.nodes.map(
+    initialValues: services.map(
       (service) =>
         ({
           id: service.id,
-          label: service.label.split("<b>")[1].replace("</b>", ""),
+          label: service.name,
         } as any)
     ),
     selectable: true,

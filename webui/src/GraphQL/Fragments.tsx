@@ -19,6 +19,7 @@ export const PROCESS_FRAGMENT = gql`
 
 export const SERVICE_FRAGMENT = gql`
   fragment ServiceFragment on Service {
+    id
     name
     command
     description
@@ -28,5 +29,9 @@ export const SERVICE_FRAGMENT = gql`
     dependsOn
     env
     autoRestart
+    workingDirectory
+    logFile
+    stderrFile
+    port
   }
 `;
