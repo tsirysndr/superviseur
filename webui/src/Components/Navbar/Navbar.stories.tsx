@@ -4,13 +4,13 @@ import Navbar from "./Navbar";
 export default {
   title: "Components/Navbar",
   component: Navbar,
-  argTypes: {},
+  argTypes: {
+    onSearch: { action: "onSearch" },
+  },
 } as ComponentMeta<typeof Navbar>;
 
 const Template: ComponentStory<typeof Navbar> = (args) => <Navbar {...args} />;
 
 export const Default = Template.bind({});
 
-Default.args = {
-  lines: ["line 1", "line 2", "line 3"],
-};
+Default.args = {};

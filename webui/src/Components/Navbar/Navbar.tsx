@@ -32,16 +32,18 @@ const Settings = styled.div`
   padding-right: 25px;
 `;
 
-interface NavbarProps {}
+interface NavbarProps {
+  onSearch: (value: string) => void;
+}
 
-const Navbar: FC<NavbarProps> = () => {
+const Navbar: FC<NavbarProps> = ({ onSearch }) => {
   const { control, watch } = useForm();
   useEffect(() => {
-    const subscription = watch((value, { name, type }) =>
-      console.log(value, name, type)
+    const subscription = watch(
+      (value, { name }) => name && onSearch(value[name])
     );
     return () => subscription.unsubscribe();
-  }, [watch]);
+  }, [watch, onSearch]);
   return (
     <Container>
       <Logo>Superviseur</Logo>

@@ -37,7 +37,7 @@ const StatusValue = styled.div<{ terminal?: boolean }>`
     css`
       background-color: #000;
       color: #fff;
-      font-family: monospace;
+      font-family: Ubuntu, monospace;
       padding-left: 10px;
       padding-right: 10px;
     `}
@@ -59,11 +59,11 @@ const CurrentStatus = styled.span<{ color: string }>`
 `;
 
 const parseStatus = (status: ServiceStatus) => {
-  if (status.status.startsWith("Running")) {
+  if (status.status.toString().startsWith("Running")) {
     return (
       <StatusValue>
         <CurrentStatus color="#00e667">Running</CurrentStatus>{" "}
-        {status.status.replace("Running", "")}
+        {status.status.toString().replace("Running", "")}
       </StatusValue>
     );
   }
@@ -83,7 +83,7 @@ const Status: FC<StatusProps> = (props) => {
   return (
     <Container>
       <Actions>
-        {status?.startsWith("Running") && (
+        {status?.toString().startsWith("Running") && (
           <>
             <Button
               onClick={onStop}
@@ -147,7 +147,7 @@ const Status: FC<StatusProps> = (props) => {
             </Button>
           </>
         )}
-        {!status?.startsWith("Running") && (
+        {!status?.toString().startsWith("Running") && (
           <>
             <Button
               onClick={onStart}
@@ -186,7 +186,7 @@ const Status: FC<StatusProps> = (props) => {
             <StatusName>{status.name} :</StatusName>
             {status.name !== "Active" && (
               <StatusValue terminal={status.name.toLowerCase() === "command"}>
-                {status.status}
+                {status.status.toString()}
               </StatusValue>
             )}
             {status.name === "Active" && parseStatus(status)}

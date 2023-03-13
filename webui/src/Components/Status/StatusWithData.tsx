@@ -1,15 +1,26 @@
 import Status from "./Status";
 import { FC } from "react";
-import { statuses } from "../../Mocks/ServiceStatuses";
+import { parseIntoStatuses, statuses } from "../../Mocks/ServiceStatuses";
+import { useGetStatusQuery } from "../../Hooks/GraphQL";
 
 const StatusWithData: FC = () => {
+  const { data, loading } = useGetStatusQuery({
+    variables: {
+      id: "1",
+    },
+  });
+  const statuses = loading ? [] : parseIntoStatuses(data!.status);
   return (
-    <Status
-      statuses={statuses}
-      onStart={() => {}}
-      onRestart={() => {}}
-      onStop={() => {}}
-    />
+    <>
+      {!loading && (
+        <Status
+          statuses={statuses}
+          onStart={() => {}}
+          onRestart={() => {}}
+          onStop={() => {}}
+        />
+      )}
+    </>
   );
 };
 

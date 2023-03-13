@@ -7,7 +7,6 @@ import Log from "../Log";
 import Variables from "../Variables";
 import Settings from "../Settings";
 import Status from "../Status";
-import { variables } from "../../Mocks/Variables";
 
 const DrawerHeader = styled.div`
   display: flex;
