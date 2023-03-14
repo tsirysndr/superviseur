@@ -163,6 +163,11 @@ const VariableRow: FC<VariableRowProps> = (props) => {
                     backgroundColor: "#fff",
                   },
                 },
+                Body: {
+                  style: {
+                    zIndex: 1,
+                  },
+                },
               }}
             >
               <Edit>

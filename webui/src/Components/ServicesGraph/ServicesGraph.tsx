@@ -6,6 +6,7 @@ import { Edge } from "../../Types/Edge";
 import { Node } from "../../Types/Node";
 import ServiceDetails from "../ServiceDetails";
 import Background from "./Background";
+import Actions from "./Actions";
 
 const options = {
   layout: {
@@ -56,6 +57,7 @@ const options = {
 const Container = styled.div`
   height: calc(100vh - 60px);
   width: 100vw;
+  position: relative;
 `;
 
 export interface ServicesGraphProps {
@@ -109,6 +111,7 @@ const ServicesGraph: FC<ServicesGraphProps> = (props) => {
       >
         <Background />
       </div>
+      <Actions onStart={() => {}} onStop={() => {}} onRestart={() => {}} />
       <Graph graph={graph} options={options} events={events} ref={graphRef} />
       <Drawer
         isOpen={isOpen}
@@ -123,6 +126,11 @@ const ServicesGraph: FC<ServicesGraphProps> = (props) => {
               outline: `${$theme.colors.warning200} solid`,
               // backgroundColor: $theme.colors.warning200,
             }),
+          },
+          Root: {
+            style: {
+              zIndex: 1,
+            },
           },
         }}
       >

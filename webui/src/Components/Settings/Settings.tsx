@@ -215,6 +215,17 @@ const SettingsRow: FC<SettingsRowProps> = ({ settings }) => {
                       fontSize: "14px",
                     },
                   },
+                  Popover: {
+                    props: {
+                      overrides: {
+                        Body: {
+                          style: {
+                            zIndex: 1,
+                          },
+                        },
+                      },
+                    },
+                  },
                 }}
               />
             )}
@@ -262,6 +273,17 @@ const SettingsRow: FC<SettingsRowProps> = ({ settings }) => {
                   Input: {
                     style: {
                       fontSize: "14px",
+                    },
+                  },
+                  Popover: {
+                    props: {
+                      overrides: {
+                        Body: {
+                          style: {
+                            zIndex: 1,
+                          },
+                        },
+                      },
                     },
                   },
                 }}
