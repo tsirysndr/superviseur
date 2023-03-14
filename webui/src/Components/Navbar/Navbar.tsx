@@ -59,7 +59,7 @@ const Navbar: FC<NavbarProps> = ({ onSearch, results }) => {
       <Controller
         render={({ field }) => (
           <Popover
-            isOpen={results.length > 0}
+            isOpen={results && results.length > 0}
             content={() => (
               <SearchResults
                 results={results}
