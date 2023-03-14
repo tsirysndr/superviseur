@@ -10,6 +10,9 @@ export default {
       control: {
         type: "array",
       },
+      onAdd: { action: "onAdd" },
+      onRemove: { action: "onRemove" },
+      onEdit: { action: "onEdit" },
     },
   },
 } as ComponentMeta<typeof Variables>;

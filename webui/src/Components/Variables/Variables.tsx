@@ -1,4 +1,5 @@
 import { Button, SHAPE } from "baseui/button";
+import { StatefulPopover } from "baseui/popover";
 import { FC, useState } from "react";
 import { Plus } from "@styled-icons/bootstrap/Plus";
 import { Ellipsis } from "@styled-icons/fa-solid/Ellipsis";
@@ -7,6 +8,9 @@ import { EnvironmentVariable } from "../../Types/EnvironmentVariable";
 import { uniqueId } from "lodash";
 import { Input } from "baseui/input";
 import { useForm, Controller } from "react-hook-form";
+import { StatefulMenu } from "baseui/menu";
+import { Check2 } from "@styled-icons/bootstrap/Check2";
+import { CloseOutline } from "@styled-icons/evaicons-outline/CloseOutline";
 
 const Title = styled.div``;
 
@@ -15,6 +19,7 @@ const Header = styled.div`
   justify-content: space-between;
   align-items: center;
   flex-direction: row;
+  height: 34px;
 `;
 
 const VariablesTable = styled.div`
@@ -22,7 +27,7 @@ const VariablesTable = styled.div`
   height: calc(100% - 62px);
 `;
 
-const VariableRow = styled.div`
+const VariableRowContainer = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -46,6 +51,24 @@ const Placeholder = styled.div`
   align-items: center;
   border: 1px dashed #cac9c990;
   height: 250px;
+`;
+
+const Edit = styled.button`
+  cursor: pointer;
+  border: none;
+  background-color: transparent;
+  &:hover {
+    opacity: 0.5;
+  }
+`;
+
+const CheckButton = styled.button`
+  border: none;
+  background-color: transparent;
+  cursor: pointer;
+  :hover {
+    opacity: 0.6;
+  }
 `;
 
 const ButtonStyles = {
@@ -72,20 +95,152 @@ const ButtonStyles = {
   },
 };
 
-export interface VariablesProps {
-  variables: EnvironmentVariable[];
+export interface VariableRowProps {
+  variable: EnvironmentVariable;
+  onRemove: (variable: EnvironmentVariable) => void;
+  onEdit: (variable: EnvironmentVariable) => void;
 }
 
-const Variables: FC<VariablesProps> = ({ variables }) => {
+const VariableRow: FC<VariableRowProps> = (props) => {
+  const { variable, onRemove, onEdit } = props;
+  const [isEditing, setIsEditing] = useState(false);
+  const { control, handleSubmit, reset } = useForm({
+    defaultValues: {
+      envValue: variable.value,
+    },
+  });
+
+  const onAdd = () => {
+    handleSubmit(
+      async (data) => {
+        await onEdit({
+          name: variable.name,
+          value: data.envValue,
+        });
+        reset();
+        setIsEditing(false);
+      },
+      (x) => {
+        console.log(">>", x);
+      }
+    )();
+  };
+
+  const onCancel = () => {
+    reset();
+    setIsEditing(false);
+  };
+
+  return (
+    <VariableRowContainer>
+      <VariableName>{variable.name}</VariableName>
+      {!isEditing && (
+        <>
+          <VariableValue>{variable.value}</VariableValue>
+          <Actions>
+            <StatefulPopover
+              content={() => (
+                <StatefulMenu
+                  items={[
+                    { id: "edit", label: "Edit" },
+                    { id: "remove", label: "Remove" },
+                  ]}
+                  onItemSelect={({ item }) => {
+                    switch (item.id) {
+                      case "edit":
+                        setIsEditing(true);
+                        break;
+                      case "remove":
+                        onRemove(variable);
+                        break;
+                    }
+                  }}
+                />
+              )}
+              overrides={{
+                Inner: {
+                  style: {
+                    backgroundColor: "#fff",
+                  },
+                },
+              }}
+            >
+              <Edit>
+                <Ellipsis size={20} color="#000" />
+              </Edit>
+            </StatefulPopover>
+          </Actions>
+        </>
+      )}
+      {isEditing && (
+        <div
+          style={{
+            display: "flex",
+            flex: 1,
+          }}
+        >
+          <Controller
+            render={({ field }) => (
+              <Input
+                {...(field as any)}
+                overrides={{
+                  Root: {
+                    style: {
+                      height: "34px",
+                      borderRadius: "2px",
+                      width: "186px",
+                    },
+                  },
+                  Input: {
+                    style: {
+                      fontSize: "14px",
+                    },
+                  },
+                }}
+                autoFocus
+                clearable
+              />
+            )}
+            control={control}
+            name="envValue"
+            rules={{ required: true }}
+          />
+          <>
+            <CheckButton onClick={onAdd}>
+              <Check2 size={20} color="#000" />
+            </CheckButton>
+            <CheckButton onClick={onCancel}>
+              <CloseOutline size={20} color="#000" />
+            </CheckButton>
+          </>
+        </div>
+      )}
+    </VariableRowContainer>
+  );
+};
+
+export interface VariablesProps {
+  variables: EnvironmentVariable[];
+  onAdd: (variable: EnvironmentVariable) => void;
+  onRemove: (variable: EnvironmentVariable) => void;
+  onEdit: (variable: EnvironmentVariable) => void;
+}
+
+const Variables: FC<VariablesProps> = (props) => {
+  const { variables, onAdd, onRemove, onEdit } = props;
   const { control, handleSubmit, reset } = useForm();
   const [showNewVariableInput, setShowNewVariableInput] =
     useState<boolean>(false);
   const [newVariableName, setNewVariableName] = useState<string>("");
   const [newVariableValue, setNewVariableValue] = useState<string>("");
-  const onAdd = () => {
+
+  const _onAdd = () => {
     handleSubmit(
-      (data) => {
-        console.log(data);
+      async (data) => {
+        await onAdd({
+          name: data.name,
+          value: data.value,
+        });
         setShowNewVariableInput(false);
         reset();
       },
@@ -94,6 +249,7 @@ const Variables: FC<VariablesProps> = ({ variables }) => {
       }
     )();
   };
+
   return (
     <div style={{ height: "100%" }}>
       <Header>
@@ -151,7 +307,7 @@ const Variables: FC<VariablesProps> = ({ variables }) => {
               rules={{ required: true }}
             />
             <Button
-              onClick={onAdd}
+              onClick={_onAdd}
               overrides={{
                 BaseButton: {
                   style: {
@@ -219,13 +375,12 @@ const Variables: FC<VariablesProps> = ({ variables }) => {
           <Placeholder>No Environment Variables</Placeholder>
         )}
         {variables.map((variable) => (
-          <VariableRow key={uniqueId()}>
-            <VariableName>{variable.name}</VariableName>
-            <VariableValue>{variable.value}</VariableValue>
-            <Actions>
-              <Ellipsis size={20} color="#000" />
-            </Actions>
-          </VariableRow>
+          <VariableRow
+            key={uniqueId()}
+            variable={variable}
+            onRemove={onRemove}
+            onEdit={onEdit}
+          />
         ))}
       </VariablesTable>
     </div>

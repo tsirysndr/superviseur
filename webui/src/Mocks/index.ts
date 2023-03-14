@@ -5,6 +5,11 @@ import {
   GetServicesMock,
   GetStatusMock,
 } from "./Services";
+import {
+  CreateEnvVarMock,
+  DeleteEnvVarMock,
+  UpdateEnvVarMock,
+} from "./Variables";
 
 export const mocks = [
   GetServicesMock,
@@ -12,4 +17,7 @@ export const mocks = [
   GetProcessesMock,
   GetStatusMock,
   GetLogsMocks,
+  CreateEnvVarMock,
+  ...UpdateEnvVarMock,
+  ...DeleteEnvVarMock,
 ];

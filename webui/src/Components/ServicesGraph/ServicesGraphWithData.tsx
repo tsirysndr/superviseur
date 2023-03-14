@@ -17,6 +17,7 @@ const ServicesGraphWithData: FC = () => {
         return service.dependsOn.map((dependency) => ({
           from: service.id,
           to: dependency,
+          label: "depends on",
         }));
       })
       .flat() || [];

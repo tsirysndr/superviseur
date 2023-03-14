@@ -22,9 +22,25 @@ export type Log = {
 
 export type Mutation = {
   __typename?: 'Mutation';
+  createEnvVar: Service;
+  deleteEnvVar: Service;
   restart: Process;
   start: Process;
   stop: Process;
+  updateEnvVar: Service;
+};
+
+
+export type MutationCreateEnvVarArgs = {
+  id: Scalars['ID'];
+  name: Scalars['String'];
+  value: Scalars['String'];
+};
+
+
+export type MutationDeleteEnvVarArgs = {
+  id: Scalars['ID'];
+  name: Scalars['String'];
 };
 
 
@@ -40,6 +56,13 @@ export type MutationStartArgs = {
 
 export type MutationStopArgs = {
   id: Scalars['ID'];
+};
+
+
+export type MutationUpdateEnvVarArgs = {
+  id: Scalars['ID'];
+  name: Scalars['String'];
+  value: Scalars['String'];
 };
 
 export type Process = {
@@ -142,6 +165,32 @@ export type RestartMutationVariables = Exact<{
 
 
 export type RestartMutation = { __typename?: 'Mutation', restart: { __typename?: 'Process', name: string, description: string, pid: number, ppid: number, command: string, workingDirectory: string, project: string, type: string, logFile: string, stderrFile: string, autoRestart: boolean, env: Array<string> } };
+
+export type CreateEnvVarMutationVariables = Exact<{
+  id: Scalars['ID'];
+  name: Scalars['String'];
+  value: Scalars['String'];
+}>;
+
+
+export type CreateEnvVarMutation = { __typename?: 'Mutation', createEnvVar: { __typename?: 'Service', id: string, env: Array<string> } };
+
+export type DeleteEnvVarMutationVariables = Exact<{
+  id: Scalars['ID'];
+  name: Scalars['String'];
+}>;
+
+
+export type DeleteEnvVarMutation = { __typename?: 'Mutation', deleteEnvVar: { __typename?: 'Service', id: string, env: Array<string> } };
+
+export type UpdateEnvVarMutationVariables = Exact<{
+  id: Scalars['ID'];
+  name: Scalars['String'];
+  value: Scalars['String'];
+}>;
+
+
+export type UpdateEnvVarMutation = { __typename?: 'Mutation', updateEnvVar: { __typename?: 'Service', id: string, env: Array<string> } };
 
 export type GetStatusQueryVariables = Exact<{
   id: Scalars['ID'];
@@ -332,6 +381,113 @@ export function useRestartMutation(baseOptions?: Apollo.MutationHookOptions<Rest
 export type RestartMutationHookResult = ReturnType<typeof useRestartMutation>;
 export type RestartMutationResult = Apollo.MutationResult<RestartMutation>;
 export type RestartMutationOptions = Apollo.BaseMutationOptions<RestartMutation, RestartMutationVariables>;
+export const CreateEnvVarDocument = gql`
+    mutation CreateEnvVar($id: ID!, $name: String!, $value: String!) {
+  createEnvVar(id: $id, name: $name, value: $value) {
+    id
+    env
+  }
+}
+    `;
+export type CreateEnvVarMutationFn = Apollo.MutationFunction<CreateEnvVarMutation, CreateEnvVarMutationVariables>;
+
+/**
+ * __useCreateEnvVarMutation__
+ *
+ * To run a mutation, you first call `useCreateEnvVarMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateEnvVarMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createEnvVarMutation, { data, loading, error }] = useCreateEnvVarMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *      name: // value for 'name'
+ *      value: // value for 'value'
+ *   },
+ * });
+ */
+export function useCreateEnvVarMutation(baseOptions?: Apollo.MutationHookOptions<CreateEnvVarMutation, CreateEnvVarMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<CreateEnvVarMutation, CreateEnvVarMutationVariables>(CreateEnvVarDocument, options);
+      }
+export type CreateEnvVarMutationHookResult = ReturnType<typeof useCreateEnvVarMutation>;
+export type CreateEnvVarMutationResult = Apollo.MutationResult<CreateEnvVarMutation>;
+export type CreateEnvVarMutationOptions = Apollo.BaseMutationOptions<CreateEnvVarMutation, CreateEnvVarMutationVariables>;
+export const DeleteEnvVarDocument = gql`
+    mutation DeleteEnvVar($id: ID!, $name: String!) {
+  deleteEnvVar(id: $id, name: $name) {
+    id
+    env
+  }
+}
+    `;
+export type DeleteEnvVarMutationFn = Apollo.MutationFunction<DeleteEnvVarMutation, DeleteEnvVarMutationVariables>;
+
+/**
+ * __useDeleteEnvVarMutation__
+ *
+ * To run a mutation, you first call `useDeleteEnvVarMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteEnvVarMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteEnvVarMutation, { data, loading, error }] = useDeleteEnvVarMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *      name: // value for 'name'
+ *   },
+ * });
+ */
+export function useDeleteEnvVarMutation(baseOptions?: Apollo.MutationHookOptions<DeleteEnvVarMutation, DeleteEnvVarMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DeleteEnvVarMutation, DeleteEnvVarMutationVariables>(DeleteEnvVarDocument, options);
+      }
+export type DeleteEnvVarMutationHookResult = ReturnType<typeof useDeleteEnvVarMutation>;
+export type DeleteEnvVarMutationResult = Apollo.MutationResult<DeleteEnvVarMutation>;
+export type DeleteEnvVarMutationOptions = Apollo.BaseMutationOptions<DeleteEnvVarMutation, DeleteEnvVarMutationVariables>;
+export const UpdateEnvVarDocument = gql`
+    mutation UpdateEnvVar($id: ID!, $name: String!, $value: String!) {
+  updateEnvVar(id: $id, name: $name, value: $value) {
+    id
+    env
+  }
+}
+    `;
+export type UpdateEnvVarMutationFn = Apollo.MutationFunction<UpdateEnvVarMutation, UpdateEnvVarMutationVariables>;
+
+/**
+ * __useUpdateEnvVarMutation__
+ *
+ * To run a mutation, you first call `useUpdateEnvVarMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateEnvVarMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateEnvVarMutation, { data, loading, error }] = useUpdateEnvVarMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *      name: // value for 'name'
+ *      value: // value for 'value'
+ *   },
+ * });
+ */
+export function useUpdateEnvVarMutation(baseOptions?: Apollo.MutationHookOptions<UpdateEnvVarMutation, UpdateEnvVarMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UpdateEnvVarMutation, UpdateEnvVarMutationVariables>(UpdateEnvVarDocument, options);
+      }
+export type UpdateEnvVarMutationHookResult = ReturnType<typeof useUpdateEnvVarMutation>;
+export type UpdateEnvVarMutationResult = Apollo.MutationResult<UpdateEnvVarMutation>;
+export type UpdateEnvVarMutationOptions = Apollo.BaseMutationOptions<UpdateEnvVarMutation, UpdateEnvVarMutationVariables>;
 export const GetStatusDocument = gql`
     query GetStatus($id: ID!) {
   status(id: $id) {
