@@ -121,12 +121,6 @@ const ServicesGraph: FC<ServicesGraphProps> = (props) => {
           graphRef.current.Network.unselectAll();
         }}
         overrides={{
-          Backdrop: {
-            style: ({ $theme }) => ({
-              outline: `${$theme.colors.warning200} solid`,
-              // backgroundColor: $theme.colors.warning200,
-            }),
-          },
           Root: {
             style: {
               zIndex: 1,

@@ -5,6 +5,11 @@ import { SearchOutline } from "@styled-icons/evaicons-outline/SearchOutline";
 import { Github } from "@styled-icons/evaicons-solid/Github";
 import { Feedback } from "@styled-icons/remix-line/Feedback";
 import { useForm, Controller } from "react-hook-form";
+import { Popover } from "baseui/popover";
+import SearchResults from "./SearchResults";
+import { Service } from "../../Hooks/GraphQL";
+import ServiceDetails from "../ServiceDetails";
+import { Drawer } from "baseui/drawer";
 
 const Container = styled.div`
   display: flex;
@@ -34,10 +39,14 @@ const Settings = styled.div`
 
 interface NavbarProps {
   onSearch: (value: string) => void;
+  results: Service[];
 }
 
-const Navbar: FC<NavbarProps> = ({ onSearch }) => {
-  const { control, watch } = useForm();
+const Navbar: FC<NavbarProps> = ({ onSearch, results }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [selectedNode, setSelectedNode] =
+    useState<string | undefined>(undefined);
+  const { control, watch, reset } = useForm();
   useEffect(() => {
     const subscription = watch(
       (value, { name }) => name && onSearch(value[name])
@@ -49,61 +58,43 @@ const Navbar: FC<NavbarProps> = ({ onSearch }) => {
       <Logo>Superviseur</Logo>
       <Controller
         render={({ field }) => (
-          <Input
-            {...(field as any)}
-            placeholder="Search for a service ..."
-            clearable
-            clearOnEscape
-            size={SIZE.default}
-            startEnhancer={() => <SearchOutline size={20} color="#f9f9f9c6" />}
-            overrides={{
-              Root: {
-                style: {
-                  width: "400px",
-                  height: "35px",
-                  borderWidth: "0px",
-                  borderRadius: "2px",
-                  backgroundColor: "#5a10c5",
-                },
-              },
-              Input: {
-                style: {
-                  color: "#fff",
-                  caretColor: "#fff",
-                  "::placeholder": {
-                    color: "#f9f9f990",
-                  },
-                  ":-ms-input-placeholder": {
-                    color: "#f9f9f990",
-                  },
-                  "::-ms-input-placeholder": {
-                    color: "#f9f9f990",
-                  },
-                },
-              },
-              InputContainer: {
-                style: {
-                  backgroundColor: "#5a10c5",
-                },
-              },
-              StartEnhancer: {
-                style: {
-                  paddingLeft: "0px",
-                  backgroundColor: "#5a10c5",
-                },
-              },
-              ClearIconContainer: {
-                style: {
-                  color: "#fff",
-                },
-              },
-            }}
-          />
+          <Popover
+            isOpen={results.length > 0}
+            content={() => (
+              <SearchResults
+                results={results}
+                onSelect={(id) => {
+                  onSearch("");
+                  reset({
+                    search: "",
+                  });
+                  setSelectedNode(id);
+                  setIsOpen(true);
+                }}
+              />
+            )}
+            overrides={styles.popover}
+          >
+            <div>
+              <Input
+                {...(field as any)}
+                placeholder="Search for a service ..."
+                clearable
+                clearOnEscape
+                size={SIZE.default}
+                startEnhancer={() => (
+                  <SearchOutline size={20} color="#f9f9f9c6" />
+                )}
+                overrides={styles.input}
+              />
+            </div>
+          </Popover>
         )}
         control={control}
         name="search"
         rules={{ required: true }}
       />
+
       <Settings>
         <a
           href="https://github.com/tsirysndr/superviseur/issues/new"
@@ -123,8 +114,85 @@ const Navbar: FC<NavbarProps> = ({ onSearch }) => {
           <Github size={24} color="#fff" />
         </a>
       </Settings>
+
+      <Drawer
+        isOpen={isOpen}
+        autoFocus
+        onClose={() => {
+          setIsOpen(false);
+        }}
+        overrides={{
+          Root: {
+            style: {
+              zIndex: 1,
+            },
+          },
+        }}
+      >
+        <ServiceDetails selectedNode={selectedNode} />
+      </Drawer>
     </Container>
   );
+};
+
+const styles = {
+  input: {
+    Root: {
+      style: {
+        width: "400px",
+        height: "35px",
+        borderWidth: "0px",
+        borderRadius: "2px",
+        backgroundColor: "#5a10c5",
+      },
+    },
+    Input: {
+      style: {
+        color: "#fff",
+        caretColor: "#fff",
+        "::placeholder": {
+          color: "#f9f9f990",
+        },
+        ":-ms-input-placeholder": {
+          color: "#f9f9f990",
+        },
+        "::-ms-input-placeholder": {
+          color: "#f9f9f990",
+        },
+      },
+    },
+    InputContainer: {
+      style: {
+        backgroundColor: "#5a10c5",
+      },
+    },
+    StartEnhancer: {
+      style: {
+        paddingLeft: "0px",
+        backgroundColor: "#5a10c5",
+      },
+    },
+    ClearIconContainer: {
+      style: {
+        color: "#fff",
+      },
+    },
+  },
+  popover: {
+    Inner: {
+      style: {
+        backgroundColor: "#fff",
+        borderTopLeftRadius: "0px",
+        borderTopRightRadius: "0px",
+        top: "-1px",
+      },
+    },
+    Body: {
+      style: {
+        top: "-2px",
+      },
+    },
+  },
 };
 
 export default Navbar;
