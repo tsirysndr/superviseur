@@ -7,7 +7,8 @@ use std::{
 
 use crate::{
     api::superviseur::v1alpha1::{
-        control_service_server::ControlServiceServer, logging_service_server::LoggingServiceServer,
+        control_service_server::ControlServiceServer, core_service_server::CoreServiceServer,
+        logging_service_server::LoggingServiceServer,
     },
     server::{control::Control, logging::Logging},
     superviseur::Superviseur,
@@ -20,6 +21,7 @@ use tokio_stream::wrappers::UnixListenerStream;
 use tonic::transport::Server;
 
 pub mod control;
+pub mod core;
 pub mod logging;
 
 pub async fn exec(port: u16, serve: bool) -> Result<(), Error> {
@@ -66,6 +68,12 @@ pub async fn exec(port: u16, serve: bool) -> Result<(), Error> {
                 cloned_config_map.clone(),
             ))))
             .add_service(tonic_web::enable(ControlServiceServer::new(Control::new(
+                cloned_cmd_tx.clone(),
+                cloned_superviseur.clone(),
+                cloned_processes.clone(),
+                cloned_config_map.clone(),
+            ))))
+            .add_service(tonic_web::enable(CoreServiceServer::new(core::Core::new(
                 cloned_cmd_tx,
                 cloned_superviseur,
                 cloned_processes,
@@ -86,6 +94,12 @@ pub async fn exec(port: u16, serve: bool) -> Result<(), Error> {
                 config_map.clone(),
             ))))
             .add_service(tonic_web::enable(ControlServiceServer::new(Control::new(
+                cmd_tx.clone(),
+                superviseur.clone(),
+                processes.clone(),
+                config_map.clone(),
+            ))))
+            .add_service(tonic_web::enable(CoreServiceServer::new(core::Core::new(
                 cmd_tx,
                 superviseur,
                 processes,

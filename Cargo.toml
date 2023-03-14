@@ -45,6 +45,7 @@ slab = "0.4.8"
 futures-channel = "0.3.26"
 once_cell = "1.17.1"
 actix-cors = "0.6.4"
+sha256 = "1.1.2"
 
 [build-dependencies]
 tonic-build = "0.8"

@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package superviseur.v1alpha1;
+
+message GetVersionRequest {
+}
+
+message GetVersionResponse {
+  string version = 1;
+}
+
+message StartWebDashboardRequest {
+  string config_file_path = 2;
+}
+
+message StartWebDashboardResponse {
+  string url = 1;
+}
+
+service CoreService {
+  rpc GetVersion (GetVersionRequest) returns (GetVersionResponse) {}
+  rpc StartWebDashboard (StartWebDashboardRequest) returns (StartWebDashboardResponse) {}
+}

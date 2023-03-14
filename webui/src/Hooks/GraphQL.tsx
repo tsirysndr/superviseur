@@ -45,17 +45,17 @@ export type MutationDeleteEnvVarArgs = {
 
 
 export type MutationRestartArgs = {
-  id: Scalars['ID'];
+  id?: InputMaybe<Scalars['ID']>;
 };
 
 
 export type MutationStartArgs = {
-  id: Scalars['ID'];
+  id?: InputMaybe<Scalars['ID']>;
 };
 
 
 export type MutationStopArgs = {
-  id: Scalars['ID'];
+  id?: InputMaybe<Scalars['ID']>;
 };
 
 
@@ -146,21 +146,21 @@ export type SubscriptionTailArgs = {
 };
 
 export type StartMutationVariables = Exact<{
-  id: Scalars['ID'];
+  id?: InputMaybe<Scalars['ID']>;
 }>;
 
 
 export type StartMutation = { __typename?: 'Mutation', start: { __typename?: 'Process', name: string, description: string, pid: number, ppid: number, command: string, workingDirectory: string, project: string, type: string, logFile: string, stderrFile: string, autoRestart: boolean, env: Array<string> } };
 
 export type StopMutationVariables = Exact<{
-  id: Scalars['ID'];
+  id?: InputMaybe<Scalars['ID']>;
 }>;
 
 
 export type StopMutation = { __typename?: 'Mutation', stop: { __typename?: 'Process', name: string, description: string, pid: number, ppid: number, command: string, workingDirectory: string, project: string, type: string, logFile: string, stderrFile: string, autoRestart: boolean, env: Array<string> } };
 
 export type RestartMutationVariables = Exact<{
-  id: Scalars['ID'];
+  id?: InputMaybe<Scalars['ID']>;
 }>;
 
 
@@ -283,7 +283,7 @@ export const ServiceFragmentFragmentDoc = gql`
 }
     `;
 export const StartDocument = gql`
-    mutation Start($id: ID!) {
+    mutation Start($id: ID) {
   start(id: $id) {
     ...ProcessFragment
   }
@@ -316,7 +316,7 @@ export type StartMutationHookResult = ReturnType<typeof useStartMutation>;
 export type StartMutationResult = Apollo.MutationResult<StartMutation>;
 export type StartMutationOptions = Apollo.BaseMutationOptions<StartMutation, StartMutationVariables>;
 export const StopDocument = gql`
-    mutation Stop($id: ID!) {
+    mutation Stop($id: ID) {
   stop(id: $id) {
     ...ProcessFragment
   }
@@ -349,7 +349,7 @@ export type StopMutationHookResult = ReturnType<typeof useStopMutation>;
 export type StopMutationResult = Apollo.MutationResult<StopMutation>;
 export type StopMutationOptions = Apollo.BaseMutationOptions<StopMutation, StopMutationVariables>;
 export const RestartDocument = gql`
-    mutation Restart($id: ID!) {
+    mutation Restart($id: ID) {
   restart(id: $id) {
     ...ProcessFragment
   }

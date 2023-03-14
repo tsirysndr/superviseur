@@ -2,7 +2,7 @@ import { gql } from "@apollo/client";
 import { PROCESS_FRAGMENT } from "../Fragments";
 
 export const START = gql`
-  mutation Start($id: ID!) {
+  mutation Start($id: ID) {
     start(id: $id) {
       ...ProcessFragment
     }
@@ -11,7 +11,7 @@ export const START = gql`
 `;
 
 export const STOP = gql`
-  mutation Stop($id: ID!) {
+  mutation Stop($id: ID) {
     stop(id: $id) {
       ...ProcessFragment
     }
@@ -20,7 +20,7 @@ export const STOP = gql`
 `;
 
 export const RESTART = gql`
-  mutation Restart($id: ID!) {
+  mutation Restart($id: ID) {
     restart(id: $id) {
       ...ProcessFragment
     }

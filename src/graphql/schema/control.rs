@@ -57,7 +57,7 @@ pub struct ControlMutation;
 
 #[Object]
 impl ControlMutation {
-    async fn start(&self, ctx: &Context<'_>, id: ID) -> Process {
+    async fn start(&self, ctx: &Context<'_>, id: Option<ID>) -> Process {
         Process {
             name: "test".to_string(),
             description: "test".to_string(),
@@ -74,7 +74,7 @@ impl ControlMutation {
         }
     }
 
-    async fn stop(&self, ctx: &Context<'_>, id: ID) -> Process {
+    async fn stop(&self, ctx: &Context<'_>, id: Option<ID>) -> Process {
         Process {
             name: "test".to_string(),
             description: "test".to_string(),
@@ -91,7 +91,7 @@ impl ControlMutation {
         }
     }
 
-    async fn restart(&self, ctx: &Context<'_>, id: ID) -> Process {
+    async fn restart(&self, ctx: &Context<'_>, id: Option<ID>) -> Process {
         Process {
             name: "test".to_string(),
             description: "test".to_string(),

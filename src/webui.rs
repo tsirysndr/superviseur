@@ -9,11 +9,21 @@ use async_graphql::{http::GraphiQLSource, Schema};
 use async_graphql_actix_web::{GraphQLRequest, GraphQLResponse, GraphQLSubscription};
 use mime_guess::from_path;
 use rust_embed::RustEmbed;
-use std::{thread, time::Duration};
+use std::{
+    collections::HashMap,
+    sync::{Arc, Mutex},
+    thread,
+    time::Duration,
+};
+use tokio::sync::mpsc;
 
-use crate::graphql::{
-    schema::{Mutation, Query, Subscription},
-    SuperviseurSchema,
+use crate::{
+    graphql::{
+        schema::{Mutation, Query, Subscription},
+        SuperviseurSchema,
+    },
+    superviseur::{Superviseur, SuperviseurCommand},
+    types::{configuration::ConfigurationData, process::Process},
 };
 
 #[derive(RustEmbed)]
@@ -84,12 +94,14 @@ async fn index_ws(
     GraphQLSubscription::new(Schema::clone(&*schema)).start(&req, payload)
 }
 
-pub async fn start_webui() -> std::io::Result<()> {
+pub async fn start_webui(
+    config_file_path: String,
+    cmd_tx: mpsc::UnboundedSender<SuperviseurCommand>,
+    superviseur: Superviseur,
+    processes: Arc<Mutex<Vec<(Process, String)>>>,
+    config_map: Arc<Mutex<HashMap<String, ConfigurationData>>>,
+) -> std::io::Result<()> {
     let addr = format!("0.0.0.0:{}", 5478);
-    thread::spawn(move || {
-        thread::sleep(Duration::from_secs(2));
-        open::that("http://localhost:5478").unwrap();
-    });
 
     let schema = Schema::build(
         Query::default(),
