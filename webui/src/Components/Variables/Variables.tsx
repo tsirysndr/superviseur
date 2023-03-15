@@ -36,11 +36,13 @@ const VariableRowContainer = styled.div`
 `;
 
 const VariableName = styled.div`
-  flex: 1;
+  width: 44%;
 `;
 
 const VariableValue = styled.div`
   flex: 1;
+  width: 56%;
+  padding-left: 14px;
 `;
 
 const Actions = styled.div``;
@@ -57,6 +59,7 @@ const Edit = styled.button`
   cursor: pointer;
   border: none;
   background-color: transparent;
+  margin-left: 32px;
   &:hover {
     opacity: 0.5;
   }
@@ -181,7 +184,7 @@ const VariableRow: FC<VariableRowProps> = (props) => {
         <div
           style={{
             display: "flex",
-            flex: 1,
+            width: "56%",
           }}
         >
           <Controller
@@ -193,7 +196,6 @@ const VariableRow: FC<VariableRowProps> = (props) => {
                     style: {
                       height: "34px",
                       borderRadius: "2px",
-                      width: "224px",
                     },
                   },
                   Input: {
