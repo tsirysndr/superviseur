@@ -1,5 +1,6 @@
 use std::{
     collections::HashMap,
+    error::Error,
     sync::{Arc, Mutex},
     thread,
 };
@@ -66,17 +67,22 @@ impl CoreService for Core {
         let rt = Handle::current();
 
         thread::spawn(move || {
-            rt.block_on(start_webui(
+            match rt.block_on(start_webui(
                 path,
                 cmd_tx,
                 superviseur,
                 processes,
                 config_map,
-            ))
-            .map_err(|e| eprintln!("Error: {}", e))
-            .unwrap_or_default();
-            println!("WebUI stopped");
-            std::process::exit(0);
+            )) {
+                Ok(_) => {
+                    std::process::exit(0);
+                }
+                Err(e) => {
+                    if e.to_string() != String::from("Address already in use (os error 48)") {
+                        std::process::exit(1);
+                    }
+                }
+            }
         });
 
         let ip = local_ip_addr::get_local_ip_address()

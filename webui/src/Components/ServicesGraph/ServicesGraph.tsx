@@ -126,6 +126,11 @@ const ServicesGraph: FC<ServicesGraphProps> = (props) => {
               zIndex: 1,
             },
           },
+          DrawerContainer: {
+            style: {
+              width: "45vw",
+            },
+          },
         }}
       >
         <ServiceDetails selectedNode={selectedNode} />

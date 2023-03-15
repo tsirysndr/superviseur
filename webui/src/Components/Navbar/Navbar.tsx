@@ -127,6 +127,11 @@ const Navbar: FC<NavbarProps> = ({ onSearch, results }) => {
               zIndex: 1,
             },
           },
+          DrawerContainer: {
+            style: {
+              width: "45vw",
+            },
+          },
         }}
       >
         <ServiceDetails selectedNode={selectedNode} />
