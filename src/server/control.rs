@@ -57,29 +57,48 @@ impl ControlService for Control {
         let request = request.into_inner();
         let config = request.config;
         let path = request.file_path;
-        let config: ConfigurationData =
+        let mut config: ConfigurationData =
             hcl::from_str(&config).map_err(|e| tonic::Status::internal(e.to_string()))?;
-        self.config_map
-            .lock()
-            .unwrap()
-            .insert(path.clone(), config.clone());
 
         let mut generator = Generator::default();
+        let mut config_map = self.config_map.lock().unwrap();
+
+        // check if the config is already loaded
+        if config_map.contains_key(&path) {
+            // reuse the id of the services
+            let old_config = config_map.get(&path).unwrap();
+            for service in &mut config.services {
+                match old_config.services.iter().find(|s| s.name == service.name) {
+                    Some(old_service) => {
+                        service.id = old_service.id.clone();
+                    }
+                    None => {
+                        service.id = Some(generator.next().unwrap());
+                    }
+                }
+            }
+        } else {
+            config.services = config
+                .services
+                .into_iter()
+                .map(|mut service| {
+                    service.id = Some(generator.next().unwrap());
+                    service
+                })
+                .collect();
+
+            config_map.insert(path.clone(), config.clone());
+        }
 
         for service in config.services {
             self.cmd_tx
-                .send(SuperviseurCommand::Load(
-                    types::configuration::Service {
-                        id: Some(generator.next().unwrap()),
-                        ..service.clone()
-                    },
-                    config.project.clone(),
-                ))
+                .send(SuperviseurCommand::Load(service, config.project.clone()))
                 .map_err(|e| tonic::Status::internal(e.to_string()))?;
         }
 
         Ok(Response::new(LoadConfigResponse { success: true }))
     }
+
     async fn start(
         &self,
         request: Request<StartRequest>,
