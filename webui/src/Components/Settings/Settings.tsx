@@ -2,7 +2,7 @@ import styled from "@emotion/styled";
 import { Input } from "baseui/input";
 import { Select } from "baseui/select";
 import { FC, useEffect, useState } from "react";
-import { Checkbox } from "baseui/checkbox";
+import { Checkbox, STYLE_TYPE } from "baseui/checkbox";
 import { SettingsList, Settings as SettingsData } from "../../Types/Settings";
 import { useForm, Controller } from "react-hook-form";
 import { Check2 } from "@styled-icons/bootstrap/Check2";
@@ -87,6 +87,7 @@ const SettingsRow: FC<SettingsRowProps> = ({ settings }) => {
   useEffect(() => {
     const subscription = watch((value, { name, type }) => {
       if (type === "change") {
+        // console.log(">>", name, value[name!]);
         setShowSaveButtons(true);
       }
     });
@@ -150,19 +151,25 @@ const SettingsRow: FC<SettingsRowProps> = ({ settings }) => {
               <Checkbox
                 checked={field.value as boolean}
                 onChange={() => field.onChange(!field.value)}
+                checkmarkType={STYLE_TYPE.toggle_round}
                 overrides={{
-                  Label: {
+                  Toggle: {
                     style: {
-                      color: "#b03aff",
+                      backgroundColor: "#fff",
                     },
+                  },
+                  ToggleTrack: {
+                    style: ({ $checked }) => ({
+                      backgroundColor: $checked ? "#630be2" : "#e2e2e2",
+                    }),
                   },
                   Checkmark: {
                     style: ({ $checked }) => ({
-                      borderLeftColor: "#b03aff",
-                      borderRightColor: "#b03aff",
-                      borderTopColor: "#b03aff",
-                      borderBottomColor: "#b03aff",
-                      backgroundColor: $checked ? "#b03aff" : null,
+                      borderLeftColor: "#630be2",
+                      borderRightColor: "#630be2",
+                      borderTopColor: "#630be2",
+                      borderBottomColor: "#630be2",
+                      backgroundColor: $checked ? "#630be2" : null,
                     }),
                   },
                 }}
@@ -192,7 +199,7 @@ const SettingsRow: FC<SettingsRowProps> = ({ settings }) => {
                       overrides: {
                         Root: {
                           style: {
-                            backgroundColor: "#b03aff",
+                            backgroundColor: "#630be2",
                           },
                         },
                       },
