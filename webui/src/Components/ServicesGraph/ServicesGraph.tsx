@@ -105,8 +105,8 @@ const ServicesGraph: FC<ServicesGraphProps> = (props) => {
       <div
         style={{
           position: "absolute",
-          width: "100%",
-          height: "100%",
+          width: "calc(100% - 15px)",
+          height: "calc(100% - 20px)",
         }}
       >
         <Background />
