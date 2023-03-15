@@ -2,20 +2,22 @@
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Service {
     #[prost(string, tag = "1")]
-    pub name: ::prost::alloc::string::String,
+    pub id: ::prost::alloc::string::String,
     #[prost(string, tag = "2")]
-    pub command: ::prost::alloc::string::String,
+    pub name: ::prost::alloc::string::String,
     #[prost(string, tag = "3")]
-    pub description: ::prost::alloc::string::String,
+    pub command: ::prost::alloc::string::String,
     #[prost(string, tag = "4")]
-    pub namespace: ::prost::alloc::string::String,
+    pub description: ::prost::alloc::string::String,
     #[prost(string, tag = "5")]
-    pub r#type: ::prost::alloc::string::String,
+    pub namespace: ::prost::alloc::string::String,
     #[prost(string, tag = "6")]
+    pub r#type: ::prost::alloc::string::String,
+    #[prost(string, tag = "7")]
     pub status: ::prost::alloc::string::String,
-    #[prost(string, repeated, tag = "7")]
+    #[prost(string, repeated, tag = "8")]
     pub depends_on: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
-    #[prost(bool, tag = "8")]
+    #[prost(bool, tag = "9")]
     pub auto_restart: bool,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
@@ -49,4 +51,6 @@ pub struct Process {
     pub auto_restart: bool,
     #[prost(string, repeated, tag = "14")]
     pub env: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    #[prost(string, tag = "15")]
+    pub service_id: ::prost::alloc::string::String,
 }

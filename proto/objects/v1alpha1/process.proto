@@ -17,4 +17,5 @@ message Process {
   string stderr_file = 12;
   bool auto_restart = 13;
   repeated string env = 14;
+  string service_id = 15;
 }

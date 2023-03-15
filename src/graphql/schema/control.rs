@@ -108,20 +108,35 @@ impl ControlQuery {
 
         let processes = processes.lock().unwrap();
 
-        let (process, _) = processes
+        match processes
             .iter()
             .find(|(p, _)| p.service_id.clone() == id.to_string())
-            .unwrap();
-        let service = config
-            .services
-            .iter()
-            .find(|s| s.id == Some(id.to_string()))
-            .ok_or(Error::new("Service not found"))?;
+        {
+            Some((process, _)) => {
+                let service = config
+                    .services
+                    .iter()
+                    .find(|s| s.id == Some(id.to_string()))
+                    .ok_or(Error::new("Service not found"))?;
 
-        Ok(Service {
-            status: process.state.to_string(),
-            ..Service::from(service)
-        })
+                Ok(Service {
+                    status: process.state.to_string(),
+                    ..Service::from(service)
+                })
+            }
+            None => {
+                let service = config
+                    .services
+                    .iter()
+                    .find(|s| s.id == Some(id.to_string()))
+                    .ok_or(Error::new("Service not found"))?;
+
+                Ok(Service {
+                    status: "stopped".to_string(),
+                    ..Service::from(service)
+                })
+            }
+        }
     }
 }
 

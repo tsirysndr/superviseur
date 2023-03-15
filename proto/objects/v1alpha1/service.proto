@@ -3,12 +3,13 @@ syntax = "proto3";
 package objects.v1alpha1;
 
 message Service {
-  string name = 1;
-  string command = 2;
-  string description = 3;
-  string namespace = 4;
-  string type = 5;
-  string status = 6;
-  repeated string depends_on = 7;
-  bool auto_restart = 8;
+  string id = 1;
+  string name = 2;
+  string command = 3;
+  string description = 4;
+  string namespace = 5;
+  string type = 6;
+  string status = 7;
+  repeated string depends_on = 8;
+  bool auto_restart = 9;
 }

@@ -25,6 +25,7 @@ pub mod api {
         impl Into<types::service::Service> for Service {
             fn into(self) -> types::service::Service {
                 types::service::Service {
+                    id: self.id,
                     name: self.name,
                     status: self.status,
                     depends_on: self.depends_on,
@@ -38,6 +39,7 @@ pub mod api {
         impl From<types::configuration::Service> for Service {
             fn from(service: types::configuration::Service) -> Self {
                 Self {
+                    id: service.id.unwrap_or_default(),
                     name: service.name,
                     depends_on: service.depends_on,
                     command: service.command,
@@ -72,6 +74,7 @@ pub mod api {
                     stderr: self.stderr_file,
                     auto_restart: self.auto_restart,
                     env,
+                    service_id: self.service_id,
                     ..Default::default()
                 }
             }
@@ -97,6 +100,7 @@ pub mod api {
                     stderr_file: process.stderr,
                     auto_restart: process.auto_restart,
                     env,
+                    service_id: process.service_id,
                     ..Default::default()
                 }
             }
