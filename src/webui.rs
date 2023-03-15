@@ -108,6 +108,11 @@ pub async fn start_webui(
         Mutation::default(),
         Subscription::default(),
     )
+    .data(config_file_path)
+    .data(superviseur)
+    .data(cmd_tx)
+    .data(processes)
+    .data(config_map)
     .finish();
 
     HttpServer::new(move || {

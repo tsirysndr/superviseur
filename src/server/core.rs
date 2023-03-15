@@ -69,7 +69,7 @@ impl CoreService for Core {
                 start_webui(path, cmd_tx, superviseur, processes, config_map).await
             })
             .map_err(|e| eprintln!("Error: {}", e))
-            .unwrap();
+            .unwrap_or_default();
         });
 
         let ip = local_ip_addr::get_local_ip_address()

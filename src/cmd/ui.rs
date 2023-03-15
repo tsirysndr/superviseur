@@ -10,12 +10,6 @@ use tower::service_fn;
 use crate::{types::{BANNER, UNIX_SOCKET_PATH, SUPERFILE},  config::verify_if_config_file_is_present, api::superviseur::v1alpha1::{core_service_client::CoreServiceClient,  control_service_client::ControlServiceClient, LoadConfigRequest, StartWebDashboardRequest}};
 
 pub async fn execute_ui() -> Result<(), Error> {
-    println!("{}", BANNER.bright_purple());
-    println!(
-        "Starting dashboard ui on {} 🚀",
-        "http://localhost:5478".cyan()
-    );
-    
     verify_if_config_file_is_present()?;
     let current_dir = std::env::current_dir()?;
     let config = std::fs::read_to_string(current_dir.join(SUPERFILE))?;
@@ -39,11 +33,18 @@ pub async fn execute_ui() -> Result<(), Error> {
     let request = tonic::Request::new(StartWebDashboardRequest {
         config_file_path: current_dir.to_str().unwrap().to_string(),
     });
-    client.start_web_dashboard(request).await?;
+    let response = client.start_web_dashboard(request).await?;
+    let response = response.into_inner();
+
+    println!("{}", BANNER.bright_purple());
+    println!(
+        "Starting dashboard ui on {} 🚀",
+        response.url.cyan()
+    );
 
     thread::spawn(move || {
         thread::sleep(Duration::from_secs(2));
-        open::that("http://localhost:5478").unwrap();
+        open::that(response.url).unwrap();
     });
 
 
