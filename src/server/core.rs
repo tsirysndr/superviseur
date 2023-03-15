@@ -4,7 +4,7 @@ use std::{
     thread,
 };
 
-use tokio::sync::mpsc;
+use tokio::{runtime::Handle, sync::mpsc};
 use tonic::{Request, Response};
 
 use crate::{
@@ -63,13 +63,20 @@ impl CoreService for Core {
         let processes = self.processes.clone();
         let config_map = self.config_map.clone();
 
+        let rt = Handle::current();
+
         thread::spawn(move || {
-            let rt = actix_web::rt::Runtime::new().unwrap();
-            rt.block_on(async move {
-                start_webui(path, cmd_tx, superviseur, processes, config_map).await
-            })
+            rt.block_on(start_webui(
+                path,
+                cmd_tx,
+                superviseur,
+                processes,
+                config_map,
+            ))
             .map_err(|e| eprintln!("Error: {}", e))
             .unwrap_or_default();
+            println!("WebUI stopped");
+            std::process::exit(0);
         });
 
         let ip = local_ip_addr::get_local_ip_address()
