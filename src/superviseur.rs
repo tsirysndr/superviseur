@@ -44,6 +44,9 @@ pub enum SuperviseurCommand {
     Start(Service, String),
     Stop(Service, String),
     Restart(Service, String),
+    StartAll(String, Vec<Service>),
+    StopAll(String, Vec<Service>),
+    RestartAll(String, Vec<Service>),
 }
 
 #[derive(Debug)]
@@ -88,6 +91,7 @@ impl SuperviseurInternal {
             .find(|(p, key)| p.name == service.name && key == &project)
             .map(|(p, _)| p)
         {
+            process.service_id = service.id.unwrap_or("-".to_string());
             process.name = service.name;
             process.command = service.command;
             process.description = service.description;
@@ -103,6 +107,7 @@ impl SuperviseurInternal {
 
         processes.push((
             Process {
+                service_id: service.id.unwrap_or("-".to_string()),
                 name: service.name,
                 command: service.command,
                 description: service.description,
@@ -229,14 +234,78 @@ impl SuperviseurInternal {
         self.handle_start(service, project)
     }
 
+    fn handle_start_all(&mut self, project: String, services: Vec<Service>) -> Result<(), Error> {
+        let mut processes = self.processes.lock().unwrap();
+        let cmd_tx = self.cmd_tx.clone();
+        for (process, _key) in processes.iter_mut().filter(|(_, key)| key == &project) {
+            if process.state == State::Stopped {
+                let service = services
+                    .iter()
+                    .find(|s| s.name == process.name)
+                    .unwrap()
+                    .clone();
+                cmd_tx
+                    .send(SuperviseurCommand::Start(service, project.clone()))
+                    .unwrap();
+            }
+        }
+        Ok(())
+    }
+
+    fn handle_stop_all(&mut self, project: String, services: Vec<Service>) -> Result<(), Error> {
+        let mut processes = self.processes.lock().unwrap();
+        let cmd_tx = self.cmd_tx.clone();
+        for (process, _key) in processes.iter_mut().filter(|(_, key)| key == &project) {
+            if process.state == State::Stopped {
+                let service = services
+                    .iter()
+                    .find(|s| s.name == process.name)
+                    .unwrap()
+                    .clone();
+                cmd_tx
+                    .send(SuperviseurCommand::Stop(service, project.clone()))
+                    .unwrap();
+            }
+        }
+        Ok(())
+    }
+
+    fn handle_restart_all(&mut self, project: String, services: Vec<Service>) -> Result<(), Error> {
+        let mut processes = self.processes.lock().unwrap();
+        let cmd_tx = self.cmd_tx.clone();
+        for (process, _key) in processes.iter_mut().filter(|(_, key)| key == &project) {
+            if process.state == State::Stopped {
+                let service = services
+                    .iter()
+                    .find(|s| s.name == process.name)
+                    .unwrap()
+                    .clone();
+                cmd_tx
+                    .send(SuperviseurCommand::Restart(service, project.clone()))
+                    .unwrap();
+            }
+        }
+        Ok(())
+    }
+
     fn handle_command(&mut self, cmd: SuperviseurCommand) -> Result<(), Error> {
         match cmd {
             SuperviseurCommand::Load(service, project) => self.handle_load(service, project),
             SuperviseurCommand::Start(service, project) => self.handle_start(service, project),
             SuperviseurCommand::Stop(service, project) => self.handle_stop(service, project),
             SuperviseurCommand::Restart(service, project) => self.handle_restart(service, project),
+            SuperviseurCommand::StartAll(project, services) => {
+                self.handle_start_all(project, services)
+            }
+            SuperviseurCommand::StopAll(project, services) => {
+                self.handle_stop_all(project, services)
+            }
+            SuperviseurCommand::RestartAll(project, services) => {
+                self.handle_restart_all(project, services)
+            }
         }
     }
+
     fn handle_event(&mut self, event: ProcessEvent) -> Result<(), Error> {
         let mut processes = self.processes.lock().unwrap();
         match event {

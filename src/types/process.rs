@@ -109,6 +109,8 @@ pub struct Process {
     pub stdout: String,
     #[tabled(skip)]
     pub stderr: String,
+    #[tabled(rename = "SERVICE_ID")]
+    pub service_id: String,
 }
 
 fn display_option<T: ToString>(value: &Option<T>) -> String {

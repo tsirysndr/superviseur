@@ -3,9 +3,9 @@ use async_graphql::Object;
 #[derive(Default, Clone)]
 pub struct Process {
     pub name: String,
-    pub description: String,
-    pub pid: i32,
-    pub ppid: i32,
+    pub description: Option<String>,
+    pub pid: Option<u32>,
+    pub ppid: Option<u32>,
     pub command: String,
     pub working_directory: String,
     pub project: String,
@@ -14,6 +14,7 @@ pub struct Process {
     pub stderr_file: String,
     pub auto_restart: bool,
     pub env: Vec<String>,
+    pub state: String,
 }
 
 #[Object]
@@ -22,15 +23,15 @@ impl Process {
         &self.name
     }
 
-    async fn description(&self) -> &str {
-        &self.description
+    async fn description(&self) -> Option<&str> {
+        self.description.as_deref()
     }
 
-    async fn pid(&self) -> i32 {
+    async fn pid(&self) -> Option<u32> {
         self.pid
     }
 
-    async fn ppid(&self) -> i32 {
+    async fn ppid(&self) -> Option<u32> {
         self.ppid
     }
 

@@ -3,6 +3,7 @@ use std::{
     sync::{Arc, Mutex},
 };
 
+use names::Generator;
 use tokio::sync::mpsc;
 use tonic::{Request, Response};
 
@@ -63,9 +64,17 @@ impl ControlService for Control {
             .unwrap()
             .insert(path.clone(), config.clone());
 
+        let mut generator = Generator::default();
+
         for service in config.services {
             self.cmd_tx
-                .send(SuperviseurCommand::Load(service, config.project.clone()))
+                .send(SuperviseurCommand::Load(
+                    types::configuration::Service {
+                        id: Some(generator.next().unwrap()),
+                        ..service.clone()
+                    },
+                    config.project.clone(),
+                ))
                 .map_err(|e| tonic::Status::internal(e.to_string()))?;
         }
 

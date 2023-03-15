@@ -5,7 +5,7 @@ pub struct Service {
     pub id: ID,
     pub name: String,
     pub command: String,
-    pub description: String,
+    pub description: Option<String>,
     pub namespace: String,
     pub r#type: String,
     pub status: String,
@@ -32,8 +32,8 @@ impl Service {
         &self.command
     }
 
-    async fn description(&self) -> &str {
-        &self.description
+    async fn description(&self) -> Option<&str> {
+        self.description.as_deref()
     }
 
     async fn namespace(&self) -> &str {

@@ -13,6 +13,8 @@ pub struct Configuration {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Service {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub id: Option<String>,
     pub name: String,
     pub r#type: String, // docker, podman, exec, wasm
     pub command: String,
