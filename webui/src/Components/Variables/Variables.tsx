@@ -193,7 +193,7 @@ const VariableRow: FC<VariableRowProps> = (props) => {
                     style: {
                       height: "34px",
                       borderRadius: "2px",
-                      width: "186px",
+                      width: "224px",
                     },
                   },
                   Input: {
