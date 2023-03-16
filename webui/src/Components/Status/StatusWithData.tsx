@@ -1,23 +1,38 @@
 import Status from "./Status";
 import { FC } from "react";
-import { parseIntoStatuses, statuses } from "../../Mocks/ServiceStatuses";
-import { useGetStatusQuery } from "../../Hooks/GraphQL";
+import { parseIntoStatuses } from "../../Mocks/ServiceStatuses";
+import {
+  useGetStatusQuery,
+  useRestartMutation,
+  useStartMutation,
+  useStopMutation,
+} from "../../Hooks/GraphQL";
 
-const StatusWithData: FC = () => {
+export interface StatusWithDataProps {
+  selectedNode: string;
+}
+
+const StatusWithData: FC<StatusWithDataProps> = ({ selectedNode }) => {
+  const [startMutation] = useStartMutation();
+  const [stopMutation] = useStopMutation();
+  const [restartMutation] = useRestartMutation();
   const { data, loading } = useGetStatusQuery({
     variables: {
-      id: "1",
+      id: selectedNode,
     },
   });
   const statuses = loading ? [] : parseIntoStatuses(data!.status);
+  const onStart = () => startMutation({ variables: { id: selectedNode } });
+  const onRestart = () => restartMutation({ variables: { id: selectedNode } });
+  const onStop = () => stopMutation({ variables: { id: selectedNode } });
   return (
     <>
       {!loading && (
         <Status
           statuses={statuses}
-          onStart={() => {}}
-          onRestart={() => {}}
-          onStop={() => {}}
+          onStart={onStart}
+          onRestart={onRestart}
+          onStop={onStop}
         />
       )}
     </>

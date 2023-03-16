@@ -36,3 +36,12 @@ export const GET_SERVICE = gql`
   }
   ${SERVICE_FRAGMENT}
 `;
+
+export const GET_ENV_VARS = gql`
+  query GetEnvVars($id: ID!) {
+    service(id: $id) {
+      id
+      env
+    }
+  }
+`;

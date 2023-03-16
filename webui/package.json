@@ -57,7 +57,6 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "start:dev": "cross-env REACT_APP_ENV=development react-scripts start",
     "build": "cross-env CI=false react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",

@@ -18,6 +18,7 @@ pub fn execute_new(cfg_format: ConfigFormat) {
             working_dir: "/tmp".to_string(),
             description: Some("Ping Service Example".to_string()),
             depends_on: vec![],
+            dependencies: vec![],
             env,
             autostart: true,
             autorestart: false,

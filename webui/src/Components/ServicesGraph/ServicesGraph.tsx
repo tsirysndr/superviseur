@@ -111,7 +111,7 @@ const ServicesGraph: FC<ServicesGraphProps> = (props) => {
       >
         <Background />
       </div>
-      <Actions onStart={() => {}} onStop={() => {}} onRestart={() => {}} />
+      <Actions />
       <Graph graph={graph} options={options} events={events} ref={graphRef} />
       <Drawer
         isOpen={isOpen}

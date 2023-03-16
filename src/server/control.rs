@@ -90,7 +90,33 @@ impl ControlService for Control {
             config_map.insert(path.clone(), config.clone());
         }
 
-        for service in config.services {
+        let config = config_map.get_mut(&path).unwrap();
+
+        let services = config.services.clone();
+        let mut services = services.into_iter();
+
+        // convert services dependencies to ids
+        for service in &mut config.services {
+            let mut dependencies = vec![];
+            for dependency in &service.depends_on {
+                match services.find(|s| s.name == *dependency) {
+                    Some(service) => {
+                        dependencies.push(service.id.clone().unwrap());
+                    }
+                    None => {
+                        return Err(tonic::Status::not_found(format!(
+                            "Service {} not found",
+                            dependency
+                        )));
+                    }
+                }
+            }
+            service.dependencies = dependencies;
+        }
+
+        let services = config.services.clone();
+
+        for service in services.into_iter() {
             self.cmd_tx
                 .send(SuperviseurCommand::Load(service, config.project.clone()))
                 .map_err(|e| tonic::Status::internal(e.to_string()))?;

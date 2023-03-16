@@ -8,11 +8,7 @@ export type ProvidersProps = {
 };
 
 const Providers: FC<ProvidersProps> = ({ children }) => {
-  return (
-    <MockedProvider mocks={mocks} addTypename={true}>
-      <ThemeProvider>{children}</ThemeProvider>
-    </MockedProvider>
-  );
+  return <ThemeProvider>{children}</ThemeProvider>;
 };
 
 export default Providers;

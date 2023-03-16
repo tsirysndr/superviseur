@@ -23,6 +23,8 @@ const LineNumber = styled.span<{ displayLineNumber?: boolean }>`
   font-size: 12px;
   padding: 2px;
   padding-right: 10px;
+  min-width: 20px;
+  text-align: right;
 `;
 
 const Line = styled.span`

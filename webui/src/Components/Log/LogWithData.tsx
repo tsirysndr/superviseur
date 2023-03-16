@@ -1,14 +1,33 @@
-import { FC } from "react";
-import { useGetLogsQuery } from "../../Hooks/GraphQL";
+import { FC, useEffect, useState } from "react";
+import { useTailLogsQuery } from "../../Hooks/GraphQL";
 import Log from "./Log";
 
-const LogWithData: FC = () => {
-  const { data } = useGetLogsQuery({
+export interface LogWithDataProps {
+  serviceId: string;
+}
+
+const LogWithData: FC<LogWithDataProps> = ({ serviceId }) => {
+  const [lines, setLines] = useState<string[]>([]);
+  const { data, startPolling, stopPolling } = useTailLogsQuery({
     variables: {
-      id: "1",
+      id: serviceId,
+      numLines: 1,
     },
   });
-  return <Log lines={data?.logs.lines || []} />;
+
+  useEffect(() => {
+    startPolling(200);
+    return () => {
+      stopPolling();
+    };
+  });
+
+  useEffect(() => {
+    if (data?.tail.lines) {
+      setLines((prev: string[]) => [...prev, ...data.tail.lines]);
+    }
+  }, [data?.tail.lines]);
+  return <Log lines={lines} />;
 };
 
 export default LogWithData;

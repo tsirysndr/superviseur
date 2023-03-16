@@ -2,7 +2,10 @@ import { Service } from "../Hooks/GraphQL";
 import { Settings } from "../Types/Settings";
 import { services } from "./Services";
 
-export const parseIntoSettings = (service: Service): Settings[] => {
+export const parseIntoSettings = (
+  service: Service,
+  services: Service[]
+): Settings[] => {
   return [
     {
       name: "Name",

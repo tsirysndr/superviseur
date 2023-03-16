@@ -219,6 +219,13 @@ export type GetServiceQueryVariables = Exact<{
 
 export type GetServiceQuery = { __typename?: 'Query', service: { __typename?: 'Service', id: string, name: string, command: string, description?: string | null, namespace: string, type: string, status: string, dependsOn: Array<string>, env: Array<string>, autoRestart: boolean, workingDirectory: string, logFile: string, stderrFile: string, port: number } };
 
+export type GetEnvVarsQueryVariables = Exact<{
+  id: Scalars['ID'];
+}>;
+
+
+export type GetEnvVarsQuery = { __typename?: 'Query', service: { __typename?: 'Service', id: string, env: Array<string> } };
+
 export type ProcessFragmentFragment = { __typename?: 'Process', name: string, description?: string | null, pid?: number | null, ppid?: number | null, command: string, workingDirectory: string, project: string, type: string, logFile: string, stderrFile: string, autoRestart: boolean, env: Array<string>, state: string, upTime: string };
 
 export type ServiceFragmentFragment = { __typename?: 'Service', id: string, name: string, command: string, description?: string | null, namespace: string, type: string, status: string, dependsOn: Array<string>, env: Array<string>, autoRestart: boolean, workingDirectory: string, logFile: string, stderrFile: string, port: number };
@@ -632,6 +639,42 @@ export function useGetServiceLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions
 export type GetServiceQueryHookResult = ReturnType<typeof useGetServiceQuery>;
 export type GetServiceLazyQueryHookResult = ReturnType<typeof useGetServiceLazyQuery>;
 export type GetServiceQueryResult = Apollo.QueryResult<GetServiceQuery, GetServiceQueryVariables>;
+export const GetEnvVarsDocument = gql`
+    query GetEnvVars($id: ID!) {
+  service(id: $id) {
+    id
+    env
+  }
+}
+    `;
+
+/**
+ * __useGetEnvVarsQuery__
+ *
+ * To run a query within a React component, call `useGetEnvVarsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetEnvVarsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetEnvVarsQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useGetEnvVarsQuery(baseOptions: Apollo.QueryHookOptions<GetEnvVarsQuery, GetEnvVarsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetEnvVarsQuery, GetEnvVarsQueryVariables>(GetEnvVarsDocument, options);
+      }
+export function useGetEnvVarsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetEnvVarsQuery, GetEnvVarsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetEnvVarsQuery, GetEnvVarsQueryVariables>(GetEnvVarsDocument, options);
+        }
+export type GetEnvVarsQueryHookResult = ReturnType<typeof useGetEnvVarsQuery>;
+export type GetEnvVarsLazyQueryHookResult = ReturnType<typeof useGetEnvVarsLazyQuery>;
+export type GetEnvVarsQueryResult = Apollo.QueryResult<GetEnvVarsQuery, GetEnvVarsQueryVariables>;
 export const GetLogsDocument = gql`
     query GetLogs($id: ID!) {
   logs(id: $id) {

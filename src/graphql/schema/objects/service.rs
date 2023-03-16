@@ -102,7 +102,7 @@ impl From<&mut types::configuration::Service> for Service {
                 .map(|(k, v)| format!("{}={}", k, v))
                 .collect(),
             auto_restart: service.autorestart,
-            depends_on: service.depends_on.clone(),
+            depends_on: service.dependencies.clone(),
             working_directory: service.working_dir.clone(),
             log_file: service.stdout.clone(),
             stderr_file: service.stderr.clone(),
@@ -135,7 +135,7 @@ impl From<&types::configuration::Service> for Service {
                 .map(|(k, v)| format!("{}={}", k, v))
                 .collect(),
             auto_restart: service.autorestart,
-            depends_on: service.depends_on.clone(),
+            depends_on: service.dependencies.clone(),
             working_directory: service.working_dir.clone(),
             log_file: service.stdout.clone(),
             stderr_file: service.stderr.clone(),

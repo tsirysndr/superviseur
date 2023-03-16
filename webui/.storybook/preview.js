@@ -1,7 +1,8 @@
 import { Client as Styletron } from "styletron-engine-atomic";
 import { Provider as StyletronProvider } from "styletron-react";
 import Providers from "../src/Providers";
-
+import { MockedProvider } from "@apollo/client/testing";
+import { mocks } from "../src/Mocks";
 import "@fontsource/ubuntu";
 import "reactflow/dist/style.css";
 import "../src/index.css";
@@ -21,9 +22,11 @@ export const parameters = {
 export const decorators = [
   (Story) => (
     <StyletronProvider value={engine}>
-      <Providers>
-        <Story />
-      </Providers>
+      <MockedProvider mocks={mocks} addTypename={true}>
+        <Providers>
+          <Story />
+        </Providers>
+      </MockedProvider>
     </StyletronProvider>
   ),
 ];

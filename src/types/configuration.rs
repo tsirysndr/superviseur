@@ -21,6 +21,8 @@ pub struct Service {
     pub working_dir: String,
     pub description: Option<String>,
     pub depends_on: Vec<String>,
+    #[serde(skip_serializing, skip_deserializing)]
+    pub dependencies: Vec<String>,
     pub env: HashMap<String, String>,
     pub autostart: bool,
     pub autorestart: bool,

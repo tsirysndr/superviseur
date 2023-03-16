@@ -1,4 +1,4 @@
-import { GetLogsMocks } from "./Lines";
+import { GetLogsMocks, TailLogsMocks } from "./Lines";
 import {
   GetProcessesMock,
   GetServiceMock,
@@ -13,11 +13,12 @@ import {
 
 export const mocks = [
   GetServicesMock,
-  GetServiceMock,
+  ...GetServiceMock,
   GetProcessesMock,
-  GetStatusMock,
+  ...GetStatusMock,
   GetLogsMocks,
   CreateEnvVarMock,
   ...UpdateEnvVarMock,
   ...DeleteEnvVarMock,
+  ...TailLogsMocks,
 ];

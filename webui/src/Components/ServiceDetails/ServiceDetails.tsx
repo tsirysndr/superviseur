@@ -55,7 +55,7 @@ const ServiceDetails: FC<ServiceDetailsProps> = (props) => {
         }}
       >
         <Tab title="Status">
-          <Status />
+          {selectedNode && <Status selectedNode={selectedNode} />}
         </Tab>
         <Tab
           title="Log"
@@ -71,7 +71,7 @@ const ServiceDetails: FC<ServiceDetailsProps> = (props) => {
             },
           }}
         >
-          <Log />
+          {selectedNode && <Log serviceId={selectedNode} />}
         </Tab>
         <Tab
           title="Variables"
@@ -87,7 +87,7 @@ const ServiceDetails: FC<ServiceDetailsProps> = (props) => {
             },
           }}
         >
-          <Variables />
+          {selectedNode && <Variables serviceId={selectedNode} />}
         </Tab>
         <Tab
           title="Settings"
@@ -103,7 +103,7 @@ const ServiceDetails: FC<ServiceDetailsProps> = (props) => {
             },
           }}
         >
-          <Settings />
+          {selectedNode && <Settings serviceId={selectedNode} />}
         </Tab>
       </Tabs>
     </Container>

@@ -1,16 +1,25 @@
 import { FC } from "react";
-import { parseIntoSettings, settings } from "../../Mocks/Settings";
+import { parseIntoSettings } from "../../Mocks/Settings";
 import Settings from "./Settings";
 import { Settings as SettingsData } from "../../Types/Settings";
-import { useGetServiceQuery } from "../../Hooks/GraphQL";
+import { useGetServiceQuery, useGetServicesQuery } from "../../Hooks/GraphQL";
 
-const SettingsWithData: FC = () => {
+export interface SettingsWithDataProps {
+  serviceId: string;
+}
+
+const SettingsWithData: FC<SettingsWithDataProps> = ({ serviceId }) => {
+  const { data: getServicesData, loading: getServicesLoading } =
+    useGetServicesQuery();
   const { data, loading } = useGetServiceQuery({
     variables: {
-      id: "1",
+      id: serviceId,
     },
   });
-  const settings = loading ? [] : parseIntoSettings(data!.service);
+  const settings =
+    (loading && getServicesLoading) || !data
+      ? []
+      : parseIntoSettings(data!.service, getServicesData!.services);
   return <Settings settings={settings} onSave={(x: SettingsData) => {}} />;
 };
 

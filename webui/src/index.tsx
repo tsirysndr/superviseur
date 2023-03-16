@@ -6,6 +6,7 @@ import reportWebVitals from "./reportWebVitals";
 import { Client as Styletron } from "styletron-engine-atomic";
 import { Provider as StyletronProvider } from "styletron-react";
 import Providers from "./Providers";
+import ApolloProvider from "./Providers/ApolloProvider";
 
 import "@fontsource/ubuntu";
 import "reactflow/dist/style.css";
@@ -18,9 +19,11 @@ const root = ReactDOM.createRoot(
 root.render(
   <React.StrictMode>
     <StyletronProvider value={engine}>
-      <Providers>
-        <App />
-      </Providers>
+      <ApolloProvider>
+        <Providers>
+          <App />
+        </Providers>
+      </ApolloProvider>
     </StyletronProvider>
   </React.StrictMode>
 );

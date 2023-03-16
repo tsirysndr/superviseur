@@ -2,19 +2,23 @@ import { FC } from "react";
 import {
   useCreateEnvVarMutation,
   useDeleteEnvVarMutation,
-  useGetServiceQuery,
+  useGetEnvVarsQuery,
   useUpdateEnvVarMutation,
 } from "../../Hooks/GraphQL";
 import { EnvironmentVariable } from "../../Types/EnvironmentVariable";
 import Variables from "./Variables";
 
-const VariablesWithData: FC = () => {
+export interface VariablesWithDataProps {
+  serviceId: string;
+}
+
+const VariablesWithData: FC<VariablesWithDataProps> = ({ serviceId }) => {
   const [createEnvVar] = useCreateEnvVarMutation();
   const [deleteEnvVar] = useDeleteEnvVarMutation();
   const [updateEnvVar] = useUpdateEnvVarMutation();
-  const { data } = useGetServiceQuery({
+  const { data, loading } = useGetEnvVarsQuery({
     variables: {
-      id: "1",
+      id: serviceId,
     },
   });
   const variables =
@@ -53,12 +57,16 @@ const VariablesWithData: FC = () => {
   };
 
   return (
-    <Variables
-      variables={variables}
-      onAdd={onAdd}
-      onEdit={onEdit}
-      onRemove={onRemove}
-    />
+    <>
+      {!loading && (
+        <Variables
+          variables={variables}
+          onAdd={onAdd}
+          onEdit={onEdit}
+          onRemove={onRemove}
+        />
+      )}
+    </>
   );
 };
 

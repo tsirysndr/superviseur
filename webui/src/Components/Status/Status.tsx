@@ -186,7 +186,7 @@ const Status: FC<StatusProps> = (props) => {
             <StatusName>{status.name} :</StatusName>
             {status.name !== "Active" && (
               <StatusValue terminal={status.name.toLowerCase() === "command"}>
-                {status.status.toString()}
+                {status.status?.toString()}
               </StatusValue>
             )}
             {status.name === "Active" && parseStatus(status)}
