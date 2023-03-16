@@ -134,7 +134,6 @@ impl SuperviseurInternal {
         service: Service,
         project: String,
         services: Vec<Service>,
-        force: bool,
     ) -> Result<(), Error> {
         // start recursively if service depends on other services
         let dependencies = service.depends_on.clone();
@@ -146,7 +145,7 @@ impl SuperviseurInternal {
             for dependency in dependencies.into_iter() {
                 match services.iter().find(|s| s.name == dependency) {
                     Some(s) => {
-                        self.handle_start(s.clone(), project.clone(), services.clone(), force)?;
+                        self.handle_start(s.clone(), project.clone(), services.clone())?;
                         thread::sleep(Duration::from_millis(100));
                     }
                     None => {
@@ -163,7 +162,7 @@ impl SuperviseurInternal {
             .find(|(p, key)| p.name == service.name && key == &project)
             .map(|(p, _)| p)
         {
-            if process.state == State::Running && !force {
+            if process.state == State::Running {
                 return Ok(());
             }
         }
@@ -250,17 +249,28 @@ impl SuperviseurInternal {
         Ok(())
     }
 
-    fn handle_stop(&self, service: Service, project: String) -> Result<(), Error> {
+    fn handle_stop(
+        &self,
+        service: Service,
+        project: String,
+        services: Vec<Service>,
+        restart: bool,
+    ) -> Result<(), Error> {
         let mut childs = self.childs.lock().unwrap();
-        let service_key = format!("{}-{}", project, service.name);
+        let service_key = format!("{}-{}", project.clone(), service.name.clone());
         match childs.get(&service_key) {
             Some(pid) => {
                 signal::kill(Pid::from_raw(*pid), Signal::SIGTERM)?;
                 childs.remove(&service_key);
 
                 self.event_tx
-                    .send(ProcessEvent::Stopped(service.name, project))
+                    .send(ProcessEvent::Stopped(service.name.clone(), project.clone()))
                     .unwrap();
+                if restart {
+                    self.cmd_tx
+                        .send(SuperviseurCommand::Start(service, project, services))
+                        .unwrap();
+                }
                 Ok(())
             }
             None => Ok(()),
@@ -273,17 +283,18 @@ impl SuperviseurInternal {
         project: String,
         services: Vec<Service>,
     ) -> Result<(), Error> {
-        self.handle_stop(service.clone(), project.clone())?;
-        self.handle_start(service, project, services, true)
+        self.handle_stop(service.clone(), project.clone(), services.clone(), true)
     }
 
     fn handle_command(&mut self, cmd: SuperviseurCommand) -> Result<(), Error> {
         match cmd {
             SuperviseurCommand::Load(service, project) => self.handle_load(service, project),
             SuperviseurCommand::Start(service, project, services) => {
-                self.handle_start(service, project, services, false)
+                self.handle_start(service, project, services)
             }
-            SuperviseurCommand::Stop(service, project) => self.handle_stop(service, project),
+            SuperviseurCommand::Stop(service, project) => {
+                self.handle_stop(service, project, vec![], false)
+            }
             SuperviseurCommand::Restart(service, project, services) => {
                 self.handle_restart(service, project, services)
             }
