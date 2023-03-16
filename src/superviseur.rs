@@ -146,7 +146,7 @@ impl SuperviseurInternal {
                 match services.iter().find(|s| s.name == dependency) {
                     Some(s) => {
                         self.handle_start(s.clone(), project.clone(), services.clone())?;
-                        thread::sleep(Duration::from_secs(1));
+                        thread::sleep(Duration::from_millis(500));
                     }
                     None => {
                         return Err(anyhow::anyhow!("Service {} not found", dependency));
@@ -154,6 +154,19 @@ impl SuperviseurInternal {
                 }
             }
         }
+
+        // skip if already started
+        let mut processes = self.processes.lock().unwrap();
+        if let Some(process) = processes
+            .iter()
+            .find(|(p, key)| p.name == service.name && key == &project)
+            .map(|(p, _)| p)
+        {
+            if process.state == State::Running {
+                return Ok(());
+            }
+        }
+
         let envs = service.env.clone();
         let working_dir = service.working_dir.clone();
         let mut child = std::process::Command::new("sh")
@@ -166,7 +179,6 @@ impl SuperviseurInternal {
             .spawn()
             .unwrap();
 
-        let mut processes = self.processes.lock().unwrap();
         let mut process = &mut processes
             .iter_mut()
             .find(|(p, key)| p.name == service.name && key == &project)
@@ -176,6 +188,8 @@ impl SuperviseurInternal {
         self.event_tx
             .send(ProcessEvent::Started(service.name.clone(), project.clone()))
             .unwrap();
+
+        println!("Started {}", service.name);
 
         process.up_time = Some(chrono::Utc::now());
         let service_key = format!("{}-{}", project, service.name);
