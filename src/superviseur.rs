@@ -134,6 +134,7 @@ impl SuperviseurInternal {
         service: Service,
         project: String,
         services: Vec<Service>,
+        force: bool,
     ) -> Result<(), Error> {
         // start recursively if service depends on other services
         let dependencies = service.depends_on.clone();
@@ -145,7 +146,7 @@ impl SuperviseurInternal {
             for dependency in dependencies.into_iter() {
                 match services.iter().find(|s| s.name == dependency) {
                     Some(s) => {
-                        self.handle_start(s.clone(), project.clone(), services.clone())?;
+                        self.handle_start(s.clone(), project.clone(), services.clone(), force)?;
                         thread::sleep(Duration::from_millis(100));
                     }
                     None => {
@@ -162,7 +163,7 @@ impl SuperviseurInternal {
             .find(|(p, key)| p.name == service.name && key == &project)
             .map(|(p, _)| p)
         {
-            if process.state == State::Running {
+            if process.state == State::Running && !force {
                 return Ok(());
             }
         }
@@ -273,14 +274,14 @@ impl SuperviseurInternal {
         services: Vec<Service>,
     ) -> Result<(), Error> {
         self.handle_stop(service.clone(), project.clone())?;
-        self.handle_start(service, project, services)
+        self.handle_start(service, project, services, true)
     }
 
     fn handle_command(&mut self, cmd: SuperviseurCommand) -> Result<(), Error> {
         match cmd {
             SuperviseurCommand::Load(service, project) => self.handle_load(service, project),
             SuperviseurCommand::Start(service, project, services) => {
-                self.handle_start(service, project, services)
+                self.handle_start(service, project, services, false)
             }
             SuperviseurCommand::Stop(service, project) => self.handle_stop(service, project),
             SuperviseurCommand::Restart(service, project, services) => {
