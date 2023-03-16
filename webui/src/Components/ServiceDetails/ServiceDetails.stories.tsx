@@ -20,5 +20,5 @@ Default.args = {
       label: "Running\n<b>Service A</b>",
     },
   ],
-  selectedNode: "d548aa8c-2f30-4e53-b938-a4db74de6f58",
+  selectedNode: "1",
 };
