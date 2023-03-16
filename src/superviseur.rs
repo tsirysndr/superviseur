@@ -146,6 +146,7 @@ impl SuperviseurInternal {
                 match services.iter().find(|s| s.name == dependency) {
                     Some(s) => {
                         self.handle_start(s.clone(), project.clone(), services.clone())?;
+                        thread::sleep(Duration::from_secs(1));
                     }
                     None => {
                         return Err(anyhow::anyhow!("Service {} not found", dependency));
