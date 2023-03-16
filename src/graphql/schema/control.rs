@@ -57,23 +57,22 @@ impl ControlQuery {
 
         let config = config_map.get(config_file_path.as_str()).unwrap();
 
-        Ok(config
-            .services
-            .iter()
-            .map(|s| {
-                let status = match processes
-                    .iter()
-                    .find(|(p, _)| Some(p.service_id.clone()) == s.id)
-                {
-                    Some((p, _)) => p.state.to_string(),
-                    None => "stopped".to_string(),
-                };
-                Service {
-                    status,
-                    ..Service::from(s)
-                }
-            })
-            .collect())
+        let services = config.services.clone();
+        let mut services = services.iter().map(Service::from).collect::<Vec<Service>>();
+
+        for service in services.iter_mut() {
+            let process = processes
+                .iter()
+                .find(|(p, _)| p.name == service.name)
+                .map(|(p, _)| p);
+            if let Some(process) = process {
+                service.status = process.state.to_string().to_uppercase();
+            } else {
+                service.status = "stopped".to_string();
+            }
+        }
+
+        Ok(services)
     }
 
     async fn processes(&self, ctx: &Context<'_>) -> Result<Vec<Process>, Error> {

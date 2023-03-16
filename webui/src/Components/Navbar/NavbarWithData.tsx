@@ -14,7 +14,7 @@ const NavbarWithData: FC = () => {
       data?.services.filter(
         (service) =>
           service.name.toLowerCase().includes(search.toLowerCase()) ||
-          service.description.toLowerCase().includes(search.toLowerCase()) ||
+          service.description!.toLowerCase().includes(search.toLowerCase()) ||
           service.command.toLowerCase().includes(search.toLowerCase()) ||
           service.namespace.toLowerCase().includes(search.toLowerCase()) ||
           service.type.toLowerCase().includes(search.toLowerCase()) ||

@@ -9,7 +9,7 @@ export const parseIntoStatuses = (process: Process): ServiceStatus[] => {
     },
     {
       name: "PID",
-      status: process.pid,
+      status: process.pid!,
     },
     {
       name: "Command",

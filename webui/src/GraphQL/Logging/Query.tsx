@@ -9,8 +9,8 @@ export const GET_LOGS = gql`
 `;
 
 export const TAIL = gql`
-  query TailLogs($id: ID!) {
-    tail(id: $id) {
+  query TailLogs($id: ID!, $numLines: Int) {
+    tail(id: $id, numLines: $numLines) {
       lines
     }
   }

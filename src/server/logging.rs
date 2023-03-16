@@ -95,7 +95,7 @@ impl LoggingService for Logging {
                         line: line.to_string(),
                     }))
                     .await
-                    .unwrap();
+                    .unwrap_or_default();
                 }
             });
         }

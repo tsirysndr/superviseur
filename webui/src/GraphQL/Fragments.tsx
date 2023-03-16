@@ -14,6 +14,8 @@ export const PROCESS_FRAGMENT = gql`
     stderrFile
     autoRestart
     env
+    state
+    upTime
   }
 `;
 

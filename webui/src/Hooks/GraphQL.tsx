@@ -69,15 +69,17 @@ export type Process = {
   __typename?: 'Process';
   autoRestart: Scalars['Boolean'];
   command: Scalars['String'];
-  description: Scalars['String'];
+  description?: Maybe<Scalars['String']>;
   env: Array<Scalars['String']>;
   logFile: Scalars['String'];
   name: Scalars['String'];
-  pid: Scalars['Int'];
-  ppid: Scalars['Int'];
+  pid?: Maybe<Scalars['Int']>;
+  ppid?: Maybe<Scalars['Int']>;
   project: Scalars['String'];
+  state: Scalars['String'];
   stderrFile: Scalars['String'];
   type: Scalars['String'];
+  upTime: Scalars['String'];
   workingDirectory: Scalars['String'];
 };
 
@@ -109,6 +111,7 @@ export type QueryStatusArgs = {
 
 export type QueryTailArgs = {
   id: Scalars['ID'];
+  numLines?: InputMaybe<Scalars['Int']>;
 };
 
 export type Service = {
@@ -116,7 +119,7 @@ export type Service = {
   autoRestart: Scalars['Boolean'];
   command: Scalars['String'];
   dependsOn: Array<Scalars['String']>;
-  description: Scalars['String'];
+  description?: Maybe<Scalars['String']>;
   env: Array<Scalars['String']>;
   id: Scalars['String'];
   logFile: Scalars['String'];
@@ -150,21 +153,21 @@ export type StartMutationVariables = Exact<{
 }>;
 
 
-export type StartMutation = { __typename?: 'Mutation', start: { __typename?: 'Process', name: string, description: string, pid: number, ppid: number, command: string, workingDirectory: string, project: string, type: string, logFile: string, stderrFile: string, autoRestart: boolean, env: Array<string> } };
+export type StartMutation = { __typename?: 'Mutation', start: { __typename?: 'Process', name: string, description?: string | null, pid?: number | null, ppid?: number | null, command: string, workingDirectory: string, project: string, type: string, logFile: string, stderrFile: string, autoRestart: boolean, env: Array<string>, state: string, upTime: string } };
 
 export type StopMutationVariables = Exact<{
   id?: InputMaybe<Scalars['ID']>;
 }>;
 
 
-export type StopMutation = { __typename?: 'Mutation', stop: { __typename?: 'Process', name: string, description: string, pid: number, ppid: number, command: string, workingDirectory: string, project: string, type: string, logFile: string, stderrFile: string, autoRestart: boolean, env: Array<string> } };
+export type StopMutation = { __typename?: 'Mutation', stop: { __typename?: 'Process', name: string, description?: string | null, pid?: number | null, ppid?: number | null, command: string, workingDirectory: string, project: string, type: string, logFile: string, stderrFile: string, autoRestart: boolean, env: Array<string>, state: string, upTime: string } };
 
 export type RestartMutationVariables = Exact<{
   id?: InputMaybe<Scalars['ID']>;
 }>;
 
 
-export type RestartMutation = { __typename?: 'Mutation', restart: { __typename?: 'Process', name: string, description: string, pid: number, ppid: number, command: string, workingDirectory: string, project: string, type: string, logFile: string, stderrFile: string, autoRestart: boolean, env: Array<string> } };
+export type RestartMutation = { __typename?: 'Mutation', restart: { __typename?: 'Process', name: string, description?: string | null, pid?: number | null, ppid?: number | null, command: string, workingDirectory: string, project: string, type: string, logFile: string, stderrFile: string, autoRestart: boolean, env: Array<string>, state: string, upTime: string } };
 
 export type CreateEnvVarMutationVariables = Exact<{
   id: Scalars['ID'];
@@ -197,28 +200,28 @@ export type GetStatusQueryVariables = Exact<{
 }>;
 
 
-export type GetStatusQuery = { __typename?: 'Query', status: { __typename?: 'Process', name: string, description: string, pid: number, ppid: number, command: string, workingDirectory: string, project: string, type: string, logFile: string, stderrFile: string, autoRestart: boolean, env: Array<string> } };
+export type GetStatusQuery = { __typename?: 'Query', status: { __typename?: 'Process', name: string, description?: string | null, pid?: number | null, ppid?: number | null, command: string, workingDirectory: string, project: string, type: string, logFile: string, stderrFile: string, autoRestart: boolean, env: Array<string>, state: string, upTime: string } };
 
 export type GetProcessesQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetProcessesQuery = { __typename?: 'Query', processes: Array<{ __typename?: 'Process', name: string, description: string, pid: number, ppid: number, command: string, workingDirectory: string, project: string, type: string, logFile: string, stderrFile: string, autoRestart: boolean, env: Array<string> }> };
+export type GetProcessesQuery = { __typename?: 'Query', processes: Array<{ __typename?: 'Process', name: string, description?: string | null, pid?: number | null, ppid?: number | null, command: string, workingDirectory: string, project: string, type: string, logFile: string, stderrFile: string, autoRestart: boolean, env: Array<string>, state: string, upTime: string }> };
 
 export type GetServicesQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetServicesQuery = { __typename?: 'Query', services: Array<{ __typename?: 'Service', id: string, name: string, command: string, description: string, namespace: string, type: string, status: string, dependsOn: Array<string>, env: Array<string>, autoRestart: boolean, workingDirectory: string, logFile: string, stderrFile: string, port: number }> };
+export type GetServicesQuery = { __typename?: 'Query', services: Array<{ __typename?: 'Service', id: string, name: string, command: string, description?: string | null, namespace: string, type: string, status: string, dependsOn: Array<string>, env: Array<string>, autoRestart: boolean, workingDirectory: string, logFile: string, stderrFile: string, port: number }> };
 
 export type GetServiceQueryVariables = Exact<{
   id: Scalars['ID'];
 }>;
 
 
-export type GetServiceQuery = { __typename?: 'Query', service: { __typename?: 'Service', id: string, name: string, command: string, description: string, namespace: string, type: string, status: string, dependsOn: Array<string>, env: Array<string>, autoRestart: boolean, workingDirectory: string, logFile: string, stderrFile: string, port: number } };
+export type GetServiceQuery = { __typename?: 'Query', service: { __typename?: 'Service', id: string, name: string, command: string, description?: string | null, namespace: string, type: string, status: string, dependsOn: Array<string>, env: Array<string>, autoRestart: boolean, workingDirectory: string, logFile: string, stderrFile: string, port: number } };
 
-export type ProcessFragmentFragment = { __typename?: 'Process', name: string, description: string, pid: number, ppid: number, command: string, workingDirectory: string, project: string, type: string, logFile: string, stderrFile: string, autoRestart: boolean, env: Array<string> };
+export type ProcessFragmentFragment = { __typename?: 'Process', name: string, description?: string | null, pid?: number | null, ppid?: number | null, command: string, workingDirectory: string, project: string, type: string, logFile: string, stderrFile: string, autoRestart: boolean, env: Array<string>, state: string, upTime: string };
 
-export type ServiceFragmentFragment = { __typename?: 'Service', id: string, name: string, command: string, description: string, namespace: string, type: string, status: string, dependsOn: Array<string>, env: Array<string>, autoRestart: boolean, workingDirectory: string, logFile: string, stderrFile: string, port: number };
+export type ServiceFragmentFragment = { __typename?: 'Service', id: string, name: string, command: string, description?: string | null, namespace: string, type: string, status: string, dependsOn: Array<string>, env: Array<string>, autoRestart: boolean, workingDirectory: string, logFile: string, stderrFile: string, port: number };
 
 export type GetLogsQueryVariables = Exact<{
   id: Scalars['ID'];
@@ -229,6 +232,7 @@ export type GetLogsQuery = { __typename?: 'Query', logs: { __typename?: 'Log', l
 
 export type TailLogsQueryVariables = Exact<{
   id: Scalars['ID'];
+  numLines?: InputMaybe<Scalars['Int']>;
 }>;
 
 
@@ -262,6 +266,8 @@ export const ProcessFragmentFragmentDoc = gql`
   stderrFile
   autoRestart
   env
+  state
+  upTime
 }
     `;
 export const ServiceFragmentFragmentDoc = gql`
@@ -662,8 +668,8 @@ export type GetLogsQueryHookResult = ReturnType<typeof useGetLogsQuery>;
 export type GetLogsLazyQueryHookResult = ReturnType<typeof useGetLogsLazyQuery>;
 export type GetLogsQueryResult = Apollo.QueryResult<GetLogsQuery, GetLogsQueryVariables>;
 export const TailLogsDocument = gql`
-    query TailLogs($id: ID!) {
-  tail(id: $id) {
+    query TailLogs($id: ID!, $numLines: Int) {
+  tail(id: $id, numLines: $numLines) {
     lines
   }
 }
@@ -682,6 +688,7 @@ export const TailLogsDocument = gql`
  * const { data, loading, error } = useTailLogsQuery({
  *   variables: {
  *      id: // value for 'id'
+ *      numLines: // value for 'numLines'
  *   },
  * });
  */

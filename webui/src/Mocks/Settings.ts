@@ -44,7 +44,7 @@ export const parseIntoSettings = (service: Service): Settings[] => {
     },
     {
       name: "Description",
-      value: service.description,
+      value: service.description!,
       multi: false,
       activable: false,
       selectable: false,
