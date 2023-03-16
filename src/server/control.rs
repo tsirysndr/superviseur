@@ -125,6 +125,7 @@ impl ControlService for Control {
                 .send(SuperviseurCommand::Start(
                     service.clone(),
                     config.project.clone(),
+                    config.services.clone(),
                 ))
                 .map_err(|e| tonic::Status::internal(e.to_string()))?;
             return Ok(Response::new(StartResponse { success: true }));
@@ -135,6 +136,7 @@ impl ControlService for Control {
                 .send(SuperviseurCommand::Start(
                     service.clone(),
                     config.project.clone(),
+                    config.services.clone(),
                 ))
                 .map_err(|e| tonic::Status::internal(e.to_string()))?;
         }
@@ -211,6 +213,7 @@ impl ControlService for Control {
                 .send(SuperviseurCommand::Restart(
                     service.clone(),
                     config.project.clone(),
+                    config.services.clone(),
                 ))
                 .map_err(|e| tonic::Status::internal(e.to_string()))?;
             return Ok(Response::new(RestartResponse { success: true }));
@@ -221,6 +224,7 @@ impl ControlService for Control {
                 .send(SuperviseurCommand::Restart(
                     service.clone(),
                     config.project.clone(),
+                    config.services.clone(),
                 ))
                 .map_err(|e| tonic::Status::internal(e.to_string()))?;
         }

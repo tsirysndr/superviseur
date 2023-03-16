@@ -41,12 +41,9 @@ impl Superviseur {
 #[derive(Debug)]
 pub enum SuperviseurCommand {
     Load(Service, String),
-    Start(Service, String),
+    Start(Service, String, Vec<Service>),
     Stop(Service, String),
-    Restart(Service, String),
-    StartAll(String, Vec<Service>),
-    StopAll(String, Vec<Service>),
-    RestartAll(String, Vec<Service>),
+    Restart(Service, String, Vec<Service>),
 }
 
 #[derive(Debug)]
@@ -132,7 +129,30 @@ impl SuperviseurInternal {
         Ok(())
     }
 
-    fn handle_start(&mut self, service: Service, project: String) -> Result<(), Error> {
+    fn handle_start(
+        &mut self,
+        service: Service,
+        project: String,
+        services: Vec<Service>,
+    ) -> Result<(), Error> {
+        // start recursively if service depends on other services
+        let dependencies = service.depends_on.clone();
+        let dependencies = dependencies
+            .into_iter()
+            .filter(|d| d != &service.name)
+            .collect::<Vec<String>>();
+        if dependencies.len() > 0 {
+            for dependency in dependencies.into_iter() {
+                match services.iter().find(|s| s.name == dependency) {
+                    Some(s) => {
+                        self.handle_start(s.clone(), project.clone(), services.clone())?;
+                    }
+                    None => {
+                        return Err(anyhow::anyhow!("Service {} not found", dependency));
+                    }
+                }
+            }
+        }
         let envs = service.env.clone();
         let working_dir = service.working_dir.clone();
         let mut child = std::process::Command::new("sh")
@@ -196,7 +216,11 @@ impl SuperviseurInternal {
             // println!("child exited with status: {}", status);
             if service.autorestart {
                 cmd_tx
-                    .send(SuperviseurCommand::Start(service.clone(), project.clone()))
+                    .send(SuperviseurCommand::Start(
+                        service.clone(),
+                        project.clone(),
+                        services.clone(),
+                    ))
                     .unwrap();
 
                 event_tx
@@ -229,79 +253,25 @@ impl SuperviseurInternal {
         }
     }
 
-    fn handle_restart(&mut self, service: Service, project: String) -> Result<(), Error> {
+    fn handle_restart(
+        &mut self,
+        service: Service,
+        project: String,
+        services: Vec<Service>,
+    ) -> Result<(), Error> {
         self.handle_stop(service.clone(), project.clone())?;
-        self.handle_start(service, project)
-    }
-
-    fn handle_start_all(&mut self, project: String, services: Vec<Service>) -> Result<(), Error> {
-        let mut processes = self.processes.lock().unwrap();
-        let cmd_tx = self.cmd_tx.clone();
-        for (process, _key) in processes.iter_mut().filter(|(_, key)| key == &project) {
-            if process.state == State::Stopped {
-                let service = services
-                    .iter()
-                    .find(|s| s.name == process.name)
-                    .unwrap()
-                    .clone();
-                cmd_tx
-                    .send(SuperviseurCommand::Start(service, project.clone()))
-                    .unwrap();
-            }
-        }
-        Ok(())
-    }
-
-    fn handle_stop_all(&mut self, project: String, services: Vec<Service>) -> Result<(), Error> {
-        let mut processes = self.processes.lock().unwrap();
-        let cmd_tx = self.cmd_tx.clone();
-        for (process, _key) in processes.iter_mut().filter(|(_, key)| key == &project) {
-            if process.state == State::Stopped {
-                let service = services
-                    .iter()
-                    .find(|s| s.name == process.name)
-                    .unwrap()
-                    .clone();
-                cmd_tx
-                    .send(SuperviseurCommand::Stop(service, project.clone()))
-                    .unwrap();
-            }
-        }
-        Ok(())
-    }
-
-    fn handle_restart_all(&mut self, project: String, services: Vec<Service>) -> Result<(), Error> {
-        let mut processes = self.processes.lock().unwrap();
-        let cmd_tx = self.cmd_tx.clone();
-        for (process, _key) in processes.iter_mut().filter(|(_, key)| key == &project) {
-            if process.state == State::Stopped {
-                let service = services
-                    .iter()
-                    .find(|s| s.name == process.name)
-                    .unwrap()
-                    .clone();
-                cmd_tx
-                    .send(SuperviseurCommand::Restart(service, project.clone()))
-                    .unwrap();
-            }
-        }
-        Ok(())
+        self.handle_start(service, project, services)
     }
 
     fn handle_command(&mut self, cmd: SuperviseurCommand) -> Result<(), Error> {
         match cmd {
             SuperviseurCommand::Load(service, project) => self.handle_load(service, project),
-            SuperviseurCommand::Start(service, project) => self.handle_start(service, project),
+            SuperviseurCommand::Start(service, project, services) => {
+                self.handle_start(service, project, services)
+            }
             SuperviseurCommand::Stop(service, project) => self.handle_stop(service, project),
-            SuperviseurCommand::Restart(service, project) => self.handle_restart(service, project),
-            SuperviseurCommand::StartAll(project, services) => {
-                self.handle_start_all(project, services)
-            }
-            SuperviseurCommand::StopAll(project, services) => {
-                self.handle_stop_all(project, services)
-            }
-            SuperviseurCommand::RestartAll(project, services) => {
-                self.handle_restart_all(project, services)
+            SuperviseurCommand::Restart(service, project, services) => {
+                self.handle_restart(service, project, services)
             }
         }
     }

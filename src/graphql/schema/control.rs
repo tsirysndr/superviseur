@@ -170,6 +170,7 @@ impl ControlMutation {
                     .send(SuperviseurCommand::Start(
                         service.clone(),
                         config.project.clone(),
+                        config.services.clone(),
                     ))
                     .unwrap();
             }
@@ -187,6 +188,7 @@ impl ControlMutation {
         cmd_tx.send(SuperviseurCommand::Start(
             service.clone(),
             config.project.clone(),
+            config.services.clone(),
         ))?;
 
         thread::sleep(Duration::from_secs(1));
@@ -280,6 +282,7 @@ impl ControlMutation {
                     .send(SuperviseurCommand::Restart(
                         service.clone(),
                         config.project.clone(),
+                        config.services.clone(),
                     ))
                     .unwrap();
             }
@@ -297,6 +300,7 @@ impl ControlMutation {
         cmd_tx.send(SuperviseurCommand::Restart(
             service.clone(),
             config.project.clone(),
+            config.services.clone(),
         ))?;
 
         thread::sleep(Duration::from_secs(1));
