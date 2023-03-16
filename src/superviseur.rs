@@ -146,7 +146,7 @@ impl SuperviseurInternal {
                 match services.iter().find(|s| s.name == dependency) {
                     Some(s) => {
                         self.handle_start(s.clone(), project.clone(), services.clone())?;
-                        thread::sleep(Duration::from_millis(500));
+                        thread::sleep(Duration::from_millis(100));
                     }
                     None => {
                         return Err(anyhow::anyhow!("Service {} not found", dependency));
@@ -188,8 +188,6 @@ impl SuperviseurInternal {
         self.event_tx
             .send(ProcessEvent::Started(service.name.clone(), project.clone()))
             .unwrap();
-
-        println!("Started {}", service.name);
 
         process.up_time = Some(chrono::Utc::now());
         let service_key = format!("{}-{}", project, service.name);
