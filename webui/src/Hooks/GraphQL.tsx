@@ -275,32 +275,32 @@ export type GetEnvVarsQuery = { __typename?: 'Query', service: { __typename?: 'S
 export type OnStartSubscriptionVariables = Exact<{ [key: string]: never; }>;
 
 
-export type OnStartSubscription = { __typename?: 'Subscription', onStart: { __typename?: 'ServiceStarted', payload: { __typename?: 'Service', id: string, name: string, command: string, description?: string | null, namespace: string, type: string, status: string, dependsOn: Array<string>, env: Array<string>, autoRestart: boolean, workingDirectory: string, logFile: string, stderrFile: string, port: number } } };
+export type OnStartSubscription = { __typename?: 'Subscription', onStart: { __typename?: 'ServiceStarted', payload: { __typename?: 'Service', id: string, name: string, status: string } } };
 
 export type OnStopSubscriptionVariables = Exact<{ [key: string]: never; }>;
 
 
-export type OnStopSubscription = { __typename?: 'Subscription', onStop: { __typename?: 'ServiceStopped', payload: { __typename?: 'Service', id: string, name: string, command: string, description?: string | null, namespace: string, type: string, status: string, dependsOn: Array<string>, env: Array<string>, autoRestart: boolean, workingDirectory: string, logFile: string, stderrFile: string, port: number } } };
+export type OnStopSubscription = { __typename?: 'Subscription', onStop: { __typename?: 'ServiceStopped', payload: { __typename?: 'Service', id: string, name: string, status: string } } };
 
 export type OnRestartSubscriptionVariables = Exact<{ [key: string]: never; }>;
 
 
-export type OnRestartSubscription = { __typename?: 'Subscription', onRestart: { __typename?: 'ServiceRestarted', payload: { __typename?: 'Service', id: string, name: string, command: string, description?: string | null, namespace: string, type: string, status: string, dependsOn: Array<string>, env: Array<string>, autoRestart: boolean, workingDirectory: string, logFile: string, stderrFile: string, port: number } } };
+export type OnRestartSubscription = { __typename?: 'Subscription', onRestart: { __typename?: 'ServiceRestarted', payload: { __typename?: 'Service', id: string, name: string, status: string } } };
 
 export type OnStartAllSubscriptionVariables = Exact<{ [key: string]: never; }>;
 
 
-export type OnStartAllSubscription = { __typename?: 'Subscription', onStartAll: { __typename?: 'AllServicesStarted', payload: Array<{ __typename?: 'Service', id: string, name: string, command: string, description?: string | null, namespace: string, type: string, status: string, dependsOn: Array<string>, env: Array<string>, autoRestart: boolean, workingDirectory: string, logFile: string, stderrFile: string, port: number }> } };
+export type OnStartAllSubscription = { __typename?: 'Subscription', onStartAll: { __typename?: 'AllServicesStarted', payload: Array<{ __typename?: 'Service', id: string, name: string, status: string }> } };
 
 export type OnStopAllSubscriptionVariables = Exact<{ [key: string]: never; }>;
 
 
-export type OnStopAllSubscription = { __typename?: 'Subscription', onStopAll: { __typename?: 'AllServicesStopped', payload: Array<{ __typename?: 'Service', id: string, name: string, command: string, description?: string | null, namespace: string, type: string, status: string, dependsOn: Array<string>, env: Array<string>, autoRestart: boolean, workingDirectory: string, logFile: string, stderrFile: string, port: number }> } };
+export type OnStopAllSubscription = { __typename?: 'Subscription', onStopAll: { __typename?: 'AllServicesStopped', payload: Array<{ __typename?: 'Service', id: string, name: string, status: string }> } };
 
 export type OnRestartAllSubscriptionVariables = Exact<{ [key: string]: never; }>;
 
 
-export type OnRestartAllSubscription = { __typename?: 'Subscription', onRestartAll: { __typename?: 'AllServicesRestarted', payload: Array<{ __typename?: 'Service', id: string, name: string, command: string, description?: string | null, namespace: string, type: string, status: string, dependsOn: Array<string>, env: Array<string>, autoRestart: boolean, workingDirectory: string, logFile: string, stderrFile: string, port: number }> } };
+export type OnRestartAllSubscription = { __typename?: 'Subscription', onRestartAll: { __typename?: 'AllServicesRestarted', payload: Array<{ __typename?: 'Service', id: string, name: string, status: string }> } };
 
 export type ProcessFragmentFragment = { __typename?: 'Process', name: string, description?: string | null, pid?: number | null, ppid?: number | null, command: string, workingDirectory: string, project: string, type: string, logFile: string, stderrFile: string, autoRestart: boolean, env: Array<string>, state: string, upTime: string };
 
@@ -755,11 +755,13 @@ export const OnStartDocument = gql`
     subscription OnStart {
   onStart {
     payload {
-      ...ServiceFragment
+      id
+      name
+      status
     }
   }
 }
-    ${ServiceFragmentFragmentDoc}`;
+    `;
 
 /**
  * __useOnStartSubscription__
@@ -786,11 +788,13 @@ export const OnStopDocument = gql`
     subscription OnStop {
   onStop {
     payload {
-      ...ServiceFragment
+      id
+      name
+      status
     }
   }
 }
-    ${ServiceFragmentFragmentDoc}`;
+    `;
 
 /**
  * __useOnStopSubscription__
@@ -817,11 +821,13 @@ export const OnRestartDocument = gql`
     subscription OnRestart {
   onRestart {
     payload {
-      ...ServiceFragment
+      id
+      name
+      status
     }
   }
 }
-    ${ServiceFragmentFragmentDoc}`;
+    `;
 
 /**
  * __useOnRestartSubscription__
@@ -848,11 +854,13 @@ export const OnStartAllDocument = gql`
     subscription OnStartAll {
   onStartAll {
     payload {
-      ...ServiceFragment
+      id
+      name
+      status
     }
   }
 }
-    ${ServiceFragmentFragmentDoc}`;
+    `;
 
 /**
  * __useOnStartAllSubscription__
@@ -879,11 +887,13 @@ export const OnStopAllDocument = gql`
     subscription OnStopAll {
   onStopAll {
     payload {
-      ...ServiceFragment
+      id
+      name
+      status
     }
   }
 }
-    ${ServiceFragmentFragmentDoc}`;
+    `;
 
 /**
  * __useOnStopAllSubscription__
@@ -910,11 +920,13 @@ export const OnRestartAllDocument = gql`
     subscription OnRestartAll {
   onRestartAll {
     payload {
-      ...ServiceFragment
+      id
+      name
+      status
     }
   }
 }
-    ${ServiceFragmentFragmentDoc}`;
+    `;
 
 /**
  * __useOnRestartAllSubscription__

@@ -2,7 +2,7 @@ use async_graphql::{Object, ID};
 
 use crate::types;
 
-#[derive(Default, Clone)]
+#[derive(Default, Clone, Debug)]
 pub struct Service {
     pub id: ID,
     pub name: String,

@@ -1,4 +1,4 @@
-import { FC } from "react";
+import { FC, useEffect, useRef } from "react";
 import styled from "@emotion/styled";
 import { css } from "@emotion/react";
 
@@ -48,8 +48,12 @@ interface LogProps {
 }
 
 const Log: FC<LogProps> = ({ displayLineNumbers, lines }) => {
+  const ref = useRef<any>();
+  useEffect(() => {
+    ref.current.scrollTop = ref.current.scrollHeight;
+  }, [lines]);
   return (
-    <Container>
+    <Container ref={ref}>
       {lines.map((line, i) => (
         <Line key={i}>
           <LineNumber displayLineNumber={displayLineNumbers}>

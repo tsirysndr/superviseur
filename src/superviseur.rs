@@ -362,7 +362,8 @@ impl SuperviseurInternal {
                     .iter()
                     .find(|s| s.name == service_name)
                     .ok_or(anyhow::anyhow!("Service not found"))?;
-                let service = schema::objects::service::Service::from(service);
+                let mut service = schema::objects::service::Service::from(service);
+                service.status = String::from("RUNNING");
                 SimpleBroker::publish(ServiceStarted {
                     payload: service.clone(),
                 });
@@ -387,7 +388,8 @@ impl SuperviseurInternal {
                     .iter()
                     .find(|s| s.name == service_name)
                     .ok_or(anyhow::anyhow!("Service not found"))?;
-                let service = schema::objects::service::Service::from(service);
+                let mut service = schema::objects::service::Service::from(service);
+                service.status = String::from("STOPPED");
                 SimpleBroker::publish(ServiceStopped {
                     payload: service.clone(),
                 });
@@ -412,7 +414,8 @@ impl SuperviseurInternal {
                     .iter()
                     .find(|s| s.name == service_name)
                     .ok_or(anyhow::anyhow!("Service not found"))?;
-                let service = schema::objects::service::Service::from(service);
+                let mut service = schema::objects::service::Service::from(service);
+                service.status = String::from("RUNNING");
                 SimpleBroker::publish(ServiceRestarted {
                     payload: service.clone(),
                 });

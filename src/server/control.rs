@@ -19,6 +19,9 @@ use crate::{
             StatusRequest, StatusResponse, StopRequest, StopResponse,
         },
     },
+    graphql::{
+        self, schema::objects::subscriptions::{AllServicesStarted, AllServicesStopped, AllServicesRestarted}, simple_broker::SimpleBroker,
+    },
     superviseur::{ProcessEvent, Superviseur, SuperviseurCommand},
     types::{
         self,
@@ -181,6 +184,13 @@ impl ControlService for Control {
                 .map_err(|e| tonic::Status::internal(e.to_string()))?;
         }
 
+        let services = config.services.clone();
+        let services = services
+            .iter()
+            .map(graphql::schema::objects::service::Service::from)
+            .collect::<Vec<graphql::schema::objects::service::Service>>();
+        SimpleBroker::publish(AllServicesStarted { payload: services });
+
         Ok(Response::new(StartResponse { success: true }))
     }
 
@@ -224,6 +234,13 @@ impl ControlService for Control {
                 .unwrap();
         }
 
+        let services = config.services.clone();
+        let services = services
+            .iter()
+            .map(graphql::schema::objects::service::Service::from)
+            .collect::<Vec<graphql::schema::objects::service::Service>>();
+        SimpleBroker::publish(AllServicesStopped { payload: services });
+
         Ok(Response::new(StopResponse { success: true }))
     }
 
@@ -266,6 +283,14 @@ impl ControlService for Control {
                 ))
                 .map_err(|e| tonic::Status::internal(e.to_string()))?;
         }
+
+        let services = config.services.clone();
+        let services = services
+            .iter()
+            .map(graphql::schema::objects::service::Service::from)
+            .collect::<Vec<graphql::schema::objects::service::Service>>();
+        SimpleBroker::publish(AllServicesRestarted { payload: services });
+
 
         Ok(Response::new(RestartResponse { success: true }))
     }

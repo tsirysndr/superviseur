@@ -5,7 +5,9 @@ export const ON_START = gql`
   subscription OnStart {
     onStart {
       payload {
-        ...ServiceFragment
+        id
+        name
+        status
       }
     }
   }
@@ -16,7 +18,9 @@ export const ON_STOP = gql`
   subscription OnStop {
     onStop {
       payload {
-        ...ServiceFragment
+        id
+        name
+        status
       }
     }
   }
@@ -27,7 +31,9 @@ export const ON_RESTART = gql`
   subscription OnRestart {
     onRestart {
       payload {
-        ...ServiceFragment
+        id
+        name
+        status
       }
     }
   }
@@ -38,7 +44,9 @@ export const ON_START_ALL = gql`
   subscription OnStartAll {
     onStartAll {
       payload {
-        ...ServiceFragment
+        id
+        name
+        status
       }
     }
   }
@@ -49,7 +57,9 @@ export const ON_STOP_ALL = gql`
   subscription OnStopAll {
     onStopAll {
       payload {
-        ...ServiceFragment
+        id
+        name
+        status
       }
     }
   }
@@ -60,7 +70,9 @@ export const ON_RESTART_ALL = gql`
   subscription OnRestartAll {
     onRestartAll {
       payload {
-        ...ServiceFragment
+        id
+        name
+        status
       }
     }
   }

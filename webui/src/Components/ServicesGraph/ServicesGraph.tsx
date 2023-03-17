@@ -1,6 +1,6 @@
 import styled from "@emotion/styled";
 import { Drawer } from "baseui/drawer";
-import { FC, useRef, useState } from "react";
+import { FC, useEffect, useRef, useState } from "react";
 import Graph from "react-graph-vis";
 import { Edge } from "../../Types/Edge";
 import { Node } from "../../Types/Node";
@@ -99,6 +99,16 @@ const ServicesGraph: FC<ServicesGraphProps> = (props) => {
   });
   const { graph, events } = state;
   const graphRef = useRef<any>();
+
+  useEffect(() => {
+    if (graphRef.current) {
+      graphRef.current.Network.setData({
+        ...graph,
+        nodes: props.nodes,
+        edges: props.edges,
+      });
+    }
+  }, [props.nodes, props.edges, graph]);
 
   return (
     <Container>
