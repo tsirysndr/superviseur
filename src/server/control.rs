@@ -1,6 +1,8 @@
 use std::{
     collections::HashMap,
     sync::{Arc, Mutex},
+    thread,
+    time::Duration,
 };
 
 use names::Generator;
@@ -17,7 +19,7 @@ use crate::{
             StatusRequest, StatusResponse, StopRequest, StopResponse,
         },
     },
-    superviseur::{Superviseur, SuperviseurCommand},
+    superviseur::{ProcessEvent, Superviseur, SuperviseurCommand},
     types::{
         self,
         configuration::ConfigurationData,
@@ -27,6 +29,7 @@ use crate::{
 
 pub struct Control {
     cmd_tx: mpsc::UnboundedSender<SuperviseurCommand>,
+    event_tx: mpsc::UnboundedSender<ProcessEvent>,
     superviseur: Superviseur,
     processes: Arc<Mutex<Vec<(Process, String)>>>,
     config_map: Arc<Mutex<HashMap<String, ConfigurationData>>>,
@@ -35,12 +38,14 @@ pub struct Control {
 impl Control {
     pub fn new(
         cmd_tx: mpsc::UnboundedSender<SuperviseurCommand>,
+        event_tx: mpsc::UnboundedSender<ProcessEvent>,
         superviseur: Superviseur,
         processes: Arc<Mutex<Vec<(Process, String)>>>,
         config_map: Arc<Mutex<HashMap<String, ConfigurationData>>>,
     ) -> Self {
         Self {
             cmd_tx,
+            event_tx,
             superviseur,
             processes,
             config_map,
@@ -66,7 +71,7 @@ impl ControlService for Control {
         // check if the config is already loaded
         if config_map.contains_key(&path) {
             // reuse the id of the services
-            let old_config = config_map.get(&path).unwrap();
+            let old_config = config_map.get_mut(&path).unwrap();
             for service in &mut config.services {
                 match old_config.services.iter().find(|s| s.name == service.name) {
                     Some(old_service) => {
@@ -77,6 +82,9 @@ impl ControlService for Control {
                     }
                 }
             }
+            self.cmd_tx
+                .send(SuperviseurCommand::LoadConfig(config.clone(), path.clone()))
+                .unwrap();
         } else {
             config.services = config
                 .services
@@ -88,6 +96,12 @@ impl ControlService for Control {
                 .collect();
 
             config_map.insert(path.clone(), config.clone());
+            self.cmd_tx
+                .send(SuperviseurCommand::LoadConfig(
+                    config.clone(),
+                    config.project.clone(),
+                ))
+                .unwrap();
         }
 
         let config = config_map.get_mut(&path).unwrap();
@@ -122,6 +136,8 @@ impl ControlService for Control {
                 .map_err(|e| tonic::Status::internal(e.to_string()))?;
         }
 
+        thread::sleep(Duration::from_millis(100));
+
         Ok(Response::new(LoadConfigResponse { success: true }))
     }
 
@@ -151,7 +167,6 @@ impl ControlService for Control {
                 .send(SuperviseurCommand::Start(
                     service.clone(),
                     config.project.clone(),
-                    config.services.clone(),
                 ))
                 .map_err(|e| tonic::Status::internal(e.to_string()))?;
             return Ok(Response::new(StartResponse { success: true }));
@@ -162,7 +177,6 @@ impl ControlService for Control {
                 .send(SuperviseurCommand::Start(
                     service.clone(),
                     config.project.clone(),
-                    config.services.clone(),
                 ))
                 .map_err(|e| tonic::Status::internal(e.to_string()))?;
         }
@@ -239,7 +253,6 @@ impl ControlService for Control {
                 .send(SuperviseurCommand::Restart(
                     service.clone(),
                     config.project.clone(),
-                    config.services.clone(),
                 ))
                 .map_err(|e| tonic::Status::internal(e.to_string()))?;
             return Ok(Response::new(RestartResponse { success: true }));
@@ -250,7 +263,6 @@ impl ControlService for Control {
                 .send(SuperviseurCommand::Restart(
                     service.clone(),
                     config.project.clone(),
-                    config.services.clone(),
                 ))
                 .map_err(|e| tonic::Status::internal(e.to_string()))?;
         }

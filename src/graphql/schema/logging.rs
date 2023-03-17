@@ -9,11 +9,11 @@ use async_graphql::*;
 use futures_util::Stream;
 
 use crate::{
-    graphql::simple_broker::SimpleBroker,
-    types::{configuration::ConfigurationData},
+    graphql::{schema::objects::subscriptions::TailLogStream, simple_broker::SimpleBroker},
+    types::configuration::ConfigurationData,
 };
 
-use super::objects::log::Log;
+use super::objects::{log::Log, subscriptions};
 
 #[derive(Default, Clone)]
 pub struct LoggingQuery;
@@ -100,11 +100,15 @@ pub struct LoggingSubscription;
 
 #[Subscription]
 impl LoggingSubscription {
-    async fn tail(&self, ctx: &Context<'_>, id: ID) -> impl Stream<Item = String> {
-        SimpleBroker::<String>::subscribe()
+    async fn tail(&self, _ctx: &Context<'_>, _id: ID) -> impl Stream<Item = TailLogStream> {
+        SimpleBroker::<TailLogStream>::subscribe()
     }
 
-    async fn logs(&self, ctx: &Context<'_>, id: ID) -> impl Stream<Item = String> {
-        SimpleBroker::<String>::subscribe()
+    async fn logs(
+        &self,
+        _ctx: &Context<'_>,
+        _id: ID,
+    ) -> impl Stream<Item = subscriptions::LogStream> {
+        SimpleBroker::<subscriptions::LogStream>::subscribe()
     }
 }

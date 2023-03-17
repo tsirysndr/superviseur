@@ -47,7 +47,7 @@ export type ProviderProps = {
 };
 
 const Provider: FC<ProviderProps> = ({ children }) => {
-  if (process.env.NODE_ENV === "development") {
+  if (process.env.REACT_APP_MOCKS) {
     return (
       <MockedProvider mocks={mocks} addTypename={true}>
         {children}

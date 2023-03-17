@@ -12,8 +12,6 @@ use rust_embed::RustEmbed;
 use std::{
     collections::HashMap,
     sync::{Arc, Mutex},
-    thread,
-    time::Duration,
 };
 use tokio::sync::mpsc;
 
@@ -22,7 +20,7 @@ use crate::{
         schema::{Mutation, Query, Subscription},
         SuperviseurSchema,
     },
-    superviseur::{Superviseur, SuperviseurCommand},
+    superviseur::{ProcessEvent, Superviseur, SuperviseurCommand},
     types::{configuration::ConfigurationData, process::Process},
 };
 
@@ -97,6 +95,7 @@ async fn index_ws(
 pub async fn start_webui(
     config_file_path: String,
     cmd_tx: mpsc::UnboundedSender<SuperviseurCommand>,
+    event_tx: mpsc::UnboundedSender<ProcessEvent>,
     superviseur: Superviseur,
     processes: Arc<Mutex<Vec<(Process, String)>>>,
     config_map: Arc<Mutex<HashMap<String, ConfigurationData>>>,
@@ -111,6 +110,7 @@ pub async fn start_webui(
     .data(config_file_path)
     .data(superviseur)
     .data(cmd_tx)
+    .data(event_tx)
     .data(processes)
     .data(config_map)
     .finish();

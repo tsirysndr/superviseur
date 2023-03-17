@@ -32,7 +32,7 @@ pub struct Service {
     pub stderr: String,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Default, Clone)]
 pub struct ConfigurationData {
     pub project: String,
     pub services: Vec<Service>,

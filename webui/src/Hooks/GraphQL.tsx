@@ -15,9 +15,29 @@ export type Scalars = {
   Float: number;
 };
 
+export type AllServicesRestarted = {
+  __typename?: 'AllServicesRestarted';
+  payload: Array<Service>;
+};
+
+export type AllServicesStarted = {
+  __typename?: 'AllServicesStarted';
+  payload: Array<Service>;
+};
+
+export type AllServicesStopped = {
+  __typename?: 'AllServicesStopped';
+  payload: Array<Service>;
+};
+
 export type Log = {
   __typename?: 'Log';
   lines: Array<Scalars['String']>;
+};
+
+export type LogStream = {
+  __typename?: 'LogStream';
+  line: Scalars['String'];
 };
 
 export type Mutation = {
@@ -132,10 +152,31 @@ export type Service = {
   workingDirectory: Scalars['String'];
 };
 
+export type ServiceRestarted = {
+  __typename?: 'ServiceRestarted';
+  payload: Service;
+};
+
+export type ServiceStarted = {
+  __typename?: 'ServiceStarted';
+  payload: Service;
+};
+
+export type ServiceStopped = {
+  __typename?: 'ServiceStopped';
+  payload: Service;
+};
+
 export type Subscription = {
   __typename?: 'Subscription';
-  logs: Scalars['String'];
-  tail: Scalars['String'];
+  logs: LogStream;
+  onRestart: ServiceRestarted;
+  onRestartAll: AllServicesRestarted;
+  onStart: ServiceStarted;
+  onStartAll: AllServicesStarted;
+  onStop: ServiceStopped;
+  onStopAll: AllServicesStopped;
+  tail: TailLogStream;
 };
 
 
@@ -146,6 +187,11 @@ export type SubscriptionLogsArgs = {
 
 export type SubscriptionTailArgs = {
   id: Scalars['ID'];
+};
+
+export type TailLogStream = {
+  __typename?: 'TailLogStream';
+  line: Scalars['String'];
 };
 
 export type StartMutationVariables = Exact<{
@@ -226,6 +272,36 @@ export type GetEnvVarsQueryVariables = Exact<{
 
 export type GetEnvVarsQuery = { __typename?: 'Query', service: { __typename?: 'Service', id: string, env: Array<string> } };
 
+export type OnStartSubscriptionVariables = Exact<{ [key: string]: never; }>;
+
+
+export type OnStartSubscription = { __typename?: 'Subscription', onStart: { __typename?: 'ServiceStarted', payload: { __typename?: 'Service', id: string, name: string, command: string, description?: string | null, namespace: string, type: string, status: string, dependsOn: Array<string>, env: Array<string>, autoRestart: boolean, workingDirectory: string, logFile: string, stderrFile: string, port: number } } };
+
+export type OnStopSubscriptionVariables = Exact<{ [key: string]: never; }>;
+
+
+export type OnStopSubscription = { __typename?: 'Subscription', onStop: { __typename?: 'ServiceStopped', payload: { __typename?: 'Service', id: string, name: string, command: string, description?: string | null, namespace: string, type: string, status: string, dependsOn: Array<string>, env: Array<string>, autoRestart: boolean, workingDirectory: string, logFile: string, stderrFile: string, port: number } } };
+
+export type OnRestartSubscriptionVariables = Exact<{ [key: string]: never; }>;
+
+
+export type OnRestartSubscription = { __typename?: 'Subscription', onRestart: { __typename?: 'ServiceRestarted', payload: { __typename?: 'Service', id: string, name: string, command: string, description?: string | null, namespace: string, type: string, status: string, dependsOn: Array<string>, env: Array<string>, autoRestart: boolean, workingDirectory: string, logFile: string, stderrFile: string, port: number } } };
+
+export type OnStartAllSubscriptionVariables = Exact<{ [key: string]: never; }>;
+
+
+export type OnStartAllSubscription = { __typename?: 'Subscription', onStartAll: { __typename?: 'AllServicesStarted', payload: Array<{ __typename?: 'Service', id: string, name: string, command: string, description?: string | null, namespace: string, type: string, status: string, dependsOn: Array<string>, env: Array<string>, autoRestart: boolean, workingDirectory: string, logFile: string, stderrFile: string, port: number }> } };
+
+export type OnStopAllSubscriptionVariables = Exact<{ [key: string]: never; }>;
+
+
+export type OnStopAllSubscription = { __typename?: 'Subscription', onStopAll: { __typename?: 'AllServicesStopped', payload: Array<{ __typename?: 'Service', id: string, name: string, command: string, description?: string | null, namespace: string, type: string, status: string, dependsOn: Array<string>, env: Array<string>, autoRestart: boolean, workingDirectory: string, logFile: string, stderrFile: string, port: number }> } };
+
+export type OnRestartAllSubscriptionVariables = Exact<{ [key: string]: never; }>;
+
+
+export type OnRestartAllSubscription = { __typename?: 'Subscription', onRestartAll: { __typename?: 'AllServicesRestarted', payload: Array<{ __typename?: 'Service', id: string, name: string, command: string, description?: string | null, namespace: string, type: string, status: string, dependsOn: Array<string>, env: Array<string>, autoRestart: boolean, workingDirectory: string, logFile: string, stderrFile: string, port: number }> } };
+
 export type ProcessFragmentFragment = { __typename?: 'Process', name: string, description?: string | null, pid?: number | null, ppid?: number | null, command: string, workingDirectory: string, project: string, type: string, logFile: string, stderrFile: string, autoRestart: boolean, env: Array<string>, state: string, upTime: string };
 
 export type ServiceFragmentFragment = { __typename?: 'Service', id: string, name: string, command: string, description?: string | null, namespace: string, type: string, status: string, dependsOn: Array<string>, env: Array<string>, autoRestart: boolean, workingDirectory: string, logFile: string, stderrFile: string, port: number };
@@ -250,14 +326,14 @@ export type LogsSubscriptionVariables = Exact<{
 }>;
 
 
-export type LogsSubscription = { __typename?: 'Subscription', logs: string };
+export type LogsSubscription = { __typename?: 'Subscription', logs: { __typename?: 'LogStream', line: string } };
 
 export type TailSubscriptionVariables = Exact<{
   id: Scalars['ID'];
 }>;
 
 
-export type TailSubscription = { __typename?: 'Subscription', tail: string };
+export type TailSubscription = { __typename?: 'Subscription', tail: { __typename?: 'TailLogStream', line: string } };
 
 export const ProcessFragmentFragmentDoc = gql`
     fragment ProcessFragment on Process {
@@ -675,6 +751,192 @@ export function useGetEnvVarsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions
 export type GetEnvVarsQueryHookResult = ReturnType<typeof useGetEnvVarsQuery>;
 export type GetEnvVarsLazyQueryHookResult = ReturnType<typeof useGetEnvVarsLazyQuery>;
 export type GetEnvVarsQueryResult = Apollo.QueryResult<GetEnvVarsQuery, GetEnvVarsQueryVariables>;
+export const OnStartDocument = gql`
+    subscription OnStart {
+  onStart {
+    payload {
+      ...ServiceFragment
+    }
+  }
+}
+    ${ServiceFragmentFragmentDoc}`;
+
+/**
+ * __useOnStartSubscription__
+ *
+ * To run a query within a React component, call `useOnStartSubscription` and pass it any options that fit your needs.
+ * When your component renders, `useOnStartSubscription` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useOnStartSubscription({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useOnStartSubscription(baseOptions?: Apollo.SubscriptionHookOptions<OnStartSubscription, OnStartSubscriptionVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useSubscription<OnStartSubscription, OnStartSubscriptionVariables>(OnStartDocument, options);
+      }
+export type OnStartSubscriptionHookResult = ReturnType<typeof useOnStartSubscription>;
+export type OnStartSubscriptionResult = Apollo.SubscriptionResult<OnStartSubscription>;
+export const OnStopDocument = gql`
+    subscription OnStop {
+  onStop {
+    payload {
+      ...ServiceFragment
+    }
+  }
+}
+    ${ServiceFragmentFragmentDoc}`;
+
+/**
+ * __useOnStopSubscription__
+ *
+ * To run a query within a React component, call `useOnStopSubscription` and pass it any options that fit your needs.
+ * When your component renders, `useOnStopSubscription` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useOnStopSubscription({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useOnStopSubscription(baseOptions?: Apollo.SubscriptionHookOptions<OnStopSubscription, OnStopSubscriptionVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useSubscription<OnStopSubscription, OnStopSubscriptionVariables>(OnStopDocument, options);
+      }
+export type OnStopSubscriptionHookResult = ReturnType<typeof useOnStopSubscription>;
+export type OnStopSubscriptionResult = Apollo.SubscriptionResult<OnStopSubscription>;
+export const OnRestartDocument = gql`
+    subscription OnRestart {
+  onRestart {
+    payload {
+      ...ServiceFragment
+    }
+  }
+}
+    ${ServiceFragmentFragmentDoc}`;
+
+/**
+ * __useOnRestartSubscription__
+ *
+ * To run a query within a React component, call `useOnRestartSubscription` and pass it any options that fit your needs.
+ * When your component renders, `useOnRestartSubscription` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useOnRestartSubscription({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useOnRestartSubscription(baseOptions?: Apollo.SubscriptionHookOptions<OnRestartSubscription, OnRestartSubscriptionVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useSubscription<OnRestartSubscription, OnRestartSubscriptionVariables>(OnRestartDocument, options);
+      }
+export type OnRestartSubscriptionHookResult = ReturnType<typeof useOnRestartSubscription>;
+export type OnRestartSubscriptionResult = Apollo.SubscriptionResult<OnRestartSubscription>;
+export const OnStartAllDocument = gql`
+    subscription OnStartAll {
+  onStartAll {
+    payload {
+      ...ServiceFragment
+    }
+  }
+}
+    ${ServiceFragmentFragmentDoc}`;
+
+/**
+ * __useOnStartAllSubscription__
+ *
+ * To run a query within a React component, call `useOnStartAllSubscription` and pass it any options that fit your needs.
+ * When your component renders, `useOnStartAllSubscription` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useOnStartAllSubscription({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useOnStartAllSubscription(baseOptions?: Apollo.SubscriptionHookOptions<OnStartAllSubscription, OnStartAllSubscriptionVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useSubscription<OnStartAllSubscription, OnStartAllSubscriptionVariables>(OnStartAllDocument, options);
+      }
+export type OnStartAllSubscriptionHookResult = ReturnType<typeof useOnStartAllSubscription>;
+export type OnStartAllSubscriptionResult = Apollo.SubscriptionResult<OnStartAllSubscription>;
+export const OnStopAllDocument = gql`
+    subscription OnStopAll {
+  onStopAll {
+    payload {
+      ...ServiceFragment
+    }
+  }
+}
+    ${ServiceFragmentFragmentDoc}`;
+
+/**
+ * __useOnStopAllSubscription__
+ *
+ * To run a query within a React component, call `useOnStopAllSubscription` and pass it any options that fit your needs.
+ * When your component renders, `useOnStopAllSubscription` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useOnStopAllSubscription({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useOnStopAllSubscription(baseOptions?: Apollo.SubscriptionHookOptions<OnStopAllSubscription, OnStopAllSubscriptionVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useSubscription<OnStopAllSubscription, OnStopAllSubscriptionVariables>(OnStopAllDocument, options);
+      }
+export type OnStopAllSubscriptionHookResult = ReturnType<typeof useOnStopAllSubscription>;
+export type OnStopAllSubscriptionResult = Apollo.SubscriptionResult<OnStopAllSubscription>;
+export const OnRestartAllDocument = gql`
+    subscription OnRestartAll {
+  onRestartAll {
+    payload {
+      ...ServiceFragment
+    }
+  }
+}
+    ${ServiceFragmentFragmentDoc}`;
+
+/**
+ * __useOnRestartAllSubscription__
+ *
+ * To run a query within a React component, call `useOnRestartAllSubscription` and pass it any options that fit your needs.
+ * When your component renders, `useOnRestartAllSubscription` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useOnRestartAllSubscription({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useOnRestartAllSubscription(baseOptions?: Apollo.SubscriptionHookOptions<OnRestartAllSubscription, OnRestartAllSubscriptionVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useSubscription<OnRestartAllSubscription, OnRestartAllSubscriptionVariables>(OnRestartAllDocument, options);
+      }
+export type OnRestartAllSubscriptionHookResult = ReturnType<typeof useOnRestartAllSubscription>;
+export type OnRestartAllSubscriptionResult = Apollo.SubscriptionResult<OnRestartAllSubscription>;
 export const GetLogsDocument = gql`
     query GetLogs($id: ID!) {
   logs(id: $id) {
@@ -748,7 +1010,9 @@ export type TailLogsLazyQueryHookResult = ReturnType<typeof useTailLogsLazyQuery
 export type TailLogsQueryResult = Apollo.QueryResult<TailLogsQuery, TailLogsQueryVariables>;
 export const LogsDocument = gql`
     subscription Logs($id: ID!) {
-  logs(id: $id)
+  logs(id: $id) {
+    line
+  }
 }
     `;
 
@@ -776,7 +1040,9 @@ export type LogsSubscriptionHookResult = ReturnType<typeof useLogsSubscription>;
 export type LogsSubscriptionResult = Apollo.SubscriptionResult<LogsSubscription>;
 export const TailDocument = gql`
     subscription Tail($id: ID!) {
-  tail(id: $id)
+  tail(id: $id) {
+    line
+  }
 }
     `;
 

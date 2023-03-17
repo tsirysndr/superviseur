@@ -13,13 +13,14 @@ use crate::{
         core_service_server::CoreService, GetVersionRequest, GetVersionResponse,
         StartWebDashboardRequest, StartWebDashboardResponse,
     },
-    superviseur::{Superviseur, SuperviseurCommand},
+    superviseur::{ProcessEvent, Superviseur, SuperviseurCommand},
     types::{configuration::ConfigurationData, process::Process},
     webui::start_webui,
 };
 
 pub struct Core {
     cmd_tx: mpsc::UnboundedSender<SuperviseurCommand>,
+    event_tx: mpsc::UnboundedSender<ProcessEvent>,
     superviseur: Superviseur,
     processes: Arc<Mutex<Vec<(Process, String)>>>,
     config_map: Arc<Mutex<HashMap<String, ConfigurationData>>>,
@@ -28,12 +29,14 @@ pub struct Core {
 impl Core {
     pub fn new(
         cmd_tx: mpsc::UnboundedSender<SuperviseurCommand>,
+        event_tx: mpsc::UnboundedSender<ProcessEvent>,
         superviseur: Superviseur,
         processes: Arc<Mutex<Vec<(Process, String)>>>,
         config_map: Arc<Mutex<HashMap<String, ConfigurationData>>>,
     ) -> Self {
         Self {
             cmd_tx,
+            event_tx,
             superviseur,
             processes,
             config_map,
@@ -60,6 +63,7 @@ impl CoreService for Core {
         let path = request.config_file_path;
 
         let cmd_tx = self.cmd_tx.clone();
+        let event_tx = self.event_tx.clone();
         let superviseur = self.superviseur.clone();
         let processes = self.processes.clone();
         let config_map = self.config_map.clone();
@@ -70,6 +74,7 @@ impl CoreService for Core {
             match rt.block_on(start_webui(
                 path,
                 cmd_tx,
+                event_tx,
                 superviseur,
                 processes,
                 config_map,

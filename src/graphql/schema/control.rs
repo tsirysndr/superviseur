@@ -5,15 +5,24 @@ use std::{
     time::Duration,
 };
 
-use async_graphql::{Context, Error, Object, ID};
+use async_graphql::{Context, Error, Object, Subscription, ID};
+use futures_util::Stream;
 use tokio::sync::mpsc;
 
 use crate::{
+    graphql::{schema::objects::subscriptions::ServiceStarted, simple_broker::SimpleBroker},
     superviseur::SuperviseurCommand,
     types::{self, configuration::ConfigurationData, process::State},
 };
 
-use super::objects::{process::Process, service::Service};
+use super::objects::{
+    process::Process,
+    service::Service,
+    subscriptions::{
+        AllServicesRestarted, AllServicesStarted, AllServicesStopped, ServiceRestarted,
+        ServiceStopped,
+    },
+};
 
 #[derive(Default, Clone)]
 pub struct ControlQuery;
@@ -170,10 +179,14 @@ impl ControlMutation {
                     .send(SuperviseurCommand::Start(
                         service.clone(),
                         config.project.clone(),
-                        config.services.clone(),
                     ))
                     .unwrap();
             }
+
+            let services = config.services.clone();
+            let services = services.iter().map(Service::from).collect::<Vec<Service>>();
+            SimpleBroker::publish(AllServicesStarted { payload: services });
+
             return Ok(Process {
                 ..Default::default()
             });
@@ -188,7 +201,6 @@ impl ControlMutation {
         cmd_tx.send(SuperviseurCommand::Start(
             service.clone(),
             config.project.clone(),
-            config.services.clone(),
         ))?;
 
         thread::sleep(Duration::from_secs(1));
@@ -230,6 +242,9 @@ impl ControlMutation {
                     ))
                     .unwrap();
             }
+            let services = config.services.clone();
+            let services = services.iter().map(Service::from).collect::<Vec<Service>>();
+            SimpleBroker::publish(AllServicesStopped { payload: services });
             return Ok(Process {
                 ..Default::default()
             });
@@ -282,10 +297,14 @@ impl ControlMutation {
                     .send(SuperviseurCommand::Restart(
                         service.clone(),
                         config.project.clone(),
-                        config.services.clone(),
                     ))
                     .unwrap();
             }
+
+            let services = config.services.clone();
+            let services = services.iter().map(Service::from).collect::<Vec<Service>>();
+            SimpleBroker::publish(AllServicesStarted { payload: services });
+
             return Ok(Process {
                 ..Default::default()
             });
@@ -300,7 +319,6 @@ impl ControlMutation {
         cmd_tx.send(SuperviseurCommand::Restart(
             service.clone(),
             config.project.clone(),
-            config.services.clone(),
         ))?;
 
         thread::sleep(Duration::from_secs(1));
@@ -438,5 +456,35 @@ impl ControlMutation {
             status: process.state.to_string(),
             ..Service::from(service)
         })
+    }
+}
+
+#[derive(Default, Clone)]
+pub struct ControlSubscription;
+
+#[Subscription]
+impl ControlSubscription {
+    async fn on_start(&self, _ctx: &Context<'_>) -> impl Stream<Item = ServiceStarted> {
+        SimpleBroker::<ServiceStarted>::subscribe()
+    }
+
+    async fn on_stop(&self, _ctx: &Context<'_>) -> impl Stream<Item = ServiceStopped> {
+        SimpleBroker::<ServiceStopped>::subscribe()
+    }
+
+    async fn on_restart(&self, _ctx: &Context<'_>) -> impl Stream<Item = ServiceRestarted> {
+        SimpleBroker::<ServiceRestarted>::subscribe()
+    }
+
+    async fn on_start_all(&self, _ctx: &Context<'_>) -> impl Stream<Item = AllServicesStarted> {
+        SimpleBroker::<AllServicesStarted>::subscribe()
+    }
+
+    async fn on_stop_all(&self, _ctx: &Context<'_>) -> impl Stream<Item = AllServicesStopped> {
+        SimpleBroker::<AllServicesStopped>::subscribe()
+    }
+
+    async fn on_restart_all(&self, _ctx: &Context<'_>) -> impl Stream<Item = AllServicesRestarted> {
+        SimpleBroker::<AllServicesRestarted>::subscribe()
     }
 }

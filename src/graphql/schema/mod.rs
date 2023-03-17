@@ -1,7 +1,7 @@
 use async_graphql::{MergedObject, MergedSubscription};
 
 use self::{
-    control::{ControlMutation, ControlQuery},
+    control::{ControlMutation, ControlQuery, ControlSubscription},
     logging::{LoggingQuery, LoggingSubscription},
 };
 
@@ -16,4 +16,4 @@ pub struct Query(ControlQuery, LoggingQuery);
 pub struct Mutation(ControlMutation);
 
 #[derive(Default, MergedSubscription)]
-pub struct Subscription(LoggingSubscription);
+pub struct Subscription(LoggingSubscription, ControlSubscription);

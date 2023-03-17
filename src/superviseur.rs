@@ -16,9 +16,21 @@ use nix::{
 };
 use tokio::sync::mpsc;
 
-use crate::types::{
-    configuration::Service,
-    process::{Process, State},
+use crate::{
+    graphql::{
+        schema::{
+            self,
+            objects::subscriptions::{
+                AllServicesRestarted, AllServicesStarted, AllServicesStopped, ServiceRestarted,
+                ServiceStarted, ServiceStopped,
+            },
+        },
+        simple_broker::SimpleBroker,
+    },
+    types::{
+        configuration::{ConfigurationData, Service},
+        process::{Process, State},
+    },
 };
 
 #[derive(Clone)]
@@ -28,10 +40,14 @@ impl Superviseur {
     pub fn new(
         cmd_rx: Arc<Mutex<mpsc::UnboundedReceiver<SuperviseurCommand>>>,
         cmd_tx: mpsc::UnboundedSender<SuperviseurCommand>,
+        event_tx: mpsc::UnboundedSender<ProcessEvent>,
+        events: mpsc::UnboundedReceiver<ProcessEvent>,
         processes: Arc<Mutex<Vec<(Process, String)>>>,
+        config_map: Arc<Mutex<HashMap<String, ConfigurationData>>>,
     ) -> Self {
         thread::spawn(move || {
-            let internal = SuperviseurInternal::new(cmd_rx, cmd_tx, processes);
+            let internal =
+                SuperviseurInternal::new(cmd_rx, cmd_tx, event_tx, events, processes, config_map);
             futures::executor::block_on(internal);
         });
         Self {}
@@ -41,9 +57,10 @@ impl Superviseur {
 #[derive(Debug)]
 pub enum SuperviseurCommand {
     Load(Service, String),
-    Start(Service, String, Vec<Service>),
+    Start(Service, String),
     Stop(Service, String),
-    Restart(Service, String, Vec<Service>),
+    Restart(Service, String),
+    LoadConfig(ConfigurationData, String),
 }
 
 #[derive(Debug)]
@@ -51,24 +68,38 @@ pub enum ProcessEvent {
     Started(String, String),
     Stopped(String, String),
     Restarted(String, String),
+    AllStarted(String),
+    AllStopped(String),
+    AllRestarted(String),
 }
 
 struct SuperviseurInternal {
     commands: Arc<Mutex<mpsc::UnboundedReceiver<SuperviseurCommand>>>,
+    cmd_tx: mpsc::UnboundedSender<SuperviseurCommand>,
     events: mpsc::UnboundedReceiver<ProcessEvent>,
     event_tx: mpsc::UnboundedSender<ProcessEvent>,
-    cmd_tx: mpsc::UnboundedSender<SuperviseurCommand>,
     processes: Arc<Mutex<Vec<(Process, String)>>>,
     childs: Arc<Mutex<HashMap<String, i32>>>,
+    config_map: Arc<Mutex<Vec<(ConfigurationData, String)>>>,
 }
 
 impl SuperviseurInternal {
     pub fn new(
         commands: Arc<Mutex<mpsc::UnboundedReceiver<SuperviseurCommand>>>,
         cmd_tx: mpsc::UnboundedSender<SuperviseurCommand>,
+        event_tx: mpsc::UnboundedSender<ProcessEvent>,
+        events: mpsc::UnboundedReceiver<ProcessEvent>,
         processes: Arc<Mutex<Vec<(Process, String)>>>,
+        config_map: Arc<Mutex<HashMap<String, ConfigurationData>>>,
     ) -> Self {
-        let (event_tx, events) = mpsc::unbounded_channel();
+        let config_map = Arc::new(Mutex::new(
+            config_map
+                .lock()
+                .unwrap()
+                .iter()
+                .map(|(_, v)| (v.clone(), v.project.clone()))
+                .collect(),
+        ));
         Self {
             commands,
             events,
@@ -76,7 +107,19 @@ impl SuperviseurInternal {
             cmd_tx,
             processes,
             childs: Arc::new(Mutex::new(HashMap::new())),
+            config_map,
         }
+    }
+
+    pub fn handle_load_config(
+        &mut self,
+        cfg: ConfigurationData,
+        project: String,
+    ) -> Result<(), Error> {
+        let mut config_map = self.config_map.lock().unwrap();
+        config_map.retain(|(_, key)| *key != project);
+        config_map.push((cfg.clone(), project.clone()));
+        Ok(())
     }
 
     fn handle_load(&self, service: Service, project: String) -> Result<(), Error> {
@@ -129,12 +172,7 @@ impl SuperviseurInternal {
         Ok(())
     }
 
-    fn handle_start(
-        &mut self,
-        service: Service,
-        project: String,
-        services: Vec<Service>,
-    ) -> Result<(), Error> {
+    fn handle_start(&mut self, service: Service, project: String) -> Result<(), Error> {
         // start recursively if service depends on other services
         let dependencies = service.depends_on.clone();
         let dependencies = dependencies
@@ -142,10 +180,19 @@ impl SuperviseurInternal {
             .filter(|d| d != &service.name)
             .collect::<Vec<String>>();
         if dependencies.len() > 0 {
+            let config_map = self.config_map.lock().unwrap();
+            let config = config_map
+                .iter()
+                .find(|(_, key)| *key == project)
+                .map(|(c, _)| c)
+                .ok_or(anyhow::anyhow!("Project {} not found", project))?;
+            let services = config.services.clone();
             for dependency in dependencies.into_iter() {
                 match services.iter().find(|s| s.name == dependency) {
                     Some(s) => {
-                        self.handle_start(s.clone(), project.clone(), services.clone())?;
+                        self.cmd_tx
+                            .send(SuperviseurCommand::Start(s.clone(), project.clone()))
+                            .unwrap();
                         thread::sleep(Duration::from_millis(100));
                     }
                     None => {
@@ -229,11 +276,7 @@ impl SuperviseurInternal {
             // println!("child exited with status: {}", status);
             if service.autorestart {
                 cmd_tx
-                    .send(SuperviseurCommand::Start(
-                        service.clone(),
-                        project.clone(),
-                        services.clone(),
-                    ))
+                    .send(SuperviseurCommand::Start(service.clone(), project.clone()))
                     .unwrap();
 
                 event_tx
@@ -249,13 +292,7 @@ impl SuperviseurInternal {
         Ok(())
     }
 
-    fn handle_stop(
-        &self,
-        service: Service,
-        project: String,
-        services: Vec<Service>,
-        restart: bool,
-    ) -> Result<(), Error> {
+    fn handle_stop(&self, service: Service, project: String, restart: bool) -> Result<(), Error> {
         let mut childs = self.childs.lock().unwrap();
         let service_key = format!("{}-{}", project.clone(), service.name.clone());
         match childs.get(&service_key) {
@@ -268,7 +305,7 @@ impl SuperviseurInternal {
                     .unwrap();
                 if restart {
                     self.cmd_tx
-                        .send(SuperviseurCommand::Start(service, project, services))
+                        .send(SuperviseurCommand::Start(service, project))
                         .unwrap();
                 }
                 Ok(())
@@ -277,26 +314,18 @@ impl SuperviseurInternal {
         }
     }
 
-    fn handle_restart(
-        &mut self,
-        service: Service,
-        project: String,
-        services: Vec<Service>,
-    ) -> Result<(), Error> {
-        self.handle_stop(service.clone(), project.clone(), services.clone(), true)
+    fn handle_restart(&mut self, service: Service, project: String) -> Result<(), Error> {
+        self.handle_stop(service.clone(), project.clone(), true)
     }
 
     fn handle_command(&mut self, cmd: SuperviseurCommand) -> Result<(), Error> {
         match cmd {
             SuperviseurCommand::Load(service, project) => self.handle_load(service, project),
-            SuperviseurCommand::Start(service, project, services) => {
-                self.handle_start(service, project, services)
-            }
-            SuperviseurCommand::Stop(service, project) => {
-                self.handle_stop(service, project, vec![], false)
-            }
-            SuperviseurCommand::Restart(service, project, services) => {
-                self.handle_restart(service, project, services)
+            SuperviseurCommand::Start(service, project) => self.handle_start(service, project),
+            SuperviseurCommand::Stop(service, project) => self.handle_stop(service, project, false),
+            SuperviseurCommand::Restart(service, project) => self.handle_restart(service, project),
+            SuperviseurCommand::LoadConfig(config, project) => {
+                self.handle_load_config(config, project)
             }
         }
     }
@@ -311,6 +340,23 @@ impl SuperviseurInternal {
                     .unwrap()
                     .0;
                 process.state = State::Running;
+
+                // call SimpleBroker::publish
+                let config_map = self.config_map.lock().unwrap();
+                let config = config_map
+                    .iter()
+                    .find(|(c, k)| k == &project)
+                    .map(|(c, _)| c)
+                    .ok_or(anyhow::anyhow!("Config not found"))?;
+                let service = config
+                    .services
+                    .iter()
+                    .find(|s| s.name == service_name)
+                    .ok_or(anyhow::anyhow!("Service not found"))?;
+                let service = schema::objects::service::Service::from(service);
+                SimpleBroker::publish(ServiceStarted {
+                    payload: service.clone(),
+                });
             }
             ProcessEvent::Stopped(service_name, project) => {
                 let mut process = &mut processes
@@ -319,6 +365,23 @@ impl SuperviseurInternal {
                     .unwrap()
                     .0;
                 process.state = State::Stopped;
+
+                // call SimpleBroker::publish
+                let config_map = self.config_map.lock().unwrap();
+                let config = config_map
+                    .iter()
+                    .find(|(c, k)| k == &project)
+                    .map(|(c, _)| c)
+                    .ok_or(anyhow::anyhow!("Config not found"))?;
+                let service = config
+                    .services
+                    .iter()
+                    .find(|s| s.name == service_name)
+                    .ok_or(anyhow::anyhow!("Service not found"))?;
+                let service = schema::objects::service::Service::from(service);
+                SimpleBroker::publish(ServiceStopped {
+                    payload: service.clone(),
+                });
             }
             ProcessEvent::Restarted(service_name, project) => {
                 let mut process = &mut processes
@@ -327,6 +390,68 @@ impl SuperviseurInternal {
                     .unwrap()
                     .0;
                 process.state = State::Running;
+
+                // call SimpleBroker::publish
+                let config_map = self.config_map.lock().unwrap();
+                let config = config_map
+                    .iter()
+                    .find(|(c, k)| k == &project)
+                    .map(|(c, _)| c)
+                    .ok_or(anyhow::anyhow!("Config not found"))?;
+                let service = config
+                    .services
+                    .iter()
+                    .find(|s| s.name == service_name)
+                    .ok_or(anyhow::anyhow!("Service not found"))?;
+                let service = schema::objects::service::Service::from(service);
+                SimpleBroker::publish(ServiceRestarted {
+                    payload: service.clone(),
+                });
+            }
+            ProcessEvent::AllStarted(project) => {
+                // call SimpleBroker::publish
+                let config_map = self.config_map.lock().unwrap();
+                let config = config_map
+                    .iter()
+                    .find(|(c, k)| k == &project)
+                    .map(|(c, _)| c)
+                    .ok_or(anyhow::anyhow!("Config not found"))?;
+                let services = config
+                    .services
+                    .iter()
+                    .map(|s| schema::objects::service::Service::from(s))
+                    .collect();
+                SimpleBroker::publish(AllServicesStarted { payload: services });
+            }
+            ProcessEvent::AllRestarted(project) => {
+                // call SimpleBroker::publish
+                let config_map = self.config_map.lock().unwrap();
+                let config = config_map
+                    .iter()
+                    .find(|(c, k)| k == &project)
+                    .map(|(c, _)| c)
+                    .ok_or(anyhow::anyhow!("Config not found"))?;
+                let services = config
+                    .services
+                    .iter()
+                    .map(|s| schema::objects::service::Service::from(s))
+                    .collect();
+                SimpleBroker::publish(AllServicesRestarted { payload: services });
+            }
+            ProcessEvent::AllStopped(project) => {
+                // call SimpleBroker::publish
+                let config_map = self.config_map.lock().unwrap();
+                let config = config_map
+                    .iter()
+                    .find(|(c, k)| k == &project)
+                    .map(|(c, _)| c)
+                    .ok_or(anyhow::anyhow!("Config not found"))?;
+                let services = config
+                    .services
+                    .iter()
+                    .map(|s| schema::objects::service::Service::from(s))
+                    .collect();
+                SimpleBroker::publish(AllServicesStopped { payload: services });
             }
         }
         Ok(())
