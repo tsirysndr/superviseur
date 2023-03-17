@@ -45,8 +45,8 @@ brew install tsirysndr/tap/superviseur
 Or download the latest release for your platform [here](https://github.com/tsirysndr/superviseur/releases).
 
 ## 📦 Downloads
-- `Mac`: arm64: [superviseur_v0.1.0-alpha.2_aarch64-apple-darwin.tar.gz](https://github.com/tsirysndr/superviseur/releases/download/v0.1.0-alpha.2/superviseur_v0.1.0-alpha.2_aarch64-apple-darwin.tar.gz) intel: [superviseur_v0.1.0-alpha.2_x86_64-apple-darwin.tar.gz](https://github.com/tsirysndr/superviseur/releases/download/v0.1.0-alpha.2/superviseur_v0.1.0-alpha.2_x86_64-apple-darwin.tar.gz)
-- `Linux`: [superviseur_v0.1.0-alpha.2_x86_64-unknown-linux-gnu.tar.gz](https://github.com/tsirysndr/superviseur/releases/download/v0.1.0-alpha.2/superviseur_v0.1.0-alpha.2_x86_64-unknown-linux-gnu.tar.gz)
+- `Mac`: arm64: [superviseur_v0.1.0-alpha.3_aarch64-apple-darwin.tar.gz](https://github.com/tsirysndr/superviseur/releases/download/v0.1.0-alpha.3/superviseur_v0.1.0-alpha.3_aarch64-apple-darwin.tar.gz) intel: [superviseur_v0.1.0-alpha.3_x86_64-apple-darwin.tar.gz](https://github.com/tsirysndr/superviseur/releases/download/v0.1.0-alpha.3/superviseur_v0.1.0-alpha.3_x86_64-apple-darwin.tar.gz)
+- `Linux`: [superviseur_v0.1.0-alpha.3_x86_64-unknown-linux-gnu.tar.gz](https://github.com/tsirysndr/superviseur/releases/download/v0.1.0-alpha.3/superviseur_v0.1.0-alpha.3_x86_64-unknown-linux-gnu.tar.gz)
 
 ## 🚀 Usage
 
