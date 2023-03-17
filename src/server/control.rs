@@ -1,8 +1,11 @@
 use std::{
     collections::HashMap,
     sync::{Arc, Mutex},
+    thread,
+    time::Duration,
 };
 
+use names::Generator;
 use tokio::sync::mpsc;
 use tonic::{Request, Response};
 
@@ -16,7 +19,10 @@ use crate::{
             StatusRequest, StatusResponse, StopRequest, StopResponse,
         },
     },
-    superviseur::{Superviseur, SuperviseurCommand},
+    graphql::{
+        self, schema::objects::subscriptions::{AllServicesStarted, AllServicesStopped, AllServicesRestarted}, simple_broker::SimpleBroker,
+    },
+    superviseur::{ProcessEvent, Superviseur, SuperviseurCommand},
     types::{
         self,
         configuration::ConfigurationData,
@@ -26,6 +32,7 @@ use crate::{
 
 pub struct Control {
     cmd_tx: mpsc::UnboundedSender<SuperviseurCommand>,
+    event_tx: mpsc::UnboundedSender<ProcessEvent>,
     superviseur: Superviseur,
     processes: Arc<Mutex<Vec<(Process, String)>>>,
     config_map: Arc<Mutex<HashMap<String, ConfigurationData>>>,
@@ -34,12 +41,14 @@ pub struct Control {
 impl Control {
     pub fn new(
         cmd_tx: mpsc::UnboundedSender<SuperviseurCommand>,
+        event_tx: mpsc::UnboundedSender<ProcessEvent>,
         superviseur: Superviseur,
         processes: Arc<Mutex<Vec<(Process, String)>>>,
         config_map: Arc<Mutex<HashMap<String, ConfigurationData>>>,
     ) -> Self {
         Self {
             cmd_tx,
+            event_tx,
             superviseur,
             processes,
             config_map,
@@ -56,21 +65,85 @@ impl ControlService for Control {
         let request = request.into_inner();
         let config = request.config;
         let path = request.file_path;
-        let config: ConfigurationData =
+        let mut config: ConfigurationData =
             hcl::from_str(&config).map_err(|e| tonic::Status::internal(e.to_string()))?;
-        self.config_map
-            .lock()
-            .unwrap()
-            .insert(path.clone(), config.clone());
 
-        for service in config.services {
+        let mut generator = Generator::default();
+        let mut config_map = self.config_map.lock().unwrap();
+
+        // check if the config is already loaded
+        if config_map.contains_key(&path) {
+            // reuse the id of the services
+            let old_config = config_map.get_mut(&path).unwrap();
+            for service in &mut config.services {
+                match old_config.services.iter().find(|s| s.name == service.name) {
+                    Some(old_service) => {
+                        service.id = old_service.id.clone();
+                    }
+                    None => {
+                        service.id = Some(generator.next().unwrap());
+                    }
+                }
+            }
+            self.cmd_tx
+                .send(SuperviseurCommand::LoadConfig(config.clone(), path.clone()))
+                .unwrap();
+        } else {
+            config.services = config
+                .services
+                .into_iter()
+                .map(|mut service| {
+                    service.id = Some(generator.next().unwrap());
+                    service
+                })
+                .collect();
+
+            config_map.insert(path.clone(), config.clone());
+            self.cmd_tx
+                .send(SuperviseurCommand::LoadConfig(
+                    config.clone(),
+                    config.project.clone(),
+                ))
+                .unwrap();
+        }
+
+        let config = config_map.get_mut(&path).unwrap();
+
+        let services = config.services.clone();
+        let mut services = services.into_iter();
+
+        // convert services dependencies to ids
+        for service in &mut config.services {
+            let mut dependencies = vec![];
+            for dependency in &service.depends_on {
+                match services.find(|s| s.name == *dependency) {
+                    Some(service) => {
+                        dependencies.push(service.id.clone().unwrap());
+                    }
+                    None => {
+                        return Err(tonic::Status::not_found(format!(
+                            "Service {} not found",
+                            dependency
+                        )));
+                    }
+                }
+            }
+            service.dependencies = dependencies;
+        }
+
+        let services = config.services.clone();
+
+        for service in services.into_iter() {
             self.cmd_tx
                 .send(SuperviseurCommand::Load(service, config.project.clone()))
                 .map_err(|e| tonic::Status::internal(e.to_string()))?;
         }
 
+        thread::sleep(Duration::from_millis(100));
+
         Ok(Response::new(LoadConfigResponse { success: true }))
     }
+
     async fn start(
         &self,
         request: Request<StartRequest>,
@@ -110,6 +183,13 @@ impl ControlService for Control {
                 ))
                 .map_err(|e| tonic::Status::internal(e.to_string()))?;
         }
+
+        let services = config.services.clone();
+        let services = services
+            .iter()
+            .map(graphql::schema::objects::service::Service::from)
+            .collect::<Vec<graphql::schema::objects::service::Service>>();
+        SimpleBroker::publish(AllServicesStarted { payload: services });
 
         Ok(Response::new(StartResponse { success: true }))
     }
@@ -154,6 +234,13 @@ impl ControlService for Control {
                 .unwrap();
         }
 
+        let services = config.services.clone();
+        let services = services
+            .iter()
+            .map(graphql::schema::objects::service::Service::from)
+            .collect::<Vec<graphql::schema::objects::service::Service>>();
+        SimpleBroker::publish(AllServicesStopped { payload: services });
+
         Ok(Response::new(StopResponse { success: true }))
     }
 
@@ -196,6 +283,14 @@ impl ControlService for Control {
                 ))
                 .map_err(|e| tonic::Status::internal(e.to_string()))?;
         }
+
+        let services = config.services.clone();
+        let services = services
+            .iter()
+            .map(graphql::schema::objects::service::Service::from)
+            .collect::<Vec<graphql::schema::objects::service::Service>>();
+        SimpleBroker::publish(AllServicesRestarted { payload: services });
+
 
         Ok(Response::new(RestartResponse { success: true }))
     }

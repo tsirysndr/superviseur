@@ -2,6 +2,8 @@ use tabled::Tabled;
 
 #[derive(Default, Tabled)]
 pub struct Service {
+    #[tabled(rename = "ID")]
+    pub id: String,
     #[tabled(rename = "NAME")]
     pub name: String,
     #[tabled(rename = "STATUS")]

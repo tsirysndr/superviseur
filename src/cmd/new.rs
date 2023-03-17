@@ -11,12 +11,14 @@ pub fn execute_new(cfg_format: ConfigFormat) {
     let config = ConfigurationData {
         project: "demo".to_string(),
         services: vec![Service {
+            id: None,
             name: "demo".to_string(),
             r#type: "exec".to_string(),
             command: "ping $GITHUB_DOMAIN".to_string(),
             working_dir: "/tmp".to_string(),
             description: Some("Ping Service Example".to_string()),
             depends_on: vec![],
+            dependencies: vec![],
             env,
             autostart: true,
             autorestart: false,

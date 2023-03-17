@@ -3,6 +3,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         &[
             "proto/objects/v1alpha1/service.proto",
             "proto/superviseur/v1alpha1/control.proto",
+            "proto/superviseur/v1alpha1/core.proto",
             "proto/superviseur/v1alpha1/logging.proto",
         ],
         &["proto"],

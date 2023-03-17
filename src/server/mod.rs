@@ -5,32 +5,24 @@ use std::{
     sync::{Arc, Mutex},
 };
 
+use crate::{
+    api::superviseur::v1alpha1::{
+        control_service_server::ControlServiceServer, core_service_server::CoreServiceServer,
+        logging_service_server::LoggingServiceServer,
+    },
+    server::{control::Control, logging::Logging},
+    superviseur::Superviseur,
+    types::{process::Process, BANNER, UNIX_SOCKET_PATH},
+};
 use anyhow::Error;
 use owo_colors::OwoColorize;
 use tokio::net::UnixListener;
 use tokio_stream::wrappers::UnixListenerStream;
 use tonic::transport::Server;
 
-use crate::{
-    api::superviseur::v1alpha1::{
-        control_service_server::ControlServiceServer, logging_service_server::LoggingServiceServer,
-    },
-    server::{control::Control, logging::Logging},
-    superviseur::Superviseur,
-    types::{process::Process, UNIX_SOCKET_PATH},
-};
-
 pub mod control;
+pub mod core;
 pub mod logging;
-
-const BANNER: &str = r#"
-         _____                             _                     
-        / ___/__  ______  ___  ______   __(_)_______  __  _______
-        \__ \/ / / / __ \/ _ \/ ___/ | / / / ___/ _ \/ / / / ___/
-       ___/ / /_/ / /_/ /  __/ /   | |/ / (__  )  __/ /_/ / /    
-      /____/\__,_/ .___/\___/_/    |___/_/____/\___/\__,_/_/     
-                /_/                                              
-      "#;
 
 pub async fn exec(port: u16, serve: bool) -> Result<(), Error> {
     let addr: SocketAddr = format!("0.0.0.0:{}", port).parse().unwrap();
@@ -46,12 +38,21 @@ pub async fn exec(port: u16, serve: bool) -> Result<(), Error> {
 
     let config_map = Arc::new(Mutex::new(HashMap::new()));
     let (cmd_tx, cmd_rx) = tokio::sync::mpsc::unbounded_channel();
+    let (event_tx, events) = tokio::sync::mpsc::unbounded_channel();
     let processes = Arc::new(Mutex::new(vec![] as Vec<(Process, String)>));
     let cmd_rx = Arc::new(Mutex::new(cmd_rx));
 
-    let superviseur = Superviseur::new(cmd_rx, cmd_tx.clone(), processes.clone());
+    let superviseur = Superviseur::new(
+        cmd_rx,
+        cmd_tx.clone(),
+        event_tx.clone(),
+        events,
+        processes.clone(),
+        config_map.clone(),
+    );
 
     let cloned_cmd_tx = cmd_tx.clone();
+    let cloned_event_tx = event_tx.clone();
     let cloned_superviseur = superviseur.clone();
     let cloned_processes = processes.clone();
     let cloned_config_map = config_map.clone();
@@ -76,7 +77,15 @@ pub async fn exec(port: u16, serve: bool) -> Result<(), Error> {
                 cloned_config_map.clone(),
             ))))
             .add_service(tonic_web::enable(ControlServiceServer::new(Control::new(
+                cloned_cmd_tx.clone(),
+                cloned_event_tx.clone(),
+                cloned_superviseur.clone(),
+                cloned_processes.clone(),
+                cloned_config_map.clone(),
+            ))))
+            .add_service(tonic_web::enable(CoreServiceServer::new(core::Core::new(
                 cloned_cmd_tx,
+                cloned_event_tx,
                 cloned_superviseur,
                 cloned_processes,
                 cloned_config_map,
@@ -96,7 +105,15 @@ pub async fn exec(port: u16, serve: bool) -> Result<(), Error> {
                 config_map.clone(),
             ))))
             .add_service(tonic_web::enable(ControlServiceServer::new(Control::new(
+                cmd_tx.clone(),
+                event_tx.clone(),
+                superviseur.clone(),
+                processes.clone(),
+                config_map.clone(),
+            ))))
+            .add_service(tonic_web::enable(CoreServiceServer::new(core::Core::new(
                 cmd_tx,
+                event_tx,
                 superviseur,
                 processes,
                 config_map,

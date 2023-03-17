@@ -16,9 +16,21 @@ use nix::{
 };
 use tokio::sync::mpsc;
 
-use crate::types::{
-    configuration::Service,
-    process::{Process, State},
+use crate::{
+    graphql::{
+        schema::{
+            self,
+            objects::subscriptions::{
+                AllServicesRestarted, AllServicesStarted, AllServicesStopped, LogStream,
+                ServiceRestarted, ServiceStarted, ServiceStopped, TailLogStream,
+            },
+        },
+        simple_broker::SimpleBroker,
+    },
+    types::{
+        configuration::{ConfigurationData, Service},
+        process::{Process, State},
+    },
 };
 
 #[derive(Clone)]
@@ -28,10 +40,14 @@ impl Superviseur {
     pub fn new(
         cmd_rx: Arc<Mutex<mpsc::UnboundedReceiver<SuperviseurCommand>>>,
         cmd_tx: mpsc::UnboundedSender<SuperviseurCommand>,
+        event_tx: mpsc::UnboundedSender<ProcessEvent>,
+        events: mpsc::UnboundedReceiver<ProcessEvent>,
         processes: Arc<Mutex<Vec<(Process, String)>>>,
+        config_map: Arc<Mutex<HashMap<String, ConfigurationData>>>,
     ) -> Self {
         thread::spawn(move || {
-            let internal = SuperviseurInternal::new(cmd_rx, cmd_tx, processes);
+            let internal =
+                SuperviseurInternal::new(cmd_rx, cmd_tx, event_tx, events, processes, config_map);
             futures::executor::block_on(internal);
         });
         Self {}
@@ -44,6 +60,7 @@ pub enum SuperviseurCommand {
     Start(Service, String),
     Stop(Service, String),
     Restart(Service, String),
+    LoadConfig(ConfigurationData, String),
 }
 
 #[derive(Debug)]
@@ -51,24 +68,38 @@ pub enum ProcessEvent {
     Started(String, String),
     Stopped(String, String),
     Restarted(String, String),
+    AllStarted(String),
+    AllStopped(String),
+    AllRestarted(String),
 }
 
 struct SuperviseurInternal {
     commands: Arc<Mutex<mpsc::UnboundedReceiver<SuperviseurCommand>>>,
+    cmd_tx: mpsc::UnboundedSender<SuperviseurCommand>,
     events: mpsc::UnboundedReceiver<ProcessEvent>,
     event_tx: mpsc::UnboundedSender<ProcessEvent>,
-    cmd_tx: mpsc::UnboundedSender<SuperviseurCommand>,
     processes: Arc<Mutex<Vec<(Process, String)>>>,
     childs: Arc<Mutex<HashMap<String, i32>>>,
+    config_map: Arc<Mutex<Vec<(ConfigurationData, String)>>>,
 }
 
 impl SuperviseurInternal {
     pub fn new(
         commands: Arc<Mutex<mpsc::UnboundedReceiver<SuperviseurCommand>>>,
         cmd_tx: mpsc::UnboundedSender<SuperviseurCommand>,
+        event_tx: mpsc::UnboundedSender<ProcessEvent>,
+        events: mpsc::UnboundedReceiver<ProcessEvent>,
         processes: Arc<Mutex<Vec<(Process, String)>>>,
+        config_map: Arc<Mutex<HashMap<String, ConfigurationData>>>,
     ) -> Self {
-        let (event_tx, events) = mpsc::unbounded_channel();
+        let config_map = Arc::new(Mutex::new(
+            config_map
+                .lock()
+                .unwrap()
+                .iter()
+                .map(|(_, v)| (v.clone(), v.project.clone()))
+                .collect(),
+        ));
         Self {
             commands,
             events,
@@ -76,7 +107,19 @@ impl SuperviseurInternal {
             cmd_tx,
             processes,
             childs: Arc::new(Mutex::new(HashMap::new())),
+            config_map,
         }
+    }
+
+    pub fn handle_load_config(
+        &mut self,
+        cfg: ConfigurationData,
+        project: String,
+    ) -> Result<(), Error> {
+        let mut config_map = self.config_map.lock().unwrap();
+        config_map.retain(|(_, key)| *key != project);
+        config_map.push((cfg.clone(), project.clone()));
+        Ok(())
     }
 
     fn handle_load(&self, service: Service, project: String) -> Result<(), Error> {
@@ -88,6 +131,7 @@ impl SuperviseurInternal {
             .find(|(p, key)| p.name == service.name && key == &project)
             .map(|(p, _)| p)
         {
+            process.service_id = service.id.unwrap_or("-".to_string());
             process.name = service.name;
             process.command = service.command;
             process.description = service.description;
@@ -103,6 +147,7 @@ impl SuperviseurInternal {
 
         processes.push((
             Process {
+                service_id: service.id.unwrap_or("-".to_string()),
                 name: service.name,
                 command: service.command,
                 description: service.description,
@@ -128,6 +173,47 @@ impl SuperviseurInternal {
     }
 
     fn handle_start(&mut self, service: Service, project: String) -> Result<(), Error> {
+        // start recursively if service depends on other services
+        let dependencies = service.depends_on.clone();
+        let dependencies = dependencies
+            .into_iter()
+            .filter(|d| d != &service.name)
+            .collect::<Vec<String>>();
+        if dependencies.len() > 0 {
+            let config_map = self.config_map.lock().unwrap();
+            let config = config_map
+                .iter()
+                .find(|(_, key)| *key == project)
+                .map(|(c, _)| c)
+                .ok_or(anyhow::anyhow!("Project {} not found", project))?;
+            let services = config.services.clone();
+            for dependency in dependencies.into_iter() {
+                match services.iter().find(|s| s.name == dependency) {
+                    Some(s) => {
+                        self.cmd_tx
+                            .send(SuperviseurCommand::Start(s.clone(), project.clone()))
+                            .unwrap();
+                        thread::sleep(Duration::from_millis(100));
+                    }
+                    None => {
+                        return Err(anyhow::anyhow!("Service {} not found", dependency));
+                    }
+                }
+            }
+        }
+
+        // skip if already started
+        let mut processes = self.processes.lock().unwrap();
+        if let Some(process) = processes
+            .iter()
+            .find(|(p, key)| p.name == service.name && key == &project)
+            .map(|(p, _)| p)
+        {
+            if process.state == State::Running {
+                return Ok(());
+            }
+        }
+
         let envs = service.env.clone();
         let working_dir = service.working_dir.clone();
         let mut child = std::process::Command::new("sh")
@@ -140,7 +226,6 @@ impl SuperviseurInternal {
             .spawn()
             .unwrap();
 
-        let mut processes = self.processes.lock().unwrap();
         let mut process = &mut processes
             .iter_mut()
             .find(|(p, key)| p.name == service.name && key == &project)
@@ -165,6 +250,7 @@ impl SuperviseurInternal {
 
         thread::spawn(move || {
             let service = cloned_service;
+            let id = service.id.unwrap_or("-".to_string());
             // write stdout to file
             let mut log_file = std::fs::File::create(service.stdout).unwrap();
 
@@ -172,6 +258,14 @@ impl SuperviseurInternal {
             for line in stdout.lines() {
                 let line = line.unwrap();
                 let line = format!("{}\n", line);
+                SimpleBroker::publish(TailLogStream {
+                    id: id.clone(),
+                    line: line.clone(),
+                });
+                SimpleBroker::publish(LogStream {
+                    id: id.clone(),
+                    line: line.clone(),
+                });
                 log_file.write_all(line.as_bytes()).unwrap();
             }
 
@@ -207,17 +301,22 @@ impl SuperviseurInternal {
         Ok(())
     }
 
-    fn handle_stop(&self, service: Service, project: String) -> Result<(), Error> {
+    fn handle_stop(&self, service: Service, project: String, restart: bool) -> Result<(), Error> {
         let mut childs = self.childs.lock().unwrap();
-        let service_key = format!("{}-{}", project, service.name);
+        let service_key = format!("{}-{}", project.clone(), service.name.clone());
         match childs.get(&service_key) {
             Some(pid) => {
                 signal::kill(Pid::from_raw(*pid), Signal::SIGTERM)?;
                 childs.remove(&service_key);
 
                 self.event_tx
-                    .send(ProcessEvent::Stopped(service.name, project))
+                    .send(ProcessEvent::Stopped(service.name.clone(), project.clone()))
                     .unwrap();
+                if restart {
+                    self.cmd_tx
+                        .send(SuperviseurCommand::Start(service, project))
+                        .unwrap();
+                }
                 Ok(())
             }
             None => Ok(()),
@@ -225,18 +324,21 @@ impl SuperviseurInternal {
     }
 
     fn handle_restart(&mut self, service: Service, project: String) -> Result<(), Error> {
-        self.handle_stop(service.clone(), project.clone())?;
-        self.handle_start(service, project)
+        self.handle_stop(service.clone(), project.clone(), true)
     }
 
     fn handle_command(&mut self, cmd: SuperviseurCommand) -> Result<(), Error> {
         match cmd {
             SuperviseurCommand::Load(service, project) => self.handle_load(service, project),
             SuperviseurCommand::Start(service, project) => self.handle_start(service, project),
-            SuperviseurCommand::Stop(service, project) => self.handle_stop(service, project),
+            SuperviseurCommand::Stop(service, project) => self.handle_stop(service, project, false),
             SuperviseurCommand::Restart(service, project) => self.handle_restart(service, project),
+            SuperviseurCommand::LoadConfig(config, project) => {
+                self.handle_load_config(config, project)
+            }
         }
     }
+
     fn handle_event(&mut self, event: ProcessEvent) -> Result<(), Error> {
         let mut processes = self.processes.lock().unwrap();
         match event {
@@ -247,6 +349,24 @@ impl SuperviseurInternal {
                     .unwrap()
                     .0;
                 process.state = State::Running;
+
+                // call SimpleBroker::publish
+                let config_map = self.config_map.lock().unwrap();
+                let config = config_map
+                    .iter()
+                    .find(|(c, k)| k == &project)
+                    .map(|(c, _)| c)
+                    .ok_or(anyhow::anyhow!("Config not found"))?;
+                let service = config
+                    .services
+                    .iter()
+                    .find(|s| s.name == service_name)
+                    .ok_or(anyhow::anyhow!("Service not found"))?;
+                let mut service = schema::objects::service::Service::from(service);
+                service.status = String::from("RUNNING");
+                SimpleBroker::publish(ServiceStarted {
+                    payload: service.clone(),
+                });
             }
             ProcessEvent::Stopped(service_name, project) => {
                 let mut process = &mut processes
@@ -255,6 +375,24 @@ impl SuperviseurInternal {
                     .unwrap()
                     .0;
                 process.state = State::Stopped;
+
+                // call SimpleBroker::publish
+                let config_map = self.config_map.lock().unwrap();
+                let config = config_map
+                    .iter()
+                    .find(|(c, k)| k == &project)
+                    .map(|(c, _)| c)
+                    .ok_or(anyhow::anyhow!("Config not found"))?;
+                let service = config
+                    .services
+                    .iter()
+                    .find(|s| s.name == service_name)
+                    .ok_or(anyhow::anyhow!("Service not found"))?;
+                let mut service = schema::objects::service::Service::from(service);
+                service.status = String::from("STOPPED");
+                SimpleBroker::publish(ServiceStopped {
+                    payload: service.clone(),
+                });
             }
             ProcessEvent::Restarted(service_name, project) => {
                 let mut process = &mut processes
@@ -263,6 +401,69 @@ impl SuperviseurInternal {
                     .unwrap()
                     .0;
                 process.state = State::Running;
+
+                // call SimpleBroker::publish
+                let config_map = self.config_map.lock().unwrap();
+                let config = config_map
+                    .iter()
+                    .find(|(c, k)| k == &project)
+                    .map(|(c, _)| c)
+                    .ok_or(anyhow::anyhow!("Config not found"))?;
+                let service = config
+                    .services
+                    .iter()
+                    .find(|s| s.name == service_name)
+                    .ok_or(anyhow::anyhow!("Service not found"))?;
+                let mut service = schema::objects::service::Service::from(service);
+                service.status = String::from("RUNNING");
+                SimpleBroker::publish(ServiceRestarted {
+                    payload: service.clone(),
+                });
+            }
+            ProcessEvent::AllStarted(project) => {
+                // call SimpleBroker::publish
+                let config_map = self.config_map.lock().unwrap();
+                let config = config_map
+                    .iter()
+                    .find(|(c, k)| k == &project)
+                    .map(|(c, _)| c)
+                    .ok_or(anyhow::anyhow!("Config not found"))?;
+                let services = config
+                    .services
+                    .iter()
+                    .map(|s| schema::objects::service::Service::from(s))
+                    .collect();
+                SimpleBroker::publish(AllServicesStarted { payload: services });
+            }
+            ProcessEvent::AllRestarted(project) => {
+                // call SimpleBroker::publish
+                let config_map = self.config_map.lock().unwrap();
+                let config = config_map
+                    .iter()
+                    .find(|(c, k)| k == &project)
+                    .map(|(c, _)| c)
+                    .ok_or(anyhow::anyhow!("Config not found"))?;
+                let services = config
+                    .services
+                    .iter()
+                    .map(|s| schema::objects::service::Service::from(s))
+                    .collect();
+                SimpleBroker::publish(AllServicesRestarted { payload: services });
+            }
+            ProcessEvent::AllStopped(project) => {
+                // call SimpleBroker::publish
+                let config_map = self.config_map.lock().unwrap();
+                let config = config_map
+                    .iter()
+                    .find(|(c, k)| k == &project)
+                    .map(|(c, _)| c)
+                    .ok_or(anyhow::anyhow!("Config not found"))?;
+                let services = config
+                    .services
+                    .iter()
+                    .map(|s| schema::objects::service::Service::from(s))
+                    .collect();
+                SimpleBroker::publish(AllServicesStopped { payload: services });
             }
         }
         Ok(())
