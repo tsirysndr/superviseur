@@ -21,8 +21,8 @@ use crate::{
         schema::{
             self,
             objects::subscriptions::{
-                AllServicesRestarted, AllServicesStarted, AllServicesStopped, ServiceRestarted,
-                ServiceStarted, ServiceStopped,
+                AllServicesRestarted, AllServicesStarted, AllServicesStopped, LogStream,
+                ServiceRestarted, ServiceStarted, ServiceStopped, TailLogStream,
             },
         },
         simple_broker::SimpleBroker,
@@ -250,6 +250,7 @@ impl SuperviseurInternal {
 
         thread::spawn(move || {
             let service = cloned_service;
+            let id = service.id.unwrap_or("-".to_string());
             // write stdout to file
             let mut log_file = std::fs::File::create(service.stdout).unwrap();
 
@@ -257,6 +258,14 @@ impl SuperviseurInternal {
             for line in stdout.lines() {
                 let line = line.unwrap();
                 let line = format!("{}\n", line);
+                SimpleBroker::publish(TailLogStream {
+                    id: id.clone(),
+                    line: line.clone(),
+                });
+                SimpleBroker::publish(LogStream {
+                    id: id.clone(),
+                    line: line.clone(),
+                });
                 log_file.write_all(line.as_bytes()).unwrap();
             }
 

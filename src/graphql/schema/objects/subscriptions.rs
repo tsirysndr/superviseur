@@ -4,6 +4,7 @@ use super::service::Service;
 
 #[derive(Default, Clone)]
 pub struct TailLogStream {
+    pub id: String,
     pub line: String,
 }
 
@@ -16,6 +17,7 @@ impl TailLogStream {
 
 #[derive(Default, Clone)]
 pub struct LogStream {
+    pub id: String,
     pub line: String,
 }
 

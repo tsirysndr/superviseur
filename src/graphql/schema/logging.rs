@@ -3,10 +3,13 @@ use std::{
     fs::File,
     io::{BufRead, BufReader},
     sync::{Arc, Mutex},
+    thread,
+    time::Duration,
 };
 
-use async_graphql::*;
+use async_graphql::{async_stream::stream, *};
 use futures_util::Stream;
+use tokio_stream::StreamExt;
 
 use crate::{
     graphql::{schema::objects::subscriptions::TailLogStream, simple_broker::SimpleBroker},
@@ -100,15 +103,27 @@ pub struct LoggingSubscription;
 
 #[Subscription]
 impl LoggingSubscription {
-    async fn tail(&self, _ctx: &Context<'_>, _id: ID) -> impl Stream<Item = TailLogStream> {
-        SimpleBroker::<TailLogStream>::subscribe()
+    async fn tail(&self, _ctx: &Context<'_>, id: ID) -> impl Stream<Item = TailLogStream> {
+        stream! {
+            while let Some(log) = SimpleBroker::<TailLogStream>::subscribe().next().await {
+                if ID(log.id.clone()) == id {
+                    yield log;
+                }
+            }
+        }
     }
 
     async fn logs(
         &self,
         _ctx: &Context<'_>,
-        _id: ID,
+        id: ID,
     ) -> impl Stream<Item = subscriptions::LogStream> {
-        SimpleBroker::<subscriptions::LogStream>::subscribe()
+        stream! {
+            while let Some(log) = SimpleBroker::<subscriptions::LogStream>::subscribe().next().await {
+                if ID(log.id.clone()) == id {
+                    yield log;
+                }
+            }
+        }
     }
 }
