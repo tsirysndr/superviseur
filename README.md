@@ -13,7 +13,13 @@
   </a>
 
   <a href="https://feat-webui--640724a8e12e5a011d6d59fb.chromatic.com" target="_blank">
-  <img src="https://raw.githubusercontent.com/storybooks/brand/master/badge/badge-storybook.svg" />
+  <img src="https://img.shields.io/badge/Storybook-FF4785?logo=storybook&logoColor=fff" />
+  </a>
+  <a href="https://github.com/tsirysndr/superviseur/tree/master/webui" target="_blank">
+  <img src="https://img.shields.io/badge/-ApolloGraphQL-311C87?logo=apollo-graphql" />
+  </a>
+  <a href="https://github.com/tsirysndr/superviseur/actions/workflows/release.yml" target="_blank">
+    <img alt="release" src="https://github.com/tsirysndr/superviseur/actions/workflows/release.yml/badge.svg" />
   </a>
 </p>
 <p style="margin-top: 20px; margin-bottom: 50px;">
@@ -73,6 +79,7 @@ SUBCOMMANDS:
     status     Get the status of a service
     stop       Stop all services or a specific one
     tail       Tail the log of a process
+    ui         Start the superviseur ui
     up         Start all services
 ```
 
