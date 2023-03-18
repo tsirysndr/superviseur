@@ -180,6 +180,15 @@ Output:
  NAME   STATUS    COMMAND                 TYPE 
  demo   STOPPED   "ping $GITHUB_DOMAIN"   exec 
 ```
+## As a Github Action
 
+You can use the [setup-superviseur](https://github.com/marketplace/actions/setup-superviseur) Github Action like so:
+
+```yaml
+- uses: tsirysndr/setup-superviseur@v1
+  with:
+    version: 'v0.1.0-alpha.3'
+- run: superviseur --help
+```
 ## 📝 License
 [MPL](LICENSE)
