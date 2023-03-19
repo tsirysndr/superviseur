@@ -91,6 +91,7 @@ impl From<types::process::Process> for Process {
             stderr_file: process.stderr.clone(),
             log_file: process.stdout.clone(),
             up_time: process.up_time.map(|t| t.to_rfc3339()).unwrap_or_default(),
+            working_directory: process.working_dir.clone(),
             ..Default::default()
         }
     }
