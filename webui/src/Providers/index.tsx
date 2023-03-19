@@ -1,3 +1,4 @@
+import { SnackbarProvider, PLACEMENT } from "baseui/snackbar";
 import { FC } from "react";
 import ThemeProvider from "./ThemeProvider";
 
@@ -6,7 +7,11 @@ export type ProvidersProps = {
 };
 
 const Providers: FC<ProvidersProps> = ({ children }) => {
-  return <ThemeProvider>{children}</ThemeProvider>;
+  return (
+    <SnackbarProvider placement={PLACEMENT.bottom}>
+      <ThemeProvider>{children}</ThemeProvider>
+    </SnackbarProvider>
+  );
 };
 
 export default Providers;
