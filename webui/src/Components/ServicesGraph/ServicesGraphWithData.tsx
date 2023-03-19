@@ -20,7 +20,6 @@ const ServicesGraphWithData: FC = () => {
 
   useEffect(() => {
     if (data?.services) {
-      console.log(data.services);
       setNodes(
         data?.services.map((service) => ({
           id: service.id,

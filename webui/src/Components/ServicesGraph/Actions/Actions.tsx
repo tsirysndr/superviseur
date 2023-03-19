@@ -57,67 +57,69 @@ const Actions: FC<ActionsProps> = (props) => {
         </Button>
       )}
       {allServicesAreRunning && (
-        <Button
-          onClick={onStop}
-          startEnhancer={() => <StopFill size={16} color="#630be2" />}
-          overrides={{
-            BaseButton: {
-              style: {
-                height: "30px",
-                width: "80px",
-                fontSize: "12px",
-                padding: "0px",
-                backgroundColor: "#fff",
-                color: "#630be2",
-                fontFamily: "RockfordSansMedium",
-                marginRight: "10px",
-                borderRadius: "2px",
-                border: "2px solid #630be2",
-                ":hover": {
+        <>
+          <Button
+            onClick={onStop}
+            startEnhancer={() => <StopFill size={16} color="#630be2" />}
+            overrides={{
+              BaseButton: {
+                style: {
+                  height: "30px",
+                  width: "80px",
+                  fontSize: "12px",
+                  padding: "0px",
                   backgroundColor: "#fff",
-                  opacity: 0.6,
+                  color: "#630be2",
+                  fontFamily: "RockfordSansMedium",
+                  marginRight: "10px",
+                  borderRadius: "2px",
+                  border: "2px solid #630be2",
+                  ":hover": {
+                    backgroundColor: "#fff",
+                    opacity: 0.6,
+                  },
                 },
               },
-            },
-            StartEnhancer: {
-              style: {
-                marginRight: "8px",
+              StartEnhancer: {
+                style: {
+                  marginRight: "8px",
+                },
               },
-            },
-          }}
-        >
-          Stop
-        </Button>
+            }}
+          >
+            Stop
+          </Button>
+          <Button
+            onClick={onRestart}
+            startEnhancer={() => <Reload size={14} color="#fff" />}
+            overrides={{
+              BaseButton: {
+                style: {
+                  height: "30px",
+                  width: "80px",
+                  fontSize: "12px",
+                  padding: "0px",
+                  fontFamily: "RockfordSansMedium",
+                  backgroundColor: "#630be2",
+                  color: "#fff",
+                  borderRadius: "2px",
+                  ":hover": {
+                    backgroundColor: "#630be2",
+                    opacity: 0.8,
+                  },
+                },
+              },
+              StartEnhancer: {
+                style: {
+                  marginRight: "8px",
+                },
+              },
+            }}
+          >
+            Restart
+          </Button>
+        </>
       )}
-      <Button
-        onClick={onRestart}
-        startEnhancer={() => <Reload size={14} color="#fff" />}
-        overrides={{
-          BaseButton: {
-            style: {
-              height: "30px",
-              width: "80px",
-              fontSize: "12px",
-              padding: "0px",
-              fontFamily: "RockfordSansMedium",
-              backgroundColor: "#630be2",
-              color: "#fff",
-              borderRadius: "2px",
-              ":hover": {
-                backgroundColor: "#630be2",
-                opacity: 0.8,
-              },
-            },
-          },
-          StartEnhancer: {
-            style: {
-              marginRight: "8px",
-            },
-          },
-        }}
-      >
-        Restart
-      </Button>
     </Container>
   );
 };

@@ -185,7 +185,6 @@ const SettingsRow: FC<SettingsRowProps> = ({ settings }) => {
             render={({ field }) => (
               <Select
                 {...(field as any)}
-                creatable
                 multi
                 options={settings.initialValues!}
                 labelKey="label"
