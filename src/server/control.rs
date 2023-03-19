@@ -20,7 +20,11 @@ use crate::{
         },
     },
     graphql::{
-        self, schema::objects::subscriptions::{AllServicesStarted, AllServicesStopped, AllServicesRestarted}, simple_broker::SimpleBroker,
+        self,
+        schema::objects::subscriptions::{
+            AllServicesRestarted, AllServicesStarted, AllServicesStopped,
+        },
+        simple_broker::SimpleBroker,
     },
     superviseur::{ProcessEvent, Superviseur, SuperviseurCommand},
     types::{
@@ -79,6 +83,17 @@ impl ControlService for Control {
                 match old_config.services.iter().find(|s| s.name == service.name) {
                     Some(old_service) => {
                         service.id = old_service.id.clone();
+
+                        // rewacth the directory if working_dir changed
+                        if old_service.working_dir != service.working_dir {
+                            self.cmd_tx
+                                .send(SuperviseurCommand::WatchForChanges(
+                                    service.working_dir.clone(),
+                                    service.clone(),
+                                    config.project.clone(),
+                                ))
+                                .unwrap();
+                        }
                     }
                     None => {
                         service.id = Some(generator.next().unwrap());
@@ -99,6 +114,20 @@ impl ControlService for Control {
                 .collect();
 
             config_map.insert(path.clone(), config.clone());
+
+            let services = config.services.clone();
+            let project = config.project.clone();
+
+            for service in services.into_iter() {
+                self.cmd_tx
+                    .send(SuperviseurCommand::WatchForChanges(
+                        service.working_dir.clone(),
+                        service,
+                        project.clone(),
+                    ))
+                    .unwrap();
+            }
+
             self.cmd_tx
                 .send(SuperviseurCommand::LoadConfig(
                     config.clone(),
@@ -290,7 +319,6 @@ impl ControlService for Control {
             .map(graphql::schema::objects::service::Service::from)
             .collect::<Vec<graphql::schema::objects::service::Service>>();
         SimpleBroker::publish(AllServicesRestarted { payload: services });
-
 
         Ok(Response::new(RestartResponse { success: true }))
     }

@@ -31,6 +31,7 @@ use crate::{
         configuration::{ConfigurationData, Service},
         process::{Process, State},
     },
+    watch::WatchForChanges,
 };
 
 #[derive(Clone)]
@@ -61,6 +62,7 @@ pub enum SuperviseurCommand {
     Stop(Service, String),
     Restart(Service, String),
     LoadConfig(ConfigurationData, String),
+    WatchForChanges(String, Service, String),
 }
 
 #[derive(Debug)]
@@ -327,6 +329,22 @@ impl SuperviseurInternal {
         self.handle_stop(service.clone(), project.clone(), true)
     }
 
+    fn handle_watch_for_changes(
+        &mut self,
+        dir: String,
+        service: Service,
+        project: String,
+    ) -> Result<(), Error> {
+        let superviseur_tx = self.cmd_tx.clone();
+        thread::spawn(move || {
+            let _watcher = WatchForChanges::new(dir, superviseur_tx, service, project.clone());
+            loop {
+                thread::sleep(Duration::from_secs(5));
+            }
+        });
+        Ok(())
+    }
+
     fn handle_command(&mut self, cmd: SuperviseurCommand) -> Result<(), Error> {
         match cmd {
             SuperviseurCommand::Load(service, project) => self.handle_load(service, project),
@@ -335,6 +353,9 @@ impl SuperviseurInternal {
             SuperviseurCommand::Restart(service, project) => self.handle_restart(service, project),
             SuperviseurCommand::LoadConfig(config, project) => {
                 self.handle_load_config(config, project)
+            }
+            SuperviseurCommand::WatchForChanges(dir, service, project) => {
+                self.handle_watch_for_changes(dir, service, project)
             }
         }
     }
