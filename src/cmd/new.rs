@@ -16,6 +16,7 @@ pub fn execute_new(cfg_format: ConfigFormat) {
             r#type: "exec".to_string(),
             command: "ping $GITHUB_DOMAIN".to_string(),
             working_dir: "/tmp".to_string(),
+            watch_dir: None,
             description: Some("Ping Service Example".to_string()),
             depends_on: vec![],
             dependencies: vec![],
@@ -23,9 +24,10 @@ pub fn execute_new(cfg_format: ConfigFormat) {
             autostart: true,
             autorestart: false,
             namespace: Some("demo_namespace".to_string()),
-            port: 5060,
+            port: None,
             stdout: "/tmp/demo-stdout.log".to_string(),
             stderr: "/tmp/demo-stderr.log".to_string(),
+            wait_for: None,
         }],
     };
     let serialized = match cfg_format {

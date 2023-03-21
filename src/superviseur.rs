@@ -31,6 +31,7 @@ use crate::{
         configuration::{ConfigurationData, Service},
         process::{Process, State},
     },
+    wait::wait_for_service,
     watch::WatchForChanges,
 };
 
@@ -175,34 +176,8 @@ impl SuperviseurInternal {
     }
 
     fn handle_start(&mut self, service: Service, project: String) -> Result<(), Error> {
-        // start recursively if service depends on other services
-        let dependencies = service.depends_on.clone();
-        let dependencies = dependencies
-            .into_iter()
-            .filter(|d| d != &service.name)
-            .collect::<Vec<String>>();
-        if dependencies.len() > 0 {
-            let config_map = self.config_map.lock().unwrap();
-            let config = config_map
-                .iter()
-                .find(|(_, key)| *key == project)
-                .map(|(c, _)| c)
-                .ok_or(anyhow::anyhow!("Project {} not found", project))?;
-            let services = config.services.clone();
-            for dependency in dependencies.into_iter() {
-                match services.iter().find(|s| s.name == dependency) {
-                    Some(s) => {
-                        self.cmd_tx
-                            .send(SuperviseurCommand::Start(s.clone(), project.clone()))
-                            .unwrap();
-                        thread::sleep(Duration::from_millis(100));
-                    }
-                    None => {
-                        return Err(anyhow::anyhow!("Service {} not found", dependency));
-                    }
-                }
-            }
-        }
+        self.start_dependencies(service.clone(), project.clone())?;
+        self.wait_for_service_deps(service.clone(), project.clone())?;
 
         // skip if already started
         let mut processes = self.processes.lock().unwrap();
@@ -303,11 +278,71 @@ impl SuperviseurInternal {
         Ok(())
     }
 
+    fn start_dependencies(&mut self, service: Service, project: String) -> Result<(), Error> {
+        // start recursively if service depends on other services
+        let dependencies = service.depends_on.clone();
+        let dependencies = dependencies
+            .into_iter()
+            .filter(|d| d != &service.name)
+            .collect::<Vec<String>>();
+        if dependencies.len() > 0 {
+            let config_map = self.config_map.lock().unwrap();
+            let config = config_map
+                .iter()
+                .find(|(_, key)| *key == project)
+                .map(|(c, _)| c)
+                .ok_or(anyhow::anyhow!("Project {} not found", project))?;
+            let services = config.services.clone();
+            for dependency in dependencies.into_iter() {
+                match services.iter().find(|s| s.name == dependency) {
+                    Some(s) => {
+                        self.cmd_tx
+                            .send(SuperviseurCommand::Start(s.clone(), project.clone()))
+                            .unwrap();
+                        thread::sleep(Duration::from_millis(100));
+                    }
+                    None => {
+                        return Err(anyhow::anyhow!("Service {} not found", dependency));
+                    }
+                }
+            }
+        }
+        Ok(())
+    }
+
+    fn wait_for_service_deps(&mut self, service: Service, project: String) -> Result<(), Error> {
+        match service.wait_for {
+            Some(ref wait_for) => {
+                let wait_for = wait_for.clone();
+                let config_map = self.config_map.lock().unwrap();
+                let config = config_map
+                    .iter()
+                    .find(|(_, key)| *key == project)
+                    .map(|(c, _)| c)
+                    .ok_or(anyhow::anyhow!("Project {} not found", project))?;
+                let services = config.services.clone();
+                for w in wait_for.into_iter() {
+                    match services.iter().find(|s| s.name == w) {
+                        Some(s) => {
+                            wait_for_service(s)?;
+                        }
+                        None => {
+                            return Err(anyhow::anyhow!("Service {} not found", w));
+                        }
+                    }
+                }
+            }
+            None => {}
+        }
+        Ok(())
+    }
+
     fn handle_stop(&self, service: Service, project: String, restart: bool) -> Result<(), Error> {
         let mut childs = self.childs.lock().unwrap();
         let service_key = format!("{}-{}", project.clone(), service.name.clone());
         match childs.get(&service_key) {
             Some(pid) => {
+                println!("Stopping service {} (pid: {})", service.name, pid);
                 signal::kill(Pid::from_raw(*pid), Signal::SIGTERM)?;
                 childs.remove(&service_key);
 

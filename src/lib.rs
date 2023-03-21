@@ -4,6 +4,8 @@ pub mod graphql;
 pub mod server;
 pub mod superviseur;
 pub mod types;
+pub mod util;
+pub mod wait;
 pub mod watch;
 pub mod webui;
 pub mod api {
