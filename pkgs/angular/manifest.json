@@ -1,0 +1,15 @@
+{
+  "elements": [
+    {
+      "active": true,
+      "attrPath": "evalCatalog.x86_64-darwin.stable.nodejs-17_x",
+      "originalUrl": "flake:nixpkgs-flox",
+      "outputs": null,
+      "storePaths": [
+        "/nix/store/rcfwwlpm6mzlr2hbpan9wq63638kmkyv-nodejs-17.5.0"
+      ],
+      "url": "flake:nixpkgs-flox/34ee8469ab62af53cd25a839de33950b19126dc8"
+    }
+  ],
+  "version": 2
+}
