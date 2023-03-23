@@ -1,0 +1,67 @@
+{
+  "nixpkgs-flox": {
+    "x86_64-darwin": {
+      "stable": {
+        "deno": {
+          "latest": {
+            "cache": {
+              "out": {
+                "https://cache.nixos.org": {}
+              }
+            },
+            "element": {
+              "attrPath": [
+                "legacyPackages",
+                "x86_64-darwin",
+                "deno"
+              ],
+              "originalUrl": "flake:nixpkgs",
+              "storePaths": [
+                "/nix/store/3l9a24dbjw1bwz6s6yznh0xja2c76k7m-deno-1.30.3"
+              ],
+              "url": "github:flox/nixpkgs/d0d55259081f0b97c828f38559cad899d351cad1"
+            },
+            "eval": {
+              "meta": {
+                "description": "A secure runtime for JavaScript and TypeScript",
+                "outputsToInstall": [
+                  "out"
+                ],
+                "position": "/nix/store/32cp7y0cf36h3xp0fqwy2nf432fpcaci-source/pkgs/development/web/deno/default.nix:93",
+                "unfree": false
+              },
+              "name": "deno-1.30.3",
+              "outputs": {
+                "out": "/nix/store/3l9a24dbjw1bwz6s6yznh0xja2c76k7m-deno-1.30.3"
+              },
+              "pname": "deno",
+              "system": "x86_64-darwin",
+              "version": "1.30.3"
+            },
+            "publish_element": {
+              "attrPath": [
+                "evalCatalog",
+                "x86_64-darwin",
+                "stable",
+                "deno"
+              ],
+              "originalUrl": "flake:nixpkgs-flox",
+              "storePaths": [
+                "/nix/store/3l9a24dbjw1bwz6s6yznh0xja2c76k7m-deno-1.30.3"
+              ],
+              "url": "flake:nixpkgs-flox/34ee8469ab62af53cd25a839de33950b19126dc8"
+            },
+            "schema": 1,
+            "source": {
+              "locked": {
+                "lastModified": 1676973346,
+                "revCount": 456418
+              }
+            },
+            "type": "catalogRender"
+          }
+        }
+      }
+    }
+  }
+}

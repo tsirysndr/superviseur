@@ -48,6 +48,7 @@ actix-cors = "0.6.4"
 sha256 = "1.1.2"
 names = "0.14.0"
 notify = "5.1.0"
+indexmap = { version = "1.9.2", features = ["serde"] }
 
 [build-dependencies]
 tonic-build = "0.8"

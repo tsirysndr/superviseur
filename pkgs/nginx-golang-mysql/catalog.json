@@ -1,0 +1,196 @@
+{
+  "nixpkgs-flox": {
+    "x86_64-darwin": {
+      "stable": {
+        "go": {
+          "latest": {
+            "cache": {
+              "out": {
+                "https://cache.nixos.org": {}
+              }
+            },
+            "element": {
+              "attrPath": [
+                "legacyPackages",
+                "x86_64-darwin",
+                "go"
+              ],
+              "originalUrl": "flake:nixpkgs",
+              "storePaths": [
+                "/nix/store/dnmp947dlj382vijxk7axz7qm037i7ab-go-1.19.5"
+              ],
+              "url": "github:flox/nixpkgs/d0d55259081f0b97c828f38559cad899d351cad1"
+            },
+            "eval": {
+              "meta": {
+                "description": "The Go Programming language",
+                "outputsToInstall": [
+                  "out"
+                ],
+                "position": "/nix/store/32cp7y0cf36h3xp0fqwy2nf432fpcaci-source/pkgs/development/compilers/go/1.19.nix:184",
+                "unfree": false
+              },
+              "name": "go-1.19.5",
+              "outputs": {
+                "out": "/nix/store/dnmp947dlj382vijxk7axz7qm037i7ab-go-1.19.5"
+              },
+              "pname": "go",
+              "system": "x86_64-darwin",
+              "version": "1.19.5"
+            },
+            "publish_element": {
+              "attrPath": [
+                "evalCatalog",
+                "x86_64-darwin",
+                "stable",
+                "go"
+              ],
+              "originalUrl": "flake:nixpkgs-flox",
+              "storePaths": [
+                "/nix/store/dnmp947dlj382vijxk7axz7qm037i7ab-go-1.19.5"
+              ],
+              "url": "flake:nixpkgs-flox/34ee8469ab62af53cd25a839de33950b19126dc8"
+            },
+            "schema": 1,
+            "source": {
+              "locked": {
+                "lastModified": 1676973346,
+                "revCount": 456418
+              }
+            },
+            "type": "catalogRender"
+          }
+        },
+        "mysql": {
+          "latest": {
+            "cache": {
+              "man": {
+                "https://cache.nixos.org": {}
+              },
+              "out": {
+                "https://cache.nixos.org": {}
+              }
+            },
+            "element": {
+              "attrPath": [
+                "legacyPackages",
+                "x86_64-darwin",
+                "mysql"
+              ],
+              "originalUrl": "flake:nixpkgs",
+              "storePaths": [
+                "/nix/store/wzb4s327sxwwy01b29m4jkycf1zlsfij-mariadb-server-10.6.12",
+                "/nix/store/mqp9m0nif357iyxm5fjb4ss4dyz4chh5-mariadb-server-10.6.12-man"
+              ],
+              "url": "github:flox/nixpkgs/d0d55259081f0b97c828f38559cad899d351cad1"
+            },
+            "eval": {
+              "meta": {
+                "description": "An enhanced, drop-in replacement for MySQL",
+                "outputsToInstall": [
+                  "out",
+                  "man"
+                ],
+                "position": "/nix/store/32cp7y0cf36h3xp0fqwy2nf432fpcaci-source/pkgs/servers/sql/mariadb/default.nix:133",
+                "unfree": false
+              },
+              "name": "mariadb-server-10.6.12",
+              "outputs": {
+                "man": "/nix/store/mqp9m0nif357iyxm5fjb4ss4dyz4chh5-mariadb-server-10.6.12-man",
+                "out": "/nix/store/wzb4s327sxwwy01b29m4jkycf1zlsfij-mariadb-server-10.6.12"
+              },
+              "pname": "mariadb-server",
+              "system": "x86_64-darwin",
+              "version": "10.6.12"
+            },
+            "publish_element": {
+              "attrPath": [
+                "evalCatalog",
+                "x86_64-darwin",
+                "stable",
+                "mysql"
+              ],
+              "originalUrl": "flake:nixpkgs-flox",
+              "storePaths": [
+                "/nix/store/wzb4s327sxwwy01b29m4jkycf1zlsfij-mariadb-server-10.6.12",
+                "/nix/store/mqp9m0nif357iyxm5fjb4ss4dyz4chh5-mariadb-server-10.6.12-man"
+              ],
+              "url": "flake:nixpkgs-flox/34ee8469ab62af53cd25a839de33950b19126dc8"
+            },
+            "schema": 1,
+            "source": {
+              "locked": {
+                "lastModified": 1676973346,
+                "revCount": 456418
+              }
+            },
+            "type": "catalogRender"
+          }
+        },
+        "nginx": {
+          "latest": {
+            "cache": {
+              "doc": {
+                "https://cache.nixos.org": {}
+              },
+              "out": {
+                "https://cache.nixos.org": {}
+              }
+            },
+            "element": {
+              "attrPath": [
+                "legacyPackages",
+                "x86_64-darwin",
+                "nginx"
+              ],
+              "originalUrl": "flake:nixpkgs",
+              "storePaths": [
+                "/nix/store/pnngg1cvn6jxyvryqrg50yxx5slxpnbv-nginx-1.22.1"
+              ],
+              "url": "github:flox/nixpkgs/d0d55259081f0b97c828f38559cad899d351cad1"
+            },
+            "eval": {
+              "meta": {
+                "description": "A reverse proxy and lightweight webserver",
+                "outputsToInstall": [
+                  "out"
+                ],
+                "position": "/nix/store/32cp7y0cf36h3xp0fqwy2nf432fpcaci-source/pkgs/servers/http/nginx/generic.nix:188",
+                "unfree": false
+              },
+              "name": "nginx-1.22.1",
+              "outputs": {
+                "doc": "/nix/store/0w5hachvs2zyl2f1ybwlvg2764fgwy3k-nginx-1.22.1-doc",
+                "out": "/nix/store/pnngg1cvn6jxyvryqrg50yxx5slxpnbv-nginx-1.22.1"
+              },
+              "pname": "nginx",
+              "system": "x86_64-darwin",
+              "version": "1.22.1"
+            },
+            "publish_element": {
+              "attrPath": [
+                "evalCatalog",
+                "x86_64-darwin",
+                "stable",
+                "nginx"
+              ],
+              "originalUrl": "flake:nixpkgs-flox",
+              "storePaths": [
+                "/nix/store/pnngg1cvn6jxyvryqrg50yxx5slxpnbv-nginx-1.22.1"
+              ],
+              "url": "flake:nixpkgs-flox/34ee8469ab62af53cd25a839de33950b19126dc8"
+            },
+            "schema": 1,
+            "source": {
+              "locked": {
+                "lastModified": 1676973346,
+                "revCount": 456418
+              }
+            },
+            "type": "catalogRender"
+          }
+        }
+      }
+    }
+  }
+}

@@ -193,15 +193,42 @@ impl SuperviseurInternal {
 
         let envs = service.env.clone();
         let working_dir = service.working_dir.clone();
-        let mut child = std::process::Command::new("sh")
-            .arg("-c")
-            .arg(&service.command)
-            .current_dir(working_dir)
-            .envs(envs)
-            .stdout(std::process::Stdio::piped())
-            .stderr(std::process::Stdio::piped())
-            .spawn()
-            .unwrap();
+
+        let mut child = match service.clone().flox {
+            Some(flox) => {
+                // verify if flox is installed
+                std::process::Command::new("sh")
+                    .arg("-c")
+                    .arg("flox --version")
+                    .stdout(std::process::Stdio::piped())
+                    .stderr(std::process::Stdio::piped())
+                    .spawn()
+                    .expect("flox is not installed, see https://floxdev.com/docs/");
+
+                let command = format!(
+                    "flox activate -e {} -- {}",
+                    flox.environment, &service.command
+                );
+                std::process::Command::new("sh")
+                    .arg("-c")
+                    .arg(command)
+                    .current_dir(working_dir)
+                    .envs(envs)
+                    .stdout(std::process::Stdio::piped())
+                    .stderr(std::process::Stdio::piped())
+                    .spawn()
+                    .unwrap()
+            }
+            None => std::process::Command::new("sh")
+                .arg("-c")
+                .arg(&service.command)
+                .current_dir(working_dir)
+                .envs(envs)
+                .stdout(std::process::Stdio::piped())
+                .stderr(std::process::Stdio::piped())
+                .spawn()
+                .unwrap(),
+        };
 
         let mut process = &mut processes
             .iter_mut()

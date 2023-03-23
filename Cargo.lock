@@ -2807,6 +2807,7 @@ dependencies = [
  "futures-channel",
  "futures-util",
  "hcl-rs",
+ "indexmap",
  "local-ip-addr",
  "mime_guess",
  "names",

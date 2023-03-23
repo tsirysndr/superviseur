@@ -1,0 +1,36 @@
+{
+  "elements": [
+    {
+      "active": true,
+      "attrPath": "evalCatalog.x86_64-darwin.stable.go",
+      "originalUrl": "flake:nixpkgs-flox",
+      "outputs": null,
+      "storePaths": [
+        "/nix/store/dnmp947dlj382vijxk7axz7qm037i7ab-go-1.19.5"
+      ],
+      "url": "flake:nixpkgs-flox/34ee8469ab62af53cd25a839de33950b19126dc8"
+    },
+    {
+      "active": true,
+      "attrPath": "evalCatalog.x86_64-darwin.stable.mysql",
+      "originalUrl": "flake:nixpkgs-flox",
+      "outputs": null,
+      "storePaths": [
+        "/nix/store/wzb4s327sxwwy01b29m4jkycf1zlsfij-mariadb-server-10.6.12",
+        "/nix/store/mqp9m0nif357iyxm5fjb4ss4dyz4chh5-mariadb-server-10.6.12-man"
+      ],
+      "url": "flake:nixpkgs-flox/34ee8469ab62af53cd25a839de33950b19126dc8"
+    },
+    {
+      "active": true,
+      "attrPath": "evalCatalog.x86_64-darwin.stable.nginx",
+      "originalUrl": "flake:nixpkgs-flox",
+      "outputs": null,
+      "storePaths": [
+        "/nix/store/pnngg1cvn6jxyvryqrg50yxx5slxpnbv-nginx-1.22.1"
+      ],
+      "url": "flake:nixpkgs-flox/34ee8469ab62af53cd25a839de33950b19126dc8"
+    }
+  ],
+  "version": 2
+}

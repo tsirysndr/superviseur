@@ -1,3 +1,4 @@
+use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, path::PathBuf};
 
@@ -35,10 +36,17 @@ pub struct Service {
     pub stderr: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub wait_for: Option<Vec<String>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub flox: Option<Flox>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Default, Clone)]
 pub struct ConfigurationData {
     pub project: String,
     pub services: Vec<Service>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct Flox {
+    pub environment: String,
 }

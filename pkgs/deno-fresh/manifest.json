@@ -1,0 +1,15 @@
+{
+  "elements": [
+    {
+      "active": true,
+      "attrPath": "evalCatalog.x86_64-darwin.stable.deno",
+      "originalUrl": "flake:nixpkgs-flox",
+      "outputs": null,
+      "storePaths": [
+        "/nix/store/3l9a24dbjw1bwz6s6yznh0xja2c76k7m-deno-1.30.3"
+      ],
+      "url": "flake:nixpkgs-flox/34ee8469ab62af53cd25a839de33950b19126dc8"
+    }
+  ],
+  "version": 2
+}
