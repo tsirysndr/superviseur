@@ -206,6 +206,18 @@ impl SuperviseurInternal {
                     .expect("flox is not installed, see https://floxdev.com/docs/");
 
                 let command = format!(
+                    "flox print-dev-env -A {}",
+                    flox.environment.replace(".#", "")
+                );
+                std::process::Command::new("sh")
+                    .arg("-c")
+                    .arg(command)
+                    .stdout(std::process::Stdio::piped())
+                    .stderr(std::process::Stdio::piped())
+                    .spawn()
+                    .unwrap();
+
+                let command = format!(
                     "flox activate -e {} -- {}",
                     flox.environment, &service.command
                 );
