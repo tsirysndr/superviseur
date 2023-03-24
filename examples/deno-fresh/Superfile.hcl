@@ -3,9 +3,9 @@ services = [
   {
     "name" = "deno"
     "type" = "exec"
-    "command" = "deno task start"
+    "command" = "./dev.ts"
     "working_dir" = "."
-    "description" = "Ping Service Example"
+    "description" = "Deno example app"
     "depends_on" = []
     "env" = {}
     "autostart" = true
