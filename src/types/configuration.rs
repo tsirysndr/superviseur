@@ -19,6 +19,7 @@ pub struct Service {
     pub name: String,
     pub r#type: String, // docker, podman, exec, wasm
     pub command: String,
+    pub stop_command: Option<String>,
     pub working_dir: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub watch_dir: Option<String>,

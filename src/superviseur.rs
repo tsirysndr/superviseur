@@ -209,13 +209,14 @@ impl SuperviseurInternal {
                     "flox print-dev-env -A {}",
                     flox.environment.replace(".#", "")
                 );
-                std::process::Command::new("sh")
+                let mut child = std::process::Command::new("sh")
                     .arg("-c")
                     .arg(command)
                     .stdout(std::process::Stdio::piped())
                     .stderr(std::process::Stdio::piped())
                     .spawn()
                     .unwrap();
+                child.wait().unwrap();
 
                 let command = format!(
                     "flox activate -e {} -- {}",
@@ -257,7 +258,7 @@ impl SuperviseurInternal {
         self.childs
             .lock()
             .unwrap()
-            .insert(service_key, child.id() as i32);
+            .insert(service_key, process.pid.unwrap() as i32);
 
         let stdout = child.stdout.take().unwrap();
         let stderr = child.stderr.take().unwrap();
@@ -377,6 +378,52 @@ impl SuperviseurInternal {
     }
 
     fn handle_stop(&self, service: Service, project: String, restart: bool) -> Result<(), Error> {
+        if let Some(stop_command) = service.stop_command.clone() {
+            let envs = service.env.clone();
+            let working_dir = service.working_dir.clone();
+
+            match service.clone().flox {
+                Some(flox) => {
+                    let stop_command =
+                        format!("flox activate -e {} -- {}", flox.environment, stop_command);
+                    let mut child = std::process::Command::new("sh")
+                        .arg("-c")
+                        .arg(stop_command)
+                        .current_dir(working_dir)
+                        .envs(envs)
+                        .stdout(std::process::Stdio::piped())
+                        .stderr(std::process::Stdio::piped())
+                        .spawn()
+                        .unwrap();
+                    child.wait().unwrap();
+                }
+                None => {
+                    let mut child = std::process::Command::new("sh")
+                        .arg("-c")
+                        .arg(stop_command)
+                        .current_dir(working_dir)
+                        .envs(envs)
+                        .stdout(std::process::Stdio::piped())
+                        .stderr(std::process::Stdio::piped())
+                        .spawn()
+                        .unwrap();
+                    child.wait().unwrap();
+                }
+            };
+            let mut childs = self.childs.lock().unwrap();
+            let service_key = format!("{}-{}", project.clone(), service.name.clone());
+            childs.remove(&service_key);
+
+            self.event_tx
+                .send(ProcessEvent::Stopped(service.name.clone(), project.clone()))
+                .unwrap();
+            if restart {
+                self.cmd_tx
+                    .send(SuperviseurCommand::Start(service, project))
+                    .unwrap();
+            }
+            return Ok(());
+        }
         let mut childs = self.childs.lock().unwrap();
         let service_key = format!("{}-{}", project.clone(), service.name.clone());
         match childs.get(&service_key) {

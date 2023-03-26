@@ -2,6 +2,16 @@
   "elements": [
     {
       "active": true,
+      "attrPath": "evalCatalog.x86_64-darwin.stable.figlet",
+      "originalUrl": "flake:nixpkgs-flox",
+      "outputs": null,
+      "storePaths": [
+        "/nix/store/y5sfzfnq984sf616ln1rjdkd2q99454p-figlet-2.2.5"
+      ],
+      "url": "flake:nixpkgs-flox/34ee8469ab62af53cd25a839de33950b19126dc8"
+    },
+    {
+      "active": true,
       "attrPath": "evalCatalog.x86_64-darwin.stable.go",
       "originalUrl": "flake:nixpkgs-flox",
       "outputs": null,
