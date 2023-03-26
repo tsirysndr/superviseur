@@ -29,6 +29,30 @@ impl LogStream {
 }
 
 #[derive(Default, Clone)]
+pub struct ServiceStarting {
+    pub payload: Service,
+}
+
+#[Object]
+impl ServiceStarting {
+    async fn payload(&self) -> &Service {
+        &self.payload
+    }
+}
+
+#[derive(Default, Clone)]
+pub struct ServiceStopping {
+    pub payload: Service,
+}
+
+#[Object]
+impl ServiceStopping {
+    async fn payload(&self) -> &Service {
+        &self.payload
+    }
+}
+
+#[derive(Default, Clone)]
 pub struct ServiceStarted {
     pub payload: Service,
 }

@@ -198,6 +198,12 @@ impl SuperviseurInternal {
 
         let mut child = match service.clone().flox {
             Some(flox) => {
+                self.event_tx
+                    .send(ProcessEvent::Stopping(
+                        service.name.clone(),
+                        project.clone(),
+                    ))
+                    .unwrap();
                 // verify if flox is installed
                 std::process::Command::new("sh")
                     .arg("-c")
@@ -383,6 +389,12 @@ impl SuperviseurInternal {
         if let Some(stop_command) = service.stop_command.clone() {
             let envs = service.env.clone();
             let working_dir = service.working_dir.clone();
+            self.event_tx
+                .send(ProcessEvent::Stopping(
+                    service.name.clone(),
+                    project.clone(),
+                ))
+                .unwrap();
 
             match service.clone().flox {
                 Some(flox) => {
@@ -551,9 +563,15 @@ impl SuperviseurInternal {
             }
             ProcessEvent::Starting(service_name, project) => {
                 // call SimpleBroker::publish
+                let service = self.get_service(&service_name, &project)?;
+                let mut service = schema::objects::service::Service::from(&service);
+                service.status = String::from("STARTING");
             }
             ProcessEvent::Stopping(service_name, project) => {
                 // call SimpleBroker::publish
+                let service = self.get_service(&service_name, &project)?;
+                let mut service = schema::objects::service::Service::from(&service);
+                service.status = String::from("STOPPING");
             }
         }
         Ok(())
