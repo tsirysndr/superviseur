@@ -7,6 +7,7 @@ import { StopFill } from "@styled-icons/bootstrap/StopFill";
 import { Reload } from "@styled-icons/ionicons-outline/Reload";
 import { Play } from "@styled-icons/fa-solid/Play";
 import _ from "lodash";
+import { Spinner } from "baseui/spinner";
 
 const Container = styled.div``;
 
@@ -30,8 +31,27 @@ const StatusName = styled.div`
   color: #630be2;
 `;
 
-const StatusValue = styled.div<{ terminal?: boolean }>`
+const State = styled.div`
+  margin-right: 15px;
+  color: #630be2;
+`;
+
+const StateRow = styled.div`
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+`;
+
+const StatusValue = styled.div<{ terminal?: boolean; nowrap?: boolean }>`
   flex: 1;
+  ${({ nowrap }) =>
+    nowrap &&
+    css`
+      max-width: 100%;
+      overflow: auto;
+      white-space: nowrap;
+    `}
   ${(props) =>
     props.terminal &&
     css`
@@ -147,37 +167,51 @@ const Status: FC<StatusProps> = (props) => {
             </Button>
           </>
         )}
-        {!status?.toString().startsWith("Running") && (
-          <>
-            <Button
-              onClick={onStart}
-              startEnhancer={() => <Play size={14} color="#fff" />}
-              overrides={{
-                BaseButton: {
-                  style: {
-                    height: "30px",
-                    width: "80px",
-                    fontSize: "12px",
-                    padding: "0px",
-                    fontFamily: "RockfordSansMedium",
-                    backgroundColor: "#630be2",
-                    color: "#fff",
-                    borderRadius: "2px",
-                    ":hover": {
+        {!status?.toString().startsWith("Running") &&
+          status?.toString() !== "Starting" &&
+          status?.toString() !== "Stopping" && (
+            <>
+              <Button
+                onClick={onStart}
+                startEnhancer={() => <Play size={14} color="#fff" />}
+                overrides={{
+                  BaseButton: {
+                    style: {
+                      height: "30px",
+                      width: "80px",
+                      fontSize: "12px",
+                      padding: "0px",
+                      fontFamily: "RockfordSansMedium",
                       backgroundColor: "#630be2",
+                      color: "#fff",
+                      borderRadius: "2px",
+                      ":hover": {
+                        backgroundColor: "#630be2",
+                      },
                     },
                   },
-                },
-                StartEnhancer: {
-                  style: {
-                    marginRight: "8px",
+                  StartEnhancer: {
+                    style: {
+                      marginRight: "8px",
+                    },
                   },
-                },
-              }}
-            >
-              Start
-            </Button>
-          </>
+                }}
+              >
+                Start
+              </Button>
+            </>
+          )}
+        {status?.toString() === "Starting" && (
+          <StateRow>
+            <State>Starting</State>
+            <Spinner $size={"18px"} $borderWidth="3px" $color="#630be2" />
+          </StateRow>
+        )}
+        {status?.toString() === "Stopping" && (
+          <StateRow>
+            <State>Stopping</State>
+            <Spinner $size={"18px"} $borderWidth="3px" $color="#630be2" />
+          </StateRow>
         )}
       </Actions>
       <StatusTable>
@@ -185,7 +219,10 @@ const Status: FC<StatusProps> = (props) => {
           <StatusRow key={_.uniqueId()}>
             <StatusName>{status.name} :</StatusName>
             {status.name !== "Active" && (
-              <StatusValue terminal={status.name.toLowerCase() === "command"}>
+              <StatusValue
+                terminal={status.name.toLowerCase() === "command"}
+                nowrap
+              >
                 {status.status?.toString()}
               </StatusValue>
             )}

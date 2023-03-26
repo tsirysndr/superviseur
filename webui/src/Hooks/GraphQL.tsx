@@ -96,6 +96,7 @@ export type Process = {
   pid?: Maybe<Scalars['Int']>;
   ppid?: Maybe<Scalars['Int']>;
   project: Scalars['String'];
+  serviceId: Scalars['ID'];
   state: Scalars['String'];
   stderrFile: Scalars['String'];
   type: Scalars['String'];
@@ -145,7 +146,7 @@ export type Service = {
   logFile: Scalars['String'];
   name: Scalars['String'];
   namespace: Scalars['String'];
-  port: Scalars['Int'];
+  port?: Maybe<Scalars['Int']>;
   status: Scalars['String'];
   stderrFile: Scalars['String'];
   type: Scalars['String'];
@@ -155,16 +156,31 @@ export type Service = {
 export type ServiceRestarted = {
   __typename?: 'ServiceRestarted';
   payload: Service;
+  process: Process;
 };
 
 export type ServiceStarted = {
   __typename?: 'ServiceStarted';
   payload: Service;
+  process: Process;
+};
+
+export type ServiceStarting = {
+  __typename?: 'ServiceStarting';
+  payload: Service;
+  process: Process;
 };
 
 export type ServiceStopped = {
   __typename?: 'ServiceStopped';
   payload: Service;
+  process: Process;
+};
+
+export type ServiceStopping = {
+  __typename?: 'ServiceStopping';
+  payload: Service;
+  process: Process;
 };
 
 export type Subscription = {
@@ -174,8 +190,10 @@ export type Subscription = {
   onRestartAll: AllServicesRestarted;
   onStart: ServiceStarted;
   onStartAll: AllServicesStarted;
+  onStarting: ServiceStarting;
   onStop: ServiceStopped;
   onStopAll: AllServicesStopped;
+  onStopping: ServiceStopping;
   tail: TailLogStream;
 };
 
@@ -199,21 +217,21 @@ export type StartMutationVariables = Exact<{
 }>;
 
 
-export type StartMutation = { __typename?: 'Mutation', start: { __typename?: 'Process', name: string, description?: string | null, pid?: number | null, ppid?: number | null, command: string, workingDirectory: string, project: string, type: string, logFile: string, stderrFile: string, autoRestart: boolean, env: Array<string>, state: string, upTime: string } };
+export type StartMutation = { __typename?: 'Mutation', start: { __typename?: 'Process', name: string, serviceId: string, description?: string | null, pid?: number | null, ppid?: number | null, command: string, workingDirectory: string, project: string, type: string, logFile: string, stderrFile: string, autoRestart: boolean, env: Array<string>, state: string, upTime: string } };
 
 export type StopMutationVariables = Exact<{
   id?: InputMaybe<Scalars['ID']>;
 }>;
 
 
-export type StopMutation = { __typename?: 'Mutation', stop: { __typename?: 'Process', name: string, description?: string | null, pid?: number | null, ppid?: number | null, command: string, workingDirectory: string, project: string, type: string, logFile: string, stderrFile: string, autoRestart: boolean, env: Array<string>, state: string, upTime: string } };
+export type StopMutation = { __typename?: 'Mutation', stop: { __typename?: 'Process', name: string, serviceId: string, description?: string | null, pid?: number | null, ppid?: number | null, command: string, workingDirectory: string, project: string, type: string, logFile: string, stderrFile: string, autoRestart: boolean, env: Array<string>, state: string, upTime: string } };
 
 export type RestartMutationVariables = Exact<{
   id?: InputMaybe<Scalars['ID']>;
 }>;
 
 
-export type RestartMutation = { __typename?: 'Mutation', restart: { __typename?: 'Process', name: string, description?: string | null, pid?: number | null, ppid?: number | null, command: string, workingDirectory: string, project: string, type: string, logFile: string, stderrFile: string, autoRestart: boolean, env: Array<string>, state: string, upTime: string } };
+export type RestartMutation = { __typename?: 'Mutation', restart: { __typename?: 'Process', name: string, serviceId: string, description?: string | null, pid?: number | null, ppid?: number | null, command: string, workingDirectory: string, project: string, type: string, logFile: string, stderrFile: string, autoRestart: boolean, env: Array<string>, state: string, upTime: string } };
 
 export type CreateEnvVarMutationVariables = Exact<{
   id: Scalars['ID'];
@@ -246,24 +264,24 @@ export type GetStatusQueryVariables = Exact<{
 }>;
 
 
-export type GetStatusQuery = { __typename?: 'Query', status: { __typename?: 'Process', name: string, description?: string | null, pid?: number | null, ppid?: number | null, command: string, workingDirectory: string, project: string, type: string, logFile: string, stderrFile: string, autoRestart: boolean, env: Array<string>, state: string, upTime: string } };
+export type GetStatusQuery = { __typename?: 'Query', status: { __typename?: 'Process', name: string, serviceId: string, description?: string | null, pid?: number | null, ppid?: number | null, command: string, workingDirectory: string, project: string, type: string, logFile: string, stderrFile: string, autoRestart: boolean, env: Array<string>, state: string, upTime: string } };
 
 export type GetProcessesQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetProcessesQuery = { __typename?: 'Query', processes: Array<{ __typename?: 'Process', name: string, description?: string | null, pid?: number | null, ppid?: number | null, command: string, workingDirectory: string, project: string, type: string, logFile: string, stderrFile: string, autoRestart: boolean, env: Array<string>, state: string, upTime: string }> };
+export type GetProcessesQuery = { __typename?: 'Query', processes: Array<{ __typename?: 'Process', name: string, serviceId: string, description?: string | null, pid?: number | null, ppid?: number | null, command: string, workingDirectory: string, project: string, type: string, logFile: string, stderrFile: string, autoRestart: boolean, env: Array<string>, state: string, upTime: string }> };
 
 export type GetServicesQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetServicesQuery = { __typename?: 'Query', services: Array<{ __typename?: 'Service', id: string, name: string, command: string, description?: string | null, namespace: string, type: string, status: string, dependsOn: Array<string>, env: Array<string>, autoRestart: boolean, workingDirectory: string, logFile: string, stderrFile: string, port: number }> };
+export type GetServicesQuery = { __typename?: 'Query', services: Array<{ __typename?: 'Service', id: string, name: string, command: string, description?: string | null, namespace: string, type: string, status: string, dependsOn: Array<string>, env: Array<string>, autoRestart: boolean, workingDirectory: string, logFile: string, stderrFile: string, port?: number | null }> };
 
 export type GetServiceQueryVariables = Exact<{
   id: Scalars['ID'];
 }>;
 
 
-export type GetServiceQuery = { __typename?: 'Query', service: { __typename?: 'Service', id: string, name: string, command: string, description?: string | null, namespace: string, type: string, status: string, dependsOn: Array<string>, env: Array<string>, autoRestart: boolean, workingDirectory: string, logFile: string, stderrFile: string, port: number } };
+export type GetServiceQuery = { __typename?: 'Query', service: { __typename?: 'Service', id: string, name: string, command: string, description?: string | null, namespace: string, type: string, status: string, dependsOn: Array<string>, env: Array<string>, autoRestart: boolean, workingDirectory: string, logFile: string, stderrFile: string, port?: number | null } };
 
 export type GetEnvVarsQueryVariables = Exact<{
   id: Scalars['ID'];
@@ -275,17 +293,27 @@ export type GetEnvVarsQuery = { __typename?: 'Query', service: { __typename?: 'S
 export type OnStartSubscriptionVariables = Exact<{ [key: string]: never; }>;
 
 
-export type OnStartSubscription = { __typename?: 'Subscription', onStart: { __typename?: 'ServiceStarted', payload: { __typename?: 'Service', id: string, name: string, status: string } } };
+export type OnStartSubscription = { __typename?: 'Subscription', onStart: { __typename?: 'ServiceStarted', payload: { __typename?: 'Service', id: string, name: string, status: string }, process: { __typename?: 'Process', name: string, serviceId: string, description?: string | null, pid?: number | null, ppid?: number | null, command: string, workingDirectory: string, project: string, type: string, logFile: string, stderrFile: string, autoRestart: boolean, env: Array<string>, state: string, upTime: string } } };
 
 export type OnStopSubscriptionVariables = Exact<{ [key: string]: never; }>;
 
 
-export type OnStopSubscription = { __typename?: 'Subscription', onStop: { __typename?: 'ServiceStopped', payload: { __typename?: 'Service', id: string, name: string, status: string } } };
+export type OnStopSubscription = { __typename?: 'Subscription', onStop: { __typename?: 'ServiceStopped', payload: { __typename?: 'Service', id: string, name: string, status: string }, process: { __typename?: 'Process', name: string, serviceId: string, description?: string | null, pid?: number | null, ppid?: number | null, command: string, workingDirectory: string, project: string, type: string, logFile: string, stderrFile: string, autoRestart: boolean, env: Array<string>, state: string, upTime: string } } };
+
+export type OnStartingSubscriptionVariables = Exact<{ [key: string]: never; }>;
+
+
+export type OnStartingSubscription = { __typename?: 'Subscription', onStarting: { __typename?: 'ServiceStarting', payload: { __typename?: 'Service', id: string, name: string, status: string }, process: { __typename?: 'Process', name: string, serviceId: string, description?: string | null, pid?: number | null, ppid?: number | null, command: string, workingDirectory: string, project: string, type: string, logFile: string, stderrFile: string, autoRestart: boolean, env: Array<string>, state: string, upTime: string } } };
+
+export type OnStoppingSubscriptionVariables = Exact<{ [key: string]: never; }>;
+
+
+export type OnStoppingSubscription = { __typename?: 'Subscription', onStopping: { __typename?: 'ServiceStopping', payload: { __typename?: 'Service', id: string, name: string, status: string }, process: { __typename?: 'Process', name: string, serviceId: string, description?: string | null, pid?: number | null, ppid?: number | null, command: string, workingDirectory: string, project: string, type: string, logFile: string, stderrFile: string, autoRestart: boolean, env: Array<string>, state: string, upTime: string } } };
 
 export type OnRestartSubscriptionVariables = Exact<{ [key: string]: never; }>;
 
 
-export type OnRestartSubscription = { __typename?: 'Subscription', onRestart: { __typename?: 'ServiceRestarted', payload: { __typename?: 'Service', id: string, name: string, status: string } } };
+export type OnRestartSubscription = { __typename?: 'Subscription', onRestart: { __typename?: 'ServiceRestarted', payload: { __typename?: 'Service', id: string, name: string, status: string }, process: { __typename?: 'Process', name: string, serviceId: string, description?: string | null, pid?: number | null, ppid?: number | null, command: string, workingDirectory: string, project: string, type: string, logFile: string, stderrFile: string, autoRestart: boolean, env: Array<string>, state: string, upTime: string } } };
 
 export type OnStartAllSubscriptionVariables = Exact<{ [key: string]: never; }>;
 
@@ -302,9 +330,9 @@ export type OnRestartAllSubscriptionVariables = Exact<{ [key: string]: never; }>
 
 export type OnRestartAllSubscription = { __typename?: 'Subscription', onRestartAll: { __typename?: 'AllServicesRestarted', payload: Array<{ __typename?: 'Service', id: string, name: string, status: string }> } };
 
-export type ProcessFragmentFragment = { __typename?: 'Process', name: string, description?: string | null, pid?: number | null, ppid?: number | null, command: string, workingDirectory: string, project: string, type: string, logFile: string, stderrFile: string, autoRestart: boolean, env: Array<string>, state: string, upTime: string };
+export type ProcessFragmentFragment = { __typename?: 'Process', name: string, serviceId: string, description?: string | null, pid?: number | null, ppid?: number | null, command: string, workingDirectory: string, project: string, type: string, logFile: string, stderrFile: string, autoRestart: boolean, env: Array<string>, state: string, upTime: string };
 
-export type ServiceFragmentFragment = { __typename?: 'Service', id: string, name: string, command: string, description?: string | null, namespace: string, type: string, status: string, dependsOn: Array<string>, env: Array<string>, autoRestart: boolean, workingDirectory: string, logFile: string, stderrFile: string, port: number };
+export type ServiceFragmentFragment = { __typename?: 'Service', id: string, name: string, command: string, description?: string | null, namespace: string, type: string, status: string, dependsOn: Array<string>, env: Array<string>, autoRestart: boolean, workingDirectory: string, logFile: string, stderrFile: string, port?: number | null };
 
 export type GetLogsQueryVariables = Exact<{
   id: Scalars['ID'];
@@ -338,6 +366,7 @@ export type TailSubscription = { __typename?: 'Subscription', tail: { __typename
 export const ProcessFragmentFragmentDoc = gql`
     fragment ProcessFragment on Process {
   name
+  serviceId
   description
   pid
   ppid
@@ -759,9 +788,12 @@ export const OnStartDocument = gql`
       name
       status
     }
+    process {
+      ...ProcessFragment
+    }
   }
 }
-    `;
+    ${ProcessFragmentFragmentDoc}`;
 
 /**
  * __useOnStartSubscription__
@@ -792,9 +824,12 @@ export const OnStopDocument = gql`
       name
       status
     }
+    process {
+      ...ProcessFragment
+    }
   }
 }
-    `;
+    ${ProcessFragmentFragmentDoc}`;
 
 /**
  * __useOnStopSubscription__
@@ -817,6 +852,78 @@ export function useOnStopSubscription(baseOptions?: Apollo.SubscriptionHookOptio
       }
 export type OnStopSubscriptionHookResult = ReturnType<typeof useOnStopSubscription>;
 export type OnStopSubscriptionResult = Apollo.SubscriptionResult<OnStopSubscription>;
+export const OnStartingDocument = gql`
+    subscription OnStarting {
+  onStarting {
+    payload {
+      id
+      name
+      status
+    }
+    process {
+      ...ProcessFragment
+    }
+  }
+}
+    ${ProcessFragmentFragmentDoc}`;
+
+/**
+ * __useOnStartingSubscription__
+ *
+ * To run a query within a React component, call `useOnStartingSubscription` and pass it any options that fit your needs.
+ * When your component renders, `useOnStartingSubscription` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useOnStartingSubscription({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useOnStartingSubscription(baseOptions?: Apollo.SubscriptionHookOptions<OnStartingSubscription, OnStartingSubscriptionVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useSubscription<OnStartingSubscription, OnStartingSubscriptionVariables>(OnStartingDocument, options);
+      }
+export type OnStartingSubscriptionHookResult = ReturnType<typeof useOnStartingSubscription>;
+export type OnStartingSubscriptionResult = Apollo.SubscriptionResult<OnStartingSubscription>;
+export const OnStoppingDocument = gql`
+    subscription OnStopping {
+  onStopping {
+    payload {
+      id
+      name
+      status
+    }
+    process {
+      ...ProcessFragment
+    }
+  }
+}
+    ${ProcessFragmentFragmentDoc}`;
+
+/**
+ * __useOnStoppingSubscription__
+ *
+ * To run a query within a React component, call `useOnStoppingSubscription` and pass it any options that fit your needs.
+ * When your component renders, `useOnStoppingSubscription` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useOnStoppingSubscription({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useOnStoppingSubscription(baseOptions?: Apollo.SubscriptionHookOptions<OnStoppingSubscription, OnStoppingSubscriptionVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useSubscription<OnStoppingSubscription, OnStoppingSubscriptionVariables>(OnStoppingDocument, options);
+      }
+export type OnStoppingSubscriptionHookResult = ReturnType<typeof useOnStoppingSubscription>;
+export type OnStoppingSubscriptionResult = Apollo.SubscriptionResult<OnStoppingSubscription>;
 export const OnRestartDocument = gql`
     subscription OnRestart {
   onRestart {
@@ -825,9 +932,12 @@ export const OnRestartDocument = gql`
       name
       status
     }
+    process {
+      ...ProcessFragment
+    }
   }
 }
-    `;
+    ${ProcessFragmentFragmentDoc}`;
 
 /**
  * __useOnRestartSubscription__

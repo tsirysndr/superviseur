@@ -22,7 +22,8 @@ use crate::{
             self,
             objects::subscriptions::{
                 AllServicesRestarted, AllServicesStarted, AllServicesStopped, LogStream,
-                ServiceRestarted, ServiceStarted, ServiceStopped, TailLogStream,
+                ServiceRestarted, ServiceStarted, ServiceStarting, ServiceStopped, ServiceStopping,
+                TailLogStream,
             },
         },
         simple_broker::SimpleBroker,
@@ -178,6 +179,13 @@ impl SuperviseurInternal {
     }
 
     fn handle_start(&mut self, service: Service, project: String) -> Result<(), Error> {
+        self.event_tx
+            .send(ProcessEvent::Starting(
+                service.name.clone(),
+                project.clone(),
+            ))
+            .unwrap();
+
         self.start_dependencies(service.clone(), project.clone())?;
         self.wait_for_service_deps(service.clone(), project.clone())?;
 
@@ -198,12 +206,6 @@ impl SuperviseurInternal {
 
         let mut child = match service.clone().flox {
             Some(flox) => {
-                self.event_tx
-                    .send(ProcessEvent::Stopping(
-                        service.name.clone(),
-                        project.clone(),
-                    ))
-                    .unwrap();
                 // verify if flox is installed
                 std::process::Command::new("sh")
                     .arg("-c")
@@ -386,15 +388,15 @@ impl SuperviseurInternal {
     }
 
     fn handle_stop(&self, service: Service, project: String, restart: bool) -> Result<(), Error> {
+        self.event_tx
+            .send(ProcessEvent::Stopping(
+                service.name.clone(),
+                project.clone(),
+            ))
+            .unwrap();
         if let Some(stop_command) = service.stop_command.clone() {
             let envs = service.env.clone();
             let working_dir = service.working_dir.clone();
-            self.event_tx
-                .send(ProcessEvent::Stopping(
-                    service.name.clone(),
-                    project.clone(),
-                ))
-                .unwrap();
 
             match service.clone().flox {
                 Some(flox) => {
@@ -512,6 +514,7 @@ impl SuperviseurInternal {
                 service.status = String::from("RUNNING");
                 SimpleBroker::publish(ServiceStarted {
                     payload: service.clone(),
+                    process: process.into(),
                 });
             }
             ProcessEvent::Stopped(service_name, project) => {
@@ -528,6 +531,7 @@ impl SuperviseurInternal {
                 service.status = String::from("STOPPED");
                 SimpleBroker::publish(ServiceStopped {
                     payload: service.clone(),
+                    process: process.into(),
                 });
             }
             ProcessEvent::Restarted(service_name, project) => {
@@ -544,6 +548,7 @@ impl SuperviseurInternal {
                 service.status = String::from("RUNNING");
                 SimpleBroker::publish(ServiceRestarted {
                     payload: service.clone(),
+                    process: process.into(),
                 });
             }
             ProcessEvent::AllStarted(project) => {
@@ -562,16 +567,36 @@ impl SuperviseurInternal {
                 SimpleBroker::publish(AllServicesStopped { payload: services });
             }
             ProcessEvent::Starting(service_name, project) => {
+                let mut process = &mut processes
+                    .iter_mut()
+                    .find(|(p, key)| p.name == service_name && key == &project)
+                    .unwrap()
+                    .0;
+                process.state = State::Starting;
                 // call SimpleBroker::publish
                 let service = self.get_service(&service_name, &project)?;
                 let mut service = schema::objects::service::Service::from(&service);
                 service.status = String::from("STARTING");
+                SimpleBroker::publish(ServiceStarting {
+                    payload: service.clone(),
+                    process: process.into(),
+                });
             }
             ProcessEvent::Stopping(service_name, project) => {
+                let mut process = &mut processes
+                    .iter_mut()
+                    .find(|(p, key)| p.name == service_name && key == &project)
+                    .unwrap()
+                    .0;
+                process.state = State::Stopping;
                 // call SimpleBroker::publish
                 let service = self.get_service(&service_name, &project)?;
                 let mut service = schema::objects::service::Service::from(&service);
                 service.status = String::from("STOPPING");
+                SimpleBroker::publish(ServiceStopping {
+                    payload: service.clone(),
+                    process: process.into(),
+                });
             }
         }
         Ok(())

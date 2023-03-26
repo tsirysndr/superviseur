@@ -3,6 +3,7 @@ import { gql } from "@apollo/client";
 export const PROCESS_FRAGMENT = gql`
   fragment ProcessFragment on Process {
     name
+    serviceId
     description
     pid
     ppid

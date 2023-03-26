@@ -20,7 +20,7 @@ use super::objects::{
     service::Service,
     subscriptions::{
         AllServicesRestarted, AllServicesStarted, AllServicesStopped, ServiceRestarted,
-        ServiceStopped,
+        ServiceStarting, ServiceStopped, ServiceStopping,
     },
 };
 
@@ -464,6 +464,14 @@ pub struct ControlSubscription;
 
 #[Subscription]
 impl ControlSubscription {
+    async fn on_starting(&self, _ctx: &Context<'_>) -> impl Stream<Item = ServiceStarting> {
+        SimpleBroker::<ServiceStarting>::subscribe()
+    }
+
+    async fn on_stopping(&self, _ctx: &Context<'_>) -> impl Stream<Item = ServiceStopping> {
+        SimpleBroker::<ServiceStopping>::subscribe()
+    }
+
     async fn on_start(&self, _ctx: &Context<'_>) -> impl Stream<Item = ServiceStarted> {
         SimpleBroker::<ServiceStarted>::subscribe()
     }
