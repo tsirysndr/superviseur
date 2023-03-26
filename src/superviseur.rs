@@ -68,6 +68,8 @@ pub enum SuperviseurCommand {
 
 #[derive(Debug)]
 pub enum ProcessEvent {
+    Starting(String, String),
+    Stopping(String, String),
     Started(String, String),
     Stopped(String, String),
     Restarted(String, String),
@@ -493,18 +495,8 @@ impl SuperviseurInternal {
                 process.state = State::Running;
 
                 // call SimpleBroker::publish
-                let config_map = self.config_map.lock().unwrap();
-                let config = config_map
-                    .iter()
-                    .find(|(c, k)| k == &project)
-                    .map(|(c, _)| c)
-                    .ok_or(anyhow::anyhow!("Config not found"))?;
-                let service = config
-                    .services
-                    .iter()
-                    .find(|s| s.name == service_name)
-                    .ok_or(anyhow::anyhow!("Service not found"))?;
-                let mut service = schema::objects::service::Service::from(service);
+                let service = self.get_service(&service_name, &project)?;
+                let mut service = schema::objects::service::Service::from(&service);
                 service.status = String::from("RUNNING");
                 SimpleBroker::publish(ServiceStarted {
                     payload: service.clone(),
@@ -519,18 +511,8 @@ impl SuperviseurInternal {
                 process.state = State::Stopped;
 
                 // call SimpleBroker::publish
-                let config_map = self.config_map.lock().unwrap();
-                let config = config_map
-                    .iter()
-                    .find(|(c, k)| k == &project)
-                    .map(|(c, _)| c)
-                    .ok_or(anyhow::anyhow!("Config not found"))?;
-                let service = config
-                    .services
-                    .iter()
-                    .find(|s| s.name == service_name)
-                    .ok_or(anyhow::anyhow!("Service not found"))?;
-                let mut service = schema::objects::service::Service::from(service);
+                let service = self.get_service(&service_name, &project)?;
+                let mut service = schema::objects::service::Service::from(&service);
                 service.status = String::from("STOPPED");
                 SimpleBroker::publish(ServiceStopped {
                     payload: service.clone(),
@@ -545,18 +527,8 @@ impl SuperviseurInternal {
                 process.state = State::Running;
 
                 // call SimpleBroker::publish
-                let config_map = self.config_map.lock().unwrap();
-                let config = config_map
-                    .iter()
-                    .find(|(c, k)| k == &project)
-                    .map(|(c, _)| c)
-                    .ok_or(anyhow::anyhow!("Config not found"))?;
-                let service = config
-                    .services
-                    .iter()
-                    .find(|s| s.name == service_name)
-                    .ok_or(anyhow::anyhow!("Service not found"))?;
-                let mut service = schema::objects::service::Service::from(service);
+                let service = self.get_service(&service_name, &project)?;
+                let mut service = schema::objects::service::Service::from(&service);
                 service.status = String::from("RUNNING");
                 SimpleBroker::publish(ServiceRestarted {
                     payload: service.clone(),
@@ -564,51 +536,60 @@ impl SuperviseurInternal {
             }
             ProcessEvent::AllStarted(project) => {
                 // call SimpleBroker::publish
-                let config_map = self.config_map.lock().unwrap();
-                let config = config_map
-                    .iter()
-                    .find(|(c, k)| k == &project)
-                    .map(|(c, _)| c)
-                    .ok_or(anyhow::anyhow!("Config not found"))?;
-                let services = config
-                    .services
-                    .iter()
-                    .map(|s| schema::objects::service::Service::from(s))
-                    .collect();
+                let services = self.get_project_services(&project)?;
                 SimpleBroker::publish(AllServicesStarted { payload: services });
             }
             ProcessEvent::AllRestarted(project) => {
                 // call SimpleBroker::publish
-                let config_map = self.config_map.lock().unwrap();
-                let config = config_map
-                    .iter()
-                    .find(|(c, k)| k == &project)
-                    .map(|(c, _)| c)
-                    .ok_or(anyhow::anyhow!("Config not found"))?;
-                let services = config
-                    .services
-                    .iter()
-                    .map(|s| schema::objects::service::Service::from(s))
-                    .collect();
+                let services = self.get_project_services(&project)?;
                 SimpleBroker::publish(AllServicesRestarted { payload: services });
             }
             ProcessEvent::AllStopped(project) => {
                 // call SimpleBroker::publish
-                let config_map = self.config_map.lock().unwrap();
-                let config = config_map
-                    .iter()
-                    .find(|(c, k)| k == &project)
-                    .map(|(c, _)| c)
-                    .ok_or(anyhow::anyhow!("Config not found"))?;
-                let services = config
-                    .services
-                    .iter()
-                    .map(|s| schema::objects::service::Service::from(s))
-                    .collect();
+                let services = self.get_project_services(&project)?;
                 SimpleBroker::publish(AllServicesStopped { payload: services });
+            }
+            ProcessEvent::Starting(service_name, project) => {
+                // call SimpleBroker::publish
+            }
+            ProcessEvent::Stopping(service_name, project) => {
+                // call SimpleBroker::publish
             }
         }
         Ok(())
+    }
+
+    fn get_service(&self, service_name: &str, project: &str) -> Result<Service, Error> {
+        let config_map = self.config_map.lock().unwrap();
+        let config = config_map
+            .iter()
+            .find(|(_, k)| k == &project)
+            .map(|(c, _)| c)
+            .ok_or(anyhow::anyhow!("Config not found"))?;
+        let service = config
+            .services
+            .iter()
+            .find(|s| s.name == service_name)
+            .ok_or(anyhow::anyhow!("Service not found"))?;
+        Ok(service.clone())
+    }
+
+    fn get_project_services(
+        &self,
+        project: &str,
+    ) -> Result<Vec<schema::objects::service::Service>, Error> {
+        let config_map = self.config_map.lock().unwrap();
+        let config = config_map
+            .iter()
+            .find(|(_, k)| k == &project)
+            .map(|(c, _)| c)
+            .ok_or(anyhow::anyhow!("Config not found"))?;
+        let services = config
+            .services
+            .iter()
+            .map(|s| schema::objects::service::Service::from(s))
+            .collect();
+        Ok(services)
     }
 }
 
