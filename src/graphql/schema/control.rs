@@ -11,7 +11,7 @@ use tokio::sync::mpsc;
 
 use crate::{
     graphql::{schema::objects::subscriptions::ServiceStarted, simple_broker::SimpleBroker},
-    superviseur::SuperviseurCommand,
+    superviseur::core::SuperviseurCommand,
     types::{self, configuration::ConfigurationData, process::State},
 };
 

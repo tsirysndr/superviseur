@@ -11,7 +11,7 @@ use crate::{
         logging_service_server::LoggingServiceServer,
     },
     server::{control::Control, logging::Logging},
-    superviseur::Superviseur,
+    superviseur::core::Superviseur,
     types::{process::Process, BANNER, UNIX_SOCKET_PATH},
 };
 use anyhow::Error;

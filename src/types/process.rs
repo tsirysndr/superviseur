@@ -75,7 +75,7 @@ impl Display for State {
     }
 }
 
-#[derive(Default, Tabled, Clone)]
+#[derive(Default, Tabled, Clone, Debug)]
 pub struct Process {
     #[tabled(rename = "NAME")]
     pub name: String,

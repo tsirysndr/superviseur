@@ -9,7 +9,7 @@ use crate::{
     api::superviseur::v1alpha1::{
         logging_service_server::LoggingService, LogRequest, LogResponse, TailRequest, TailResponse,
     },
-    superviseur::Superviseur,
+    superviseur::core::Superviseur,
     types::{configuration::ConfigurationData, process::Process},
 };
 use tokio_stream::wrappers::ReceiverStream;

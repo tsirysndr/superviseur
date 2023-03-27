@@ -1,4 +1,3 @@
-use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, path::PathBuf};
 
@@ -19,6 +18,7 @@ pub struct Service {
     pub name: String,
     pub r#type: String, // docker, podman, exec, wasm
     pub command: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub stop_command: Option<String>,
     pub working_dir: String,
     #[serde(skip_serializing_if = "Option::is_none")]

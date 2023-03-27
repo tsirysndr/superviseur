@@ -1,20 +1,18 @@
 project = "react-nginx"
 services = [
   {
-    "name" = "demo"
+    "name" = "react"
     "type" = "exec"
-    "command" = "ping $GITHUB_DOMAIN"
-    "working_dir" = "/tmp"
-    "description" = "Ping Service Example"
+    "command" = "npm start"
+    "working_dir" = "."
+    "description" = "React app"
     "depends_on" = []
-    "env" = {
-      "GITHUB_DOMAIN" = "github.com"
-    }
+    "env" = { }
     "autostart" = true
     "autorestart" = false
     "namespace" = "demo_namespace"
-    "stdout" = "/tmp/demo-stdout.log"
-    "stderr" = "/tmp/demo-stderr.log"
+    "stdout" = "/tmp/react-stdout.log"
+    "stderr" = "/tmp/react-stderr.log"
     flox = { 
       "environment" = ".#react-nginx"
     }

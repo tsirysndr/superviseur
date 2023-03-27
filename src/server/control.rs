@@ -28,7 +28,7 @@ use crate::{
         },
         simple_broker::SimpleBroker,
     },
-    superviseur::{ProcessEvent, Superviseur, SuperviseurCommand},
+    superviseur::core::{ProcessEvent, Superviseur, SuperviseurCommand},
     types::{
         self,
         configuration::ConfigurationData,
@@ -196,7 +196,7 @@ impl ControlService for Control {
                 .map_err(|e| tonic::Status::internal(e.to_string()))?;
         }
 
-        thread::sleep(Duration::from_millis(100));
+        thread::sleep(Duration::from_millis(500));
 
         Ok(Response::new(LoadConfigResponse { success: true }))
     }
@@ -239,6 +239,7 @@ impl ControlService for Control {
                     config.project.clone(),
                 ))
                 .map_err(|e| tonic::Status::internal(e.to_string()))?;
+            thread::sleep(Duration::from_millis(500));
         }
 
         let services = config.services.clone();
@@ -282,13 +283,20 @@ impl ControlService for Control {
             return Ok(Response::new(StopResponse { success: true }));
         }
 
+        println!("Stopping services: {:?}", config.services);
+
         for service in &config.services {
+            println!(
+                "Sending stop command for service: {:?}",
+                service.name.clone()
+            );
             self.cmd_tx
                 .send(SuperviseurCommand::Stop(
                     service.clone(),
                     config.project.clone(),
                 ))
                 .unwrap();
+            thread::sleep(Duration::from_millis(500));
         }
 
         let services = config.services.clone();

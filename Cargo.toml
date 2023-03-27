@@ -49,6 +49,7 @@ sha256 = "1.1.2"
 names = "0.14.0"
 notify = "5.1.0"
 indexmap = { version = "1.9.2", features = ["serde"] }
+async-trait = "0.1.68"
 
 [build-dependencies]
 tonic-build = "0.8"

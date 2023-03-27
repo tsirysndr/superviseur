@@ -1,27 +1,10 @@
 project = "nginx-golang-mysql"
 services = [
-  {
-    "name" = "nginx"
-    "type" = "exec"
-    "command" = "nginx --version"
-    "working_dir" = "."
-    "description" = "Nginx Service Example"
-    "depends_on" = ["go"]
-    "env" = { }
-    "autostart" = true
-    "autorestart" = false
-    "namespace" = "demo_namespace"
-    "stdout" = "/tmp/nginx-stdout.log"
-    "stderr" = "/tmp/nginx-stderr.log"
-    flox = {
-      "environment" = ".#nginx-golang-mysql"
-    }
-  },
    {
     "name" = "go"
     "type" = "exec"
-    "command" = "go version"
-    "working_dir" = "."
+    "command" = "go run main.go"
+    "working_dir" = "./backend"
     "description" = "Go Service Example"
     "depends_on" = ["mysql"]
     "env" = { }

@@ -3,7 +3,7 @@ services = [
   {
     "name" = "angular"
     "type" = "exec"
-    "command" = "npm run start"
+    "command" = "npm start"
     "working_dir" = "./angular"
     "description" = "Angular example"
     "depends_on" = []

@@ -10,7 +10,7 @@ use futures_util::Future;
 use notify::{Config, Error, Event, PollWatcher, RecommendedWatcher, Watcher, WatcherKind};
 use tokio::sync::mpsc;
 
-use crate::{superviseur::SuperviseurCommand, types::configuration::Service};
+use crate::{superviseur::core::SuperviseurCommand, types::configuration::Service};
 
 pub struct WatchForChanges {}
 
