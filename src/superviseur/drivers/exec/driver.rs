@@ -1,12 +1,18 @@
 use std::{
     collections::HashMap,
+    io::{BufRead, Write},
     sync::{Arc, Mutex},
+    thread,
 };
 
 use anyhow::Error;
 use tokio::sync::mpsc;
 
 use crate::{
+    graphql::{
+        schema::objects::subscriptions::{LogStream, TailLogStream},
+        simple_broker::SimpleBroker,
+    },
     superviseur::{core::ProcessEvent, drivers::DriverPlugin},
     types::{configuration::Service, process::Process},
 };
@@ -91,6 +97,37 @@ impl DriverPlugin for Driver {
 
         let stdout = child.stdout.take().unwrap();
         let stderr = child.stderr.take().unwrap();
+        let cloned_service = self.service.clone();
+
+        thread::spawn(move || {
+            let service = cloned_service;
+            let id = service.id.unwrap_or("-".to_string());
+            // write stdout to file
+            let mut log_file = std::fs::File::create(service.stdout).unwrap();
+
+            let stdout = std::io::BufReader::new(stdout);
+            for line in stdout.lines() {
+                let line = line.unwrap();
+                let line = format!("{}\n", line);
+                SimpleBroker::publish(TailLogStream {
+                    id: id.clone(),
+                    line: line.clone(),
+                });
+                SimpleBroker::publish(LogStream {
+                    id: id.clone(),
+                    line: line.clone(),
+                });
+                log_file.write_all(line.as_bytes()).unwrap();
+            }
+
+            // write stderr to file
+            let mut err_file = std::fs::File::create(service.stderr).unwrap();
+            let stderr = std::io::BufReader::new(stderr);
+            for line in stderr.lines() {
+                let line = line.unwrap();
+                err_file.write_all(line.as_bytes()).unwrap();
+            }
+        });
 
         Ok(())
     }

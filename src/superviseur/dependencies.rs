@@ -122,7 +122,7 @@ impl DependencyGraph {
     ) -> usize {
         let mut vertex = Vertex::from(service);
         vertex.driver = match service.flox.as_ref() {
-            Some(flox_cfg) => Box::new(flox::driver::Driver::new(
+            Some(_) => Box::new(flox::driver::Driver::new(
                 service, processes, event_tx, childs,
             )),
             None => Box::new(exec::driver::Driver::new(
