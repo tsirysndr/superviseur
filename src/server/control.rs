@@ -232,22 +232,9 @@ impl ControlService for Control {
             return Ok(Response::new(StartResponse { success: true }));
         }
 
-        for service in &config.services {
-            self.cmd_tx
-                .send(SuperviseurCommand::Start(
-                    service.clone(),
-                    config.project.clone(),
-                ))
-                .map_err(|e| tonic::Status::internal(e.to_string()))?;
-            thread::sleep(Duration::from_millis(500));
-        }
-
-        let services = config.services.clone();
-        let services = services
-            .iter()
-            .map(graphql::schema::objects::service::Service::from)
-            .collect::<Vec<graphql::schema::objects::service::Service>>();
-        SimpleBroker::publish(AllServicesStarted { payload: services });
+        self.cmd_tx
+            .send(SuperviseurCommand::StartAll(config.project.clone()))
+            .map_err(|e| tonic::Status::internal(e.to_string()))?;
 
         Ok(Response::new(StartResponse { success: true }))
     }
@@ -283,28 +270,9 @@ impl ControlService for Control {
             return Ok(Response::new(StopResponse { success: true }));
         }
 
-        println!("Stopping services: {:?}", config.services);
-
-        for service in &config.services {
-            println!(
-                "Sending stop command for service: {:?}",
-                service.name.clone()
-            );
-            self.cmd_tx
-                .send(SuperviseurCommand::Stop(
-                    service.clone(),
-                    config.project.clone(),
-                ))
-                .unwrap();
-            thread::sleep(Duration::from_millis(500));
-        }
-
-        let services = config.services.clone();
-        let services = services
-            .iter()
-            .map(graphql::schema::objects::service::Service::from)
-            .collect::<Vec<graphql::schema::objects::service::Service>>();
-        SimpleBroker::publish(AllServicesStopped { payload: services });
+        self.cmd_tx
+            .send(SuperviseurCommand::StopAll(config.project.clone()))
+            .unwrap();
 
         Ok(Response::new(StopResponse { success: true }))
     }
@@ -340,21 +308,9 @@ impl ControlService for Control {
             return Ok(Response::new(RestartResponse { success: true }));
         }
 
-        for service in &config.services {
-            self.cmd_tx
-                .send(SuperviseurCommand::Restart(
-                    service.clone(),
-                    config.project.clone(),
-                ))
-                .map_err(|e| tonic::Status::internal(e.to_string()))?;
-        }
-
-        let services = config.services.clone();
-        let services = services
-            .iter()
-            .map(graphql::schema::objects::service::Service::from)
-            .collect::<Vec<graphql::schema::objects::service::Service>>();
-        SimpleBroker::publish(AllServicesRestarted { payload: services });
+        self.cmd_tx
+            .send(SuperviseurCommand::RestartAll(config.project.clone()))
+            .map_err(|e| tonic::Status::internal(e.to_string()))?;
 
         Ok(Response::new(RestartResponse { success: true }))
     }

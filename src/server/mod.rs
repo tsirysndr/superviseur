@@ -11,8 +11,8 @@ use crate::{
         logging_service_server::LoggingServiceServer,
     },
     server::{control::Control, logging::Logging},
-    superviseur::core::Superviseur,
-    types::{process::Process, BANNER, UNIX_SOCKET_PATH},
+    superviseur::{core::Superviseur, dependencies::DependencyGraph},
+    types::{configuration::Service, process::Process, BANNER, UNIX_SOCKET_PATH},
 };
 use anyhow::Error;
 use owo_colors::OwoColorize;
@@ -41,6 +41,8 @@ pub async fn exec(port: u16, serve: bool) -> Result<(), Error> {
     let (event_tx, events) = tokio::sync::mpsc::unbounded_channel();
     let processes = Arc::new(Mutex::new(vec![] as Vec<(Process, String)>));
     let cmd_rx = Arc::new(Mutex::new(cmd_rx));
+    let service_graph = Arc::new(Mutex::new(vec![] as Vec<(DependencyGraph, String)>));
+    let service_map = Arc::new(Mutex::new(vec![] as Vec<(HashMap<usize, Service>, String)>));
 
     let superviseur = Superviseur::new(
         cmd_rx,
@@ -49,6 +51,8 @@ pub async fn exec(port: u16, serve: bool) -> Result<(), Error> {
         events,
         processes.clone(),
         config_map.clone(),
+        service_graph.clone(),
+        service_map.clone(),
     );
 
     let cloned_cmd_tx = cmd_tx.clone();

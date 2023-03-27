@@ -8,7 +8,7 @@ use std::{
     time::Duration,
 };
 
-use anyhow::{Error, Ok};
+use anyhow::{anyhow, Error, Ok};
 use futures::Future;
 use nix::{
     sys::signal::{self, Signal},
@@ -21,9 +21,8 @@ use crate::{
         schema::{
             self,
             objects::subscriptions::{
-                AllServicesRestarted, AllServicesStarted, AllServicesStopped, LogStream,
-                ServiceRestarted, ServiceStarted, ServiceStarting, ServiceStopped, ServiceStopping,
-                TailLogStream,
+                AllServicesRestarted, AllServicesStarted, AllServicesStopped, ServiceRestarted,
+                ServiceStarted, ServiceStarting, ServiceStopped, ServiceStopping,
             },
         },
         simple_broker::SimpleBroker,
@@ -34,7 +33,7 @@ use crate::{
     },
 };
 
-use super::{wait::wait_for_service, watch::WatchForChanges};
+use super::{dependencies::DependencyGraph, wait::wait_for_service, watch::WatchForChanges};
 
 #[derive(Clone)]
 pub struct Superviseur {}
@@ -47,30 +46,23 @@ impl Superviseur {
         events: mpsc::UnboundedReceiver<ProcessEvent>,
         processes: Arc<Mutex<Vec<(Process, String)>>>,
         config_map: Arc<Mutex<HashMap<String, ConfigurationData>>>,
+        service_graph: Arc<Mutex<Vec<(DependencyGraph, String)>>>,
+        service_map: Arc<Mutex<Vec<(HashMap<usize, Service>, String)>>>,
     ) -> Self {
-        let cloned_cmd_rx = cmd_rx.clone();
-        let cloned_cmd_tx = cmd_tx.clone();
-        let cloned_event_tx = event_tx.clone();
-        let cloned_processes = processes.clone();
-        let cloned_config_map = config_map.clone();
         let childs = Arc::new(Mutex::new(HashMap::new()));
-        let cloned_childs = childs.clone();
         thread::spawn(move || {
             let internal = SuperviseurInternal::new(
-                cloned_cmd_rx,
-                cloned_cmd_tx,
-                cloned_event_tx,
+                cmd_rx,
+                cmd_tx,
+                event_tx,
                 events,
-                cloned_processes,
-                cloned_childs,
-                cloned_config_map,
+                processes,
+                childs,
+                config_map,
+                service_graph,
+                service_map,
             );
             futures::executor::block_on(internal);
-        });
-        thread::spawn(move || {
-            let dependency_manager =
-                DependencyManager::new(cmd_rx, cmd_tx, event_tx, processes, childs);
-            futures::executor::block_on(dependency_manager);
         });
         Self {}
     }
@@ -85,6 +77,9 @@ pub enum SuperviseurCommand {
     LoadConfig(ConfigurationData, String),
     WatchForChanges(String, Service, String),
     StartDependency(Service, String),
+    StartAll(String),
+    StopAll(String),
+    RestartAll(String),
 }
 
 #[derive(Debug)]
@@ -107,6 +102,8 @@ struct SuperviseurInternal {
     processes: Arc<Mutex<Vec<(Process, String)>>>,
     childs: Arc<Mutex<HashMap<String, i32>>>,
     config_map: Arc<Mutex<Vec<(ConfigurationData, String)>>>,
+    service_graph: Arc<Mutex<Vec<(DependencyGraph, String)>>>,
+    service_map: Arc<Mutex<Vec<(HashMap<usize, Service>, String)>>>,
 }
 
 impl SuperviseurInternal {
@@ -118,6 +115,8 @@ impl SuperviseurInternal {
         processes: Arc<Mutex<Vec<(Process, String)>>>,
         childs: Arc<Mutex<HashMap<String, i32>>>,
         config_map: Arc<Mutex<HashMap<String, ConfigurationData>>>,
+        service_graph: Arc<Mutex<Vec<(DependencyGraph, String)>>>,
+        service_map: Arc<Mutex<Vec<(HashMap<usize, Service>, String)>>>,
     ) -> Self {
         let config_map = Arc::new(Mutex::new(
             config_map
@@ -135,6 +134,8 @@ impl SuperviseurInternal {
             processes,
             childs,
             config_map,
+            service_graph,
+            service_map,
         }
     }
 
@@ -146,6 +147,45 @@ impl SuperviseurInternal {
         let mut config_map = self.config_map.lock().unwrap();
         config_map.retain(|(_, key)| *key != project);
         config_map.push((cfg.clone(), project.clone()));
+
+        let mut services = HashMap::new();
+        let mut graph = DependencyGraph::new(project.clone());
+        for service in cfg.services.iter() {
+            services.insert(
+                graph.add_vertex(
+                    service,
+                    self.processes.clone(),
+                    self.childs.clone(),
+                    self.event_tx.clone(),
+                ),
+                service.clone(),
+            );
+        }
+
+        // Add edges to the graph
+        for service in cfg.services.iter() {
+            for dep in service.depends_on.iter() {
+                let from = services
+                    .iter()
+                    .find(|(_, s)| s.name == service.name)
+                    .map(|(from, _)| *from)
+                    .ok_or(anyhow!("service not found"))?;
+                services
+                    .iter()
+                    .find(|(_, s)| s.name == *dep)
+                    .map(|(id, _)| *id)
+                    .map(|to| graph.add_edge(from, to));
+            }
+        }
+
+        let mut service_graph = self.service_graph.lock().unwrap();
+        service_graph.retain(|(_, key)| *key != project);
+        service_graph.push((graph, project.clone()));
+
+        let mut service_map = self.service_map.lock().unwrap();
+        service_map.retain(|(_, key)| *key != project);
+        service_map.push((services, project.clone()));
+
         Ok(())
     }
 
@@ -200,7 +240,157 @@ impl SuperviseurInternal {
     }
 
     fn handle_start(&mut self, service: Service, project: String) -> Result<(), Error> {
+        /*
         println!("starting {}", service.clone().name);
+          self.event_tx
+              .send(ProcessEvent::Starting(
+                  service.name.clone(),
+                  project.clone(),
+              ))
+              .unwrap();
+
+          self.start_dependencies(service.clone(), project.clone())?;
+          self.wait_for_service_deps(service.clone(), project.clone())?;
+
+          // skip if already started
+          let mut processes = self.processes.lock().unwrap();
+          if let Some(process) = processes
+              .iter()
+              .find(|(p, key)| p.name == service.name && key == &project)
+              .map(|(p, _)| p)
+          {
+              if process.state == State::Running || process.state == State::Starting {
+                  return Ok(());
+              }
+          }
+
+          let envs = service.env.clone();
+          let working_dir = service.working_dir.clone();
+
+          let mut child = match service.clone().flox {
+              Some(flox) => {
+                  // verify if flox is installed
+                  std::process::Command::new("sh")
+                      .arg("-c")
+                      .arg("flox --version")
+                      .stdout(std::process::Stdio::piped())
+                      .stderr(std::process::Stdio::piped())
+                      .spawn()
+                      .expect("flox is not installed, see https://floxdev.com/docs/");
+
+                  let command = format!(
+                      "flox print-dev-env -A {}",
+                      flox.environment.replace(".#", "")
+                  );
+                  let mut child = std::process::Command::new("sh")
+                      .arg("-c")
+                      .arg(command)
+                      .stdout(std::process::Stdio::piped())
+                      .stderr(std::process::Stdio::piped())
+                      .spawn()
+                      .unwrap();
+                  child.wait().unwrap();
+
+                  let command = format!(
+                      "flox activate -e {} -- {}",
+                      flox.environment, &service.command
+                  );
+                  println!("command: {}", command);
+                  std::process::Command::new("sh")
+                      .arg("-c")
+                      .arg(command)
+                      .current_dir(working_dir)
+                      .envs(envs)
+                      .stdout(std::process::Stdio::piped())
+                      .stderr(std::process::Stdio::piped())
+                      .spawn()
+                      .unwrap()
+              }
+              None => std::process::Command::new("sh")
+                  .arg("-c")
+                  .arg(&service.command)
+                  .current_dir(working_dir)
+                  .envs(envs)
+                  .stdout(std::process::Stdio::piped())
+                  .stderr(std::process::Stdio::piped())
+                  .spawn()
+                  .unwrap(),
+          };
+
+          let mut process = &mut processes
+              .iter_mut()
+              .find(|(p, key)| p.name == service.name && key == &project)
+              .unwrap()
+              .0;
+          process.pid = Some(child.id());
+          self.event_tx
+              .send(ProcessEvent::Started(service.name.clone(), project.clone()))
+              .unwrap();
+          println!("started {}", service.clone().name);
+
+          process.up_time = Some(chrono::Utc::now());
+          let service_key = format!("{}-{}", project, service.name);
+          self.childs
+              .lock()
+              .unwrap()
+              .insert(service_key, process.pid.unwrap() as i32);
+
+          let stdout = child.stdout.take().unwrap();
+          let stderr = child.stderr.take().unwrap();
+
+          let cloned_service = service.clone();
+
+          thread::spawn(move || {
+              let service = cloned_service;
+              let id = service.id.unwrap_or("-".to_string());
+              // write stdout to file
+              let mut log_file = std::fs::File::create(service.stdout).unwrap();
+
+              let stdout = std::io::BufReader::new(stdout);
+              for line in stdout.lines() {
+                  let line = line.unwrap();
+                  let line = format!("{}\n", line);
+                  SimpleBroker::publish(TailLogStream {
+                      id: id.clone(),
+                      line: line.clone(),
+                  });
+                  SimpleBroker::publish(LogStream {
+                      id: id.clone(),
+                      line: line.clone(),
+                  });
+                  log_file.write_all(line.as_bytes()).unwrap();
+              }
+
+              // write stderr to file
+              let mut err_file = std::fs::File::create(service.stderr).unwrap();
+              let stderr = std::io::BufReader::new(stderr);
+              for line in stderr.lines() {
+                  let line = line.unwrap();
+                  err_file.write_all(line.as_bytes()).unwrap();
+              }
+          });
+
+          let cmd_tx = self.cmd_tx.clone();
+          let event_tx = self.event_tx.clone();
+          thread::spawn(move || {
+              let _status = child.wait().unwrap();
+              // println!("child exited with status: {}", status);
+              if service.autorestart {
+                  cmd_tx
+                      .send(SuperviseurCommand::Start(service.clone(), project.clone()))
+                      .unwrap();
+
+                  event_tx
+                      .send(ProcessEvent::Restarted(service.name, project))
+                      .unwrap();
+                  return;
+              }
+              event_tx
+                  .send(ProcessEvent::Stopped(service.name, project))
+                  .unwrap();
+          });
+         */
+
         self.event_tx
             .send(ProcessEvent::Starting(
                 service.name.clone(),
@@ -208,296 +398,124 @@ impl SuperviseurInternal {
             ))
             .unwrap();
 
-        self.start_dependencies(service.clone(), project.clone())?;
-        self.wait_for_service_deps(service.clone(), project.clone())?;
-
-        // skip if already started
-        let mut processes = self.processes.lock().unwrap();
-        if let Some(process) = processes
-            .iter()
-            .find(|(p, key)| p.name == service.name && key == &project)
-            .map(|(p, _)| p)
-        {
-            if process.state == State::Running || process.state == State::Starting {
-                return Ok(());
-            }
-        }
-
-        let envs = service.env.clone();
-        let working_dir = service.working_dir.clone();
-
-        let mut child = match service.clone().flox {
-            Some(flox) => {
-                // verify if flox is installed
-                std::process::Command::new("sh")
-                    .arg("-c")
-                    .arg("flox --version")
-                    .stdout(std::process::Stdio::piped())
-                    .stderr(std::process::Stdio::piped())
-                    .spawn()
-                    .expect("flox is not installed, see https://floxdev.com/docs/");
-
-                let command = format!(
-                    "flox print-dev-env -A {}",
-                    flox.environment.replace(".#", "")
-                );
-                let mut child = std::process::Command::new("sh")
-                    .arg("-c")
-                    .arg(command)
-                    .stdout(std::process::Stdio::piped())
-                    .stderr(std::process::Stdio::piped())
-                    .spawn()
-                    .unwrap();
-                child.wait().unwrap();
-
-                let command = format!(
-                    "flox activate -e {} -- {}",
-                    flox.environment, &service.command
-                );
-                println!("command: {}", command);
-                std::process::Command::new("sh")
-                    .arg("-c")
-                    .arg(command)
-                    .current_dir(working_dir)
-                    .envs(envs)
-                    .stdout(std::process::Stdio::piped())
-                    .stderr(std::process::Stdio::piped())
-                    .spawn()
-                    .unwrap()
-            }
-            None => std::process::Command::new("sh")
-                .arg("-c")
-                .arg(&service.command)
-                .current_dir(working_dir)
-                .envs(envs)
-                .stdout(std::process::Stdio::piped())
-                .stderr(std::process::Stdio::piped())
-                .spawn()
-                .unwrap(),
-        };
-
-        let mut process = &mut processes
-            .iter_mut()
-            .find(|(p, key)| p.name == service.name && key == &project)
-            .unwrap()
-            .0;
-        process.pid = Some(child.id());
-        self.event_tx
-            .send(ProcessEvent::Started(service.name.clone(), project.clone()))
-            .unwrap();
-        println!("started {}", service.clone().name);
-
-        process.up_time = Some(chrono::Utc::now());
-        let service_key = format!("{}-{}", project, service.name);
-        self.childs
-            .lock()
-            .unwrap()
-            .insert(service_key, process.pid.unwrap() as i32);
-
-        let stdout = child.stdout.take().unwrap();
-        let stderr = child.stderr.take().unwrap();
-
-        let cloned_service = service.clone();
-
-        thread::spawn(move || {
-            let service = cloned_service;
-            let id = service.id.unwrap_or("-".to_string());
-            // write stdout to file
-            let mut log_file = std::fs::File::create(service.stdout).unwrap();
-
-            let stdout = std::io::BufReader::new(stdout);
-            for line in stdout.lines() {
-                let line = line.unwrap();
-                let line = format!("{}\n", line);
-                SimpleBroker::publish(TailLogStream {
-                    id: id.clone(),
-                    line: line.clone(),
-                });
-                SimpleBroker::publish(LogStream {
-                    id: id.clone(),
-                    line: line.clone(),
-                });
-                log_file.write_all(line.as_bytes()).unwrap();
-            }
-
-            // write stderr to file
-            let mut err_file = std::fs::File::create(service.stderr).unwrap();
-            let stderr = std::io::BufReader::new(stderr);
-            for line in stderr.lines() {
-                let line = line.unwrap();
-                err_file.write_all(line.as_bytes()).unwrap();
-            }
-        });
-
-        let cmd_tx = self.cmd_tx.clone();
-        let event_tx = self.event_tx.clone();
-        thread::spawn(move || {
-            let _status = child.wait().unwrap();
-            // println!("child exited with status: {}", status);
-            if service.autorestart {
-                cmd_tx
-                    .send(SuperviseurCommand::Start(service.clone(), project.clone()))
-                    .unwrap();
-
-                event_tx
-                    .send(ProcessEvent::Restarted(service.name, project))
-                    .unwrap();
-                return;
-            }
-            event_tx
-                .send(ProcessEvent::Stopped(service.name, project))
-                .unwrap();
-        });
-
-        Ok(())
-    }
-
-    fn start_dependencies(&mut self, service: Service, project: String) -> Result<(), Error> {
-        // start recursively if service depends on other services
-        let dependencies = service.depends_on.clone();
-        let dependencies = dependencies
+        let service_graph = self.service_graph.lock().unwrap();
+        let graph = service_graph
+            .clone()
             .into_iter()
-            .filter(|d| d != &service.name)
-            .collect::<Vec<String>>();
-        if dependencies.len() > 0 {
-            let config_map = self.config_map.lock().unwrap();
-            let config = config_map
-                .iter()
-                .find(|(_, key)| *key == project)
-                .map(|(c, _)| c)
-                .ok_or(anyhow::anyhow!("Project {} not found", project))?;
-            let services = config.services.clone();
-            println!("dependencies: {:?}", dependencies);
-            for dependency in dependencies.into_iter() {
-                match services.iter().find(|s| s.name == dependency) {
-                    Some(s) => {
-                        println!("starting dependency {}", s.name);
-                        self.cmd_tx
-                            .send(SuperviseurCommand::StartDependency(
-                                s.clone(),
-                                project.clone(),
-                            ))
-                            .unwrap();
-                        thread::sleep(Duration::from_millis(100));
-                    }
-                    None => {
-                        return Err(anyhow::anyhow!("Service {} not found", dependency));
-                    }
-                }
-            }
-        }
+            .filter(|(_, key)| *key == project)
+            .map(|(s, _)| s)
+            .next()
+            .ok_or(anyhow::anyhow!("Project {} not found", project))?;
+        let mut visited = vec![false; graph.size()];
+        graph.start_service(&service, &mut visited);
         Ok(())
     }
 
-    fn wait_for_service_deps(&mut self, service: Service, project: String) -> Result<(), Error> {
-        match service.wait_for {
-            Some(ref wait_for) => {
-                let wait_for = wait_for.clone();
-                let config_map = self.config_map.lock().unwrap();
-                let config = config_map
-                    .iter()
-                    .find(|(_, key)| *key == project)
-                    .map(|(c, _)| c)
-                    .ok_or(anyhow::anyhow!("Project {} not found", project))?;
-                let services = config.services.clone();
-                for w in wait_for.into_iter() {
-                    match services.iter().find(|s| s.name == w) {
-                        Some(s) => {
-                            wait_for_service(s, 1000)?;
-                        }
-                        None => {
-                            return Err(anyhow::anyhow!("Service {} not found", w));
-                        }
-                    }
-                }
-            }
-            None => {}
-        }
-        Ok(())
-    }
+    fn handle_stop(&self, service: Service, project: String) -> Result<(), Error> {
+        /*
+        self.event_tx
+             .send(ProcessEvent::Stopping(
+                 service.name.clone(),
+                 project.clone(),
+             ))
+             .unwrap();
+         println!(
+             "service: {} | stop_command: {:?}",
+             service.name, service.stop_command
+         );
+         if let Some(stop_command) = service.stop_command.clone() {
+             let envs = service.env.clone();
+             let working_dir = service.working_dir.clone();
 
-    fn handle_stop(&self, service: Service, project: String, restart: bool) -> Result<(), Error> {
+             match service.clone().flox {
+                 Some(flox) => {
+                     let stop_command =
+                         format!("flox activate -e {} -- {}", flox.environment, stop_command);
+                     let mut child = std::process::Command::new("sh")
+                         .arg("-c")
+                         .arg(stop_command)
+                         .current_dir(working_dir)
+                         .envs(envs)
+                         .stdout(std::process::Stdio::piped())
+                         .stderr(std::process::Stdio::piped())
+                         .spawn()
+                         .unwrap();
+                     child.wait().unwrap();
+                 }
+                 None => {
+                     let mut child = std::process::Command::new("sh")
+                         .arg("-c")
+                         .arg(stop_command)
+                         .current_dir(working_dir)
+                         .envs(envs)
+                         .stdout(std::process::Stdio::piped())
+                         .stderr(std::process::Stdio::piped())
+                         .spawn()
+                         .unwrap();
+                     child.wait().unwrap();
+                 }
+             };
+             let mut childs = self.childs.lock().unwrap();
+             let service_key = format!("{}-{}", project.clone(), service.name.clone());
+             childs.remove(&service_key);
+
+             self.event_tx
+                 .send(ProcessEvent::Stopped(service.name.clone(), project.clone()))
+                 .unwrap();
+             if restart {
+                 self.cmd_tx
+                     .send(SuperviseurCommand::Start(service, project))
+                     .unwrap();
+             }
+             return Ok(());
+         }
+         let mut childs = self.childs.lock().unwrap();
+         let service_key = format!("{}-{}", project.clone(), service.name.clone());
+         match childs.get(&service_key) {
+             Some(pid) => {
+                 println!("Stopping service {} (pid: {})", service.name.clone(), pid);
+                 signal::kill(Pid::from_raw(*pid), Signal::SIGTERM)?;
+                 childs.remove(&service_key);
+
+                 self.event_tx
+                     .send(ProcessEvent::Stopped(service.name.clone(), project.clone()))
+                     .unwrap();
+                 if restart {
+                     self.cmd_tx
+                         .send(SuperviseurCommand::Start(service.clone(), project))
+                         .unwrap();
+                 }
+                 println!("Service {} stopped", service.name);
+                 Ok(())
+             }
+             None => Ok(()),
+         }
+         */
         self.event_tx
             .send(ProcessEvent::Stopping(
                 service.name.clone(),
                 project.clone(),
             ))
             .unwrap();
-        println!(
-            "service: {} | stop_command: {:?}",
-            service.name, service.stop_command
-        );
-        if let Some(stop_command) = service.stop_command.clone() {
-            let envs = service.env.clone();
-            let working_dir = service.working_dir.clone();
 
-            match service.clone().flox {
-                Some(flox) => {
-                    let stop_command =
-                        format!("flox activate -e {} -- {}", flox.environment, stop_command);
-                    let mut child = std::process::Command::new("sh")
-                        .arg("-c")
-                        .arg(stop_command)
-                        .current_dir(working_dir)
-                        .envs(envs)
-                        .stdout(std::process::Stdio::piped())
-                        .stderr(std::process::Stdio::piped())
-                        .spawn()
-                        .unwrap();
-                    child.wait().unwrap();
-                }
-                None => {
-                    let mut child = std::process::Command::new("sh")
-                        .arg("-c")
-                        .arg(stop_command)
-                        .current_dir(working_dir)
-                        .envs(envs)
-                        .stdout(std::process::Stdio::piped())
-                        .stderr(std::process::Stdio::piped())
-                        .spawn()
-                        .unwrap();
-                    child.wait().unwrap();
-                }
-            };
-            let mut childs = self.childs.lock().unwrap();
-            let service_key = format!("{}-{}", project.clone(), service.name.clone());
-            childs.remove(&service_key);
-
-            self.event_tx
-                .send(ProcessEvent::Stopped(service.name.clone(), project.clone()))
-                .unwrap();
-            if restart {
-                self.cmd_tx
-                    .send(SuperviseurCommand::Start(service, project))
-                    .unwrap();
-            }
-            return Ok(());
-        }
-        let mut childs = self.childs.lock().unwrap();
-        let service_key = format!("{}-{}", project.clone(), service.name.clone());
-        match childs.get(&service_key) {
-            Some(pid) => {
-                println!("Stopping service {} (pid: {})", service.name.clone(), pid);
-                signal::kill(Pid::from_raw(*pid), Signal::SIGTERM)?;
-                childs.remove(&service_key);
-
-                self.event_tx
-                    .send(ProcessEvent::Stopped(service.name.clone(), project.clone()))
-                    .unwrap();
-                if restart {
-                    self.cmd_tx
-                        .send(SuperviseurCommand::Start(service.clone(), project))
-                        .unwrap();
-                }
-                println!("Service {} stopped", service.name);
-                Ok(())
-            }
-            None => Ok(()),
-        }
+        let service_graph = self.service_graph.lock().unwrap();
+        let graph = service_graph
+            .clone()
+            .into_iter()
+            .filter(|(_, key)| *key == project)
+            .map(|(s, _)| s)
+            .next()
+            .ok_or(anyhow::anyhow!("Project {} not found", project))?;
+        let mut visited = vec![false; graph.size()];
+        graph.stop_service(&service, &mut visited);
+        Ok(())
     }
 
     fn handle_restart(&mut self, service: Service, project: String) -> Result<(), Error> {
-        self.handle_stop(service.clone(), project.clone(), true)
+        // self.handle_stop(service.clone(), project.clone(), true)
+        self.handle_stop(service.clone(), project.clone())?;
+        self.handle_start(service.clone(), project.clone())?;
+        Ok(())
     }
 
     fn handle_watch_for_changes(
@@ -516,11 +534,43 @@ impl SuperviseurInternal {
         Ok(())
     }
 
+    fn handle_start_all(&mut self, project: String) -> Result<(), Error> {
+        let service_graph = self.service_graph.lock().unwrap();
+        let graph = service_graph
+            .clone()
+            .into_iter()
+            .filter(|(_, key)| *key == project)
+            .map(|(s, _)| s)
+            .next()
+            .ok_or(anyhow::anyhow!("Project {} not found", project))?;
+        graph.start_services();
+        Ok(())
+    }
+
+    fn handle_stop_all(&mut self, project: String) -> Result<(), Error> {
+        let service_graph = self.service_graph.lock().unwrap();
+        let graph = service_graph
+            .clone()
+            .into_iter()
+            .filter(|(_, key)| *key == project)
+            .map(|(s, _)| s)
+            .next()
+            .ok_or(anyhow::anyhow!("Project {} not found", project))?;
+        graph.stop_services();
+        Ok(())
+    }
+
+    fn handle_restart_all(&mut self, project: String) -> Result<(), Error> {
+        self.handle_stop_all(project.clone())?;
+        self.handle_start_all(project)?;
+        Ok(())
+    }
+
     fn handle_command(&mut self, cmd: SuperviseurCommand) -> Result<(), Error> {
         match cmd {
             SuperviseurCommand::Load(service, project) => self.handle_load(service, project),
             SuperviseurCommand::Start(service, project) => self.handle_start(service, project),
-            SuperviseurCommand::Stop(service, project) => self.handle_stop(service, project, false),
+            SuperviseurCommand::Stop(service, project) => self.handle_stop(service, project),
             SuperviseurCommand::Restart(service, project) => self.handle_restart(service, project),
             SuperviseurCommand::LoadConfig(config, project) => {
                 self.handle_load_config(config, project)
@@ -529,6 +579,9 @@ impl SuperviseurInternal {
                 self.handle_watch_for_changes(dir, service, project)
             }
             SuperviseurCommand::StartDependency(_, _) => Ok(()),
+            SuperviseurCommand::StartAll(project) => self.handle_start_all(project),
+            SuperviseurCommand::StopAll(project) => self.handle_stop_all(project),
+            SuperviseurCommand::RestartAll(project) => self.handle_restart_all(project),
         }
     }
 
@@ -696,219 +749,6 @@ impl Future for SuperviseurInternal {
 
             if let Some(event) = event {
                 if let Err(e) = self.handle_event(event) {
-                    println!("{:?}", e);
-                }
-            }
-
-            thread::sleep(Duration::from_millis(500));
-        }
-    }
-}
-
-struct DependencyManager {
-    commands: Arc<Mutex<mpsc::UnboundedReceiver<SuperviseurCommand>>>,
-    cmd_tx: mpsc::UnboundedSender<SuperviseurCommand>,
-    event_tx: mpsc::UnboundedSender<ProcessEvent>,
-    processes: Arc<Mutex<Vec<(Process, String)>>>,
-    childs: Arc<Mutex<HashMap<String, i32>>>,
-}
-
-impl DependencyManager {
-    pub fn new(
-        commands: Arc<Mutex<mpsc::UnboundedReceiver<SuperviseurCommand>>>,
-        cmd_tx: mpsc::UnboundedSender<SuperviseurCommand>,
-        event_tx: mpsc::UnboundedSender<ProcessEvent>,
-        processes: Arc<Mutex<Vec<(Process, String)>>>,
-        childs: Arc<Mutex<HashMap<String, i32>>>,
-    ) -> Self {
-        Self {
-            commands,
-            cmd_tx,
-            event_tx,
-            processes,
-            childs,
-        }
-    }
-
-    fn handle_start(&mut self, service: Service, project: String) -> Result<(), Error> {
-        println!("starting {}", service.clone().name);
-        self.event_tx
-            .send(ProcessEvent::Starting(
-                service.name.clone(),
-                project.clone(),
-            ))
-            .unwrap();
-
-        // skip if already started
-        let mut processes = self.processes.lock().unwrap();
-        if let Some(process) = processes
-            .iter()
-            .find(|(p, key)| p.name == service.name && key == &project)
-            .map(|(p, _)| p)
-        {
-            println!("{} {}", process.name, process.state);
-            if process.state == State::Running || process.state == State::Starting {
-                return Ok(());
-            }
-        }
-
-        let envs = service.env.clone();
-        let working_dir = service.working_dir.clone();
-
-        let mut child = match service.clone().flox {
-            Some(flox) => {
-                // verify if flox is installed
-                std::process::Command::new("sh")
-                    .arg("-c")
-                    .arg("flox --version")
-                    .stdout(std::process::Stdio::piped())
-                    .stderr(std::process::Stdio::piped())
-                    .spawn()
-                    .expect("flox is not installed, see https://floxdev.com/docs/");
-
-                let command = format!(
-                    "flox print-dev-env -A {}",
-                    flox.environment.replace(".#", "")
-                );
-                let mut child = std::process::Command::new("sh")
-                    .arg("-c")
-                    .arg(command)
-                    .stdout(std::process::Stdio::piped())
-                    .stderr(std::process::Stdio::piped())
-                    .spawn()
-                    .unwrap();
-                child.wait().unwrap();
-
-                let command = format!(
-                    "flox activate -e {} -- {}",
-                    flox.environment, &service.command
-                );
-                println!("command: {}", command);
-                std::process::Command::new("sh")
-                    .arg("-c")
-                    .arg(command)
-                    .current_dir(working_dir)
-                    .envs(envs)
-                    .stdout(std::process::Stdio::piped())
-                    .stderr(std::process::Stdio::piped())
-                    .spawn()
-                    .unwrap()
-            }
-            None => std::process::Command::new("sh")
-                .arg("-c")
-                .arg(&service.command)
-                .current_dir(working_dir)
-                .envs(envs)
-                .stdout(std::process::Stdio::piped())
-                .stderr(std::process::Stdio::piped())
-                .spawn()
-                .unwrap(),
-        };
-
-        let mut process = &mut processes
-            .iter_mut()
-            .find(|(p, key)| p.name == service.name && key == &project)
-            .unwrap()
-            .0;
-        process.pid = Some(child.id());
-        self.event_tx
-            .send(ProcessEvent::Started(service.name.clone(), project.clone()))
-            .unwrap();
-        println!("started {}", service.clone().name);
-
-        process.up_time = Some(chrono::Utc::now());
-        let service_key = format!("{}-{}", project, service.name);
-        self.childs
-            .lock()
-            .unwrap()
-            .insert(service_key, process.pid.unwrap() as i32);
-
-        let stdout = child.stdout.take().unwrap();
-        let stderr = child.stderr.take().unwrap();
-
-        let cloned_service = service.clone();
-
-        thread::spawn(move || {
-            let service = cloned_service;
-            let id = service.id.unwrap_or("-".to_string());
-            // write stdout to file
-            let mut log_file = std::fs::File::create(service.stdout).unwrap();
-
-            let stdout = std::io::BufReader::new(stdout);
-            for line in stdout.lines() {
-                let line = line.unwrap();
-                let line = format!("{}\n", line);
-                SimpleBroker::publish(TailLogStream {
-                    id: id.clone(),
-                    line: line.clone(),
-                });
-                SimpleBroker::publish(LogStream {
-                    id: id.clone(),
-                    line: line.clone(),
-                });
-                log_file.write_all(line.as_bytes()).unwrap();
-            }
-
-            // write stderr to file
-            let mut err_file = std::fs::File::create(service.stderr).unwrap();
-            let stderr = std::io::BufReader::new(stderr);
-            for line in stderr.lines() {
-                let line = line.unwrap();
-                err_file.write_all(line.as_bytes()).unwrap();
-            }
-        });
-
-        let cmd_tx = self.cmd_tx.clone();
-        let event_tx = self.event_tx.clone();
-        thread::spawn(move || {
-            let _status = child.wait().unwrap();
-            // println!("child exited with status: {}", status);
-            if service.autorestart {
-                cmd_tx
-                    .send(SuperviseurCommand::Start(service.clone(), project.clone()))
-                    .unwrap();
-
-                event_tx
-                    .send(ProcessEvent::Restarted(service.name, project))
-                    .unwrap();
-                return;
-            }
-            event_tx
-                .send(ProcessEvent::Stopped(service.name, project))
-                .unwrap();
-        });
-
-        Ok(())
-    }
-
-    fn handle_command(&mut self, cmd: SuperviseurCommand) -> Result<(), Error> {
-        match cmd {
-            SuperviseurCommand::Load(_, _) => Ok(()),
-            SuperviseurCommand::Start(_, _) => Ok(()),
-            SuperviseurCommand::Stop(_, _) => Ok(()),
-            SuperviseurCommand::Restart(_, _) => Ok(()),
-            SuperviseurCommand::LoadConfig(_, _) => Ok(()),
-            SuperviseurCommand::WatchForChanges(_, _, _) => Ok(()),
-            SuperviseurCommand::StartDependency(service, project) => {
-                self.handle_start(service, project)
-            }
-        }
-    }
-}
-
-impl Future for DependencyManager {
-    type Output = ();
-
-    fn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
-        loop {
-            let cmd = match self.commands.lock().unwrap().poll_recv(cx) {
-                Poll::Ready(Some(cmd)) => Some(cmd),
-                Poll::Ready(None) => return Poll::Ready(()), // client has disconnected - shut down.
-                _ => None,
-            };
-
-            if let Some(cmd) = cmd {
-                if let Err(e) = self.handle_command(cmd) {
                     println!("{:?}", e);
                 }
             }
