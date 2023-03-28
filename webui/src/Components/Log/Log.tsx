@@ -59,7 +59,7 @@ const Log: FC<LogProps> = ({ displayLineNumbers, lines }) => {
           <LineNumber displayLineNumber={displayLineNumbers}>
             {i + 1}
           </LineNumber>
-          <div>{line}</div>
+          <div style={{ whiteSpace: "nowrap" }}>{line}</div>
         </Line>
       ))}
     </Container>
