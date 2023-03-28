@@ -9,10 +9,6 @@ use std::{
 
 use anyhow::{anyhow, Error, Ok};
 use futures::Future;
-use nix::{
-    sys::signal::{self, Signal},
-    unistd::Pid,
-};
 use tokio::sync::mpsc;
 
 use crate::{
@@ -32,7 +28,7 @@ use crate::{
     },
 };
 
-use super::{dependencies::DependencyGraph, wait::wait_for_service, watch::WatchForChanges};
+use super::{dependencies::DependencyGraph, watch::WatchForChanges};
 
 #[derive(Clone)]
 pub struct Superviseur {}
@@ -239,157 +235,6 @@ impl SuperviseurInternal {
     }
 
     fn handle_start(&mut self, service: Service, project: String) -> Result<(), Error> {
-        /*
-        println!("starting {}", service.clone().name);
-          self.event_tx
-              .send(ProcessEvent::Starting(
-                  service.name.clone(),
-                  project.clone(),
-              ))
-              .unwrap();
-
-          self.start_dependencies(service.clone(), project.clone())?;
-          self.wait_for_service_deps(service.clone(), project.clone())?;
-
-          // skip if already started
-          let mut processes = self.processes.lock().unwrap();
-          if let Some(process) = processes
-              .iter()
-              .find(|(p, key)| p.name == service.name && key == &project)
-              .map(|(p, _)| p)
-          {
-              if process.state == State::Running || process.state == State::Starting {
-                  return Ok(());
-              }
-          }
-
-          let envs = service.env.clone();
-          let working_dir = service.working_dir.clone();
-
-          let mut child = match service.clone().flox {
-              Some(flox) => {
-                  // verify if flox is installed
-                  std::process::Command::new("sh")
-                      .arg("-c")
-                      .arg("flox --version")
-                      .stdout(std::process::Stdio::piped())
-                      .stderr(std::process::Stdio::piped())
-                      .spawn()
-                      .expect("flox is not installed, see https://floxdev.com/docs/");
-
-                  let command = format!(
-                      "flox print-dev-env -A {}",
-                      flox.environment.replace(".#", "")
-                  );
-                  let mut child = std::process::Command::new("sh")
-                      .arg("-c")
-                      .arg(command)
-                      .stdout(std::process::Stdio::piped())
-                      .stderr(std::process::Stdio::piped())
-                      .spawn()
-                      .unwrap();
-                  child.wait().unwrap();
-
-                  let command = format!(
-                      "flox activate -e {} -- {}",
-                      flox.environment, &service.command
-                  );
-                  println!("command: {}", command);
-                  std::process::Command::new("sh")
-                      .arg("-c")
-                      .arg(command)
-                      .current_dir(working_dir)
-                      .envs(envs)
-                      .stdout(std::process::Stdio::piped())
-                      .stderr(std::process::Stdio::piped())
-                      .spawn()
-                      .unwrap()
-              }
-              None => std::process::Command::new("sh")
-                  .arg("-c")
-                  .arg(&service.command)
-                  .current_dir(working_dir)
-                  .envs(envs)
-                  .stdout(std::process::Stdio::piped())
-                  .stderr(std::process::Stdio::piped())
-                  .spawn()
-                  .unwrap(),
-          };
-
-          let mut process = &mut processes
-              .iter_mut()
-              .find(|(p, key)| p.name == service.name && key == &project)
-              .unwrap()
-              .0;
-          process.pid = Some(child.id());
-          self.event_tx
-              .send(ProcessEvent::Started(service.name.clone(), project.clone()))
-              .unwrap();
-          println!("started {}", service.clone().name);
-
-          process.up_time = Some(chrono::Utc::now());
-          let service_key = format!("{}-{}", project, service.name);
-          self.childs
-              .lock()
-              .unwrap()
-              .insert(service_key, process.pid.unwrap() as i32);
-
-          let stdout = child.stdout.take().unwrap();
-          let stderr = child.stderr.take().unwrap();
-
-          let cloned_service = service.clone();
-
-          thread::spawn(move || {
-              let service = cloned_service;
-              let id = service.id.unwrap_or("-".to_string());
-              // write stdout to file
-              let mut log_file = std::fs::File::create(service.stdout).unwrap();
-
-              let stdout = std::io::BufReader::new(stdout);
-              for line in stdout.lines() {
-                  let line = line.unwrap();
-                  let line = format!("{}\n", line);
-                  SimpleBroker::publish(TailLogStream {
-                      id: id.clone(),
-                      line: line.clone(),
-                  });
-                  SimpleBroker::publish(LogStream {
-                      id: id.clone(),
-                      line: line.clone(),
-                  });
-                  log_file.write_all(line.as_bytes()).unwrap();
-              }
-
-              // write stderr to file
-              let mut err_file = std::fs::File::create(service.stderr).unwrap();
-              let stderr = std::io::BufReader::new(stderr);
-              for line in stderr.lines() {
-                  let line = line.unwrap();
-                  err_file.write_all(line.as_bytes()).unwrap();
-              }
-          });
-
-          let cmd_tx = self.cmd_tx.clone();
-          let event_tx = self.event_tx.clone();
-          thread::spawn(move || {
-              let _status = child.wait().unwrap();
-              // println!("child exited with status: {}", status);
-              if service.autorestart {
-                  cmd_tx
-                      .send(SuperviseurCommand::Start(service.clone(), project.clone()))
-                      .unwrap();
-
-                  event_tx
-                      .send(ProcessEvent::Restarted(service.name, project))
-                      .unwrap();
-                  return;
-              }
-              event_tx
-                  .send(ProcessEvent::Stopped(service.name, project))
-                  .unwrap();
-          });
-         */
-
         self.event_tx
             .send(ProcessEvent::Starting(
                 service.name.clone(),
@@ -411,85 +256,6 @@ impl SuperviseurInternal {
     }
 
     fn handle_stop(&self, service: Service, project: String) -> Result<(), Error> {
-        /*
-        self.event_tx
-             .send(ProcessEvent::Stopping(
-                 service.name.clone(),
-                 project.clone(),
-             ))
-             .unwrap();
-         println!(
-             "service: {} | stop_command: {:?}",
-             service.name, service.stop_command
-         );
-         if let Some(stop_command) = service.stop_command.clone() {
-             let envs = service.env.clone();
-             let working_dir = service.working_dir.clone();
-
-             match service.clone().flox {
-                 Some(flox) => {
-                     let stop_command =
-                         format!("flox activate -e {} -- {}", flox.environment, stop_command);
-                     let mut child = std::process::Command::new("sh")
-                         .arg("-c")
-                         .arg(stop_command)
-                         .current_dir(working_dir)
-                         .envs(envs)
-                         .stdout(std::process::Stdio::piped())
-                         .stderr(std::process::Stdio::piped())
-                         .spawn()
-                         .unwrap();
-                     child.wait().unwrap();
-                 }
-                 None => {
-                     let mut child = std::process::Command::new("sh")
-                         .arg("-c")
-                         .arg(stop_command)
-                         .current_dir(working_dir)
-                         .envs(envs)
-                         .stdout(std::process::Stdio::piped())
-                         .stderr(std::process::Stdio::piped())
-                         .spawn()
-                         .unwrap();
-                     child.wait().unwrap();
-                 }
-             };
-             let mut childs = self.childs.lock().unwrap();
-             let service_key = format!("{}-{}", project.clone(), service.name.clone());
-             childs.remove(&service_key);
-
-             self.event_tx
-                 .send(ProcessEvent::Stopped(service.name.clone(), project.clone()))
-                 .unwrap();
-             if restart {
-                 self.cmd_tx
-                     .send(SuperviseurCommand::Start(service, project))
-                     .unwrap();
-             }
-             return Ok(());
-         }
-         let mut childs = self.childs.lock().unwrap();
-         let service_key = format!("{}-{}", project.clone(), service.name.clone());
-         match childs.get(&service_key) {
-             Some(pid) => {
-                 println!("Stopping service {} (pid: {})", service.name.clone(), pid);
-                 signal::kill(Pid::from_raw(*pid), Signal::SIGTERM)?;
-                 childs.remove(&service_key);
-
-                 self.event_tx
-                     .send(ProcessEvent::Stopped(service.name.clone(), project.clone()))
-                     .unwrap();
-                 if restart {
-                     self.cmd_tx
-                         .send(SuperviseurCommand::Start(service.clone(), project))
-                         .unwrap();
-                 }
-                 println!("Service {} stopped", service.name);
-                 Ok(())
-             }
-             None => Ok(()),
-         }
-         */
         self.event_tx
             .send(ProcessEvent::Stopping(
                 service.name.clone(),
@@ -511,7 +277,6 @@ impl SuperviseurInternal {
     }
 
     fn handle_restart(&mut self, service: Service, project: String) -> Result<(), Error> {
-        // self.handle_stop(service.clone(), project.clone(), true)
         self.handle_stop(service.clone(), project.clone())?;
         self.handle_start(service.clone(), project.clone())?;
         Ok(())

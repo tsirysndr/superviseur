@@ -21,13 +21,6 @@ use crate::{
             StatusRequest, StatusResponse, StopRequest, StopResponse,
         },
     },
-    graphql::{
-        self,
-        schema::objects::subscriptions::{
-            AllServicesRestarted, AllServicesStarted, AllServicesStopped,
-        },
-        simple_broker::SimpleBroker,
-    },
     superviseur::core::{ProcessEvent, Superviseur, SuperviseurCommand},
     types::{
         self,
