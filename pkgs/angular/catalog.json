@@ -1,0 +1,71 @@
+{
+  "nixpkgs-flox": {
+    "x86_64-darwin": {
+      "stable": {
+        "nodejs-17_x": {
+          "latest": {
+            "cache": {
+              "libv8": {
+                "https://cache.nixos.org": {}
+              },
+              "out": {
+                "https://cache.nixos.org": {}
+              }
+            },
+            "element": {
+              "attrPath": [
+                "legacyPackages",
+                "x86_64-darwin",
+                "nodejs-17_x"
+              ],
+              "originalUrl": "flake:nixpkgs",
+              "storePaths": [
+                "/nix/store/rcfwwlpm6mzlr2hbpan9wq63638kmkyv-nodejs-17.5.0"
+              ],
+              "url": "github:flox/nixpkgs/90705c89fbad69c4c971fabf2b1edd8c7875b5d6"
+            },
+            "eval": {
+              "meta": {
+                "description": "Event-driven I/O framework for the V8 JavaScript engine",
+                "outputsToInstall": [
+                  "out"
+                ],
+                "position": "/nix/store/x0dxzk94zhkkxjavadj2bpjimgxajivx-source/pkgs/development/web/nodejs/v17.nix:10",
+                "unfree": false
+              },
+              "name": "nodejs-17.5.0",
+              "outputs": {
+                "libv8": "/nix/store/3ffv6njclnj7dcfwnnmj8hdxcyldx0ax-nodejs-17.5.0-libv8",
+                "out": "/nix/store/rcfwwlpm6mzlr2hbpan9wq63638kmkyv-nodejs-17.5.0"
+              },
+              "pname": "nodejs",
+              "system": "x86_64-darwin",
+              "version": "17.5.0"
+            },
+            "publish_element": {
+              "attrPath": [
+                "evalCatalog",
+                "x86_64-darwin",
+                "stable",
+                "nodejs-17_x"
+              ],
+              "originalUrl": "flake:nixpkgs-flox",
+              "storePaths": [
+                "/nix/store/rcfwwlpm6mzlr2hbpan9wq63638kmkyv-nodejs-17.5.0"
+              ],
+              "url": "flake:nixpkgs-flox/34ee8469ab62af53cd25a839de33950b19126dc8"
+            },
+            "schema": 1,
+            "source": {
+              "locked": {
+                "lastModified": 1652991527,
+                "revCount": 360804
+              }
+            },
+            "type": "catalogRender"
+          }
+        }
+      }
+    }
+  }
+}

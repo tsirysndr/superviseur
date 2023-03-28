@@ -190,5 +190,8 @@ You can use the [setup-superviseur](https://github.com/marketplace/actions/setup
     version: 'v0.1.0-alpha.4'
 - run: superviseur --help
 ```
+
+## 📖 Examples
+See the [examples](examples) directory for more examples.
 ## 📝 License
 [MPL](LICENSE)

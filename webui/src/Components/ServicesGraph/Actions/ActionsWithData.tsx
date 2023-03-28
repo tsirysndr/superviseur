@@ -1,4 +1,4 @@
-import { FC, useEffect, useMemo } from "react";
+import { FC, useEffect, useMemo, useState } from "react";
 import {
   useGetServicesQuery,
   useOnRestartAllSubscription,
@@ -29,6 +29,8 @@ const styles = {
 
 const ActionsWithData: FC = () => {
   const { enqueue } = useSnackbar();
+  const [starting, setStarting] = useState(false);
+  const [stopping, setStopping] = useState(false);
   const { data: onStartAllSubscription } = useOnStartAllSubscription();
   const { data: onStopAllSubscription } = useOnStopAllSubscription();
   const { data: onRestartAllSubscription } = useOnRestartAllSubscription();
@@ -40,12 +42,26 @@ const ActionsWithData: FC = () => {
     loading: getServicesLoading,
     refetch,
   } = useGetServicesQuery();
-  const allServicesAreRunning =
-    !getServicesLoading &&
-    getServicesData!.services.every((service) => service.status === "RUNNING");
-  const onStartAll = () => startMutation();
-  const onRestartAll = () => restartMutation();
-  const onStopAll = () => stopMutation();
+  const allServicesAreRunning = useMemo(
+    () =>
+      !getServicesLoading &&
+      getServicesData!.services.every(
+        (service) => service.status === "RUNNING"
+      ),
+    [getServicesData, getServicesLoading]
+  );
+  const onStartAll = () => {
+    setStarting(true);
+    startMutation();
+  };
+  const onRestartAll = () => {
+    setStarting(true);
+    restartMutation();
+  };
+  const onStopAll = () => {
+    setStopping(true);
+    stopMutation();
+  };
 
   const allServicesAreStarted = useMemo(
     () => onStartAllSubscription?.onStartAll,
@@ -73,16 +89,18 @@ const ActionsWithData: FC = () => {
   }, [allServicesAreRestarted, allServicesAreStarted, allServicesAreStopped]);
 
   useEffect(() => {
-    if (allServicesAreStarted) {
+    if (allServicesAreRunning) {
+      setStarting(false);
       enqueue({
         message: "All services successfully started",
         overrides: styles.snackbar,
       });
     }
-  }, [allServicesAreStarted]);
+  }, [allServicesAreRunning]);
 
   useEffect(() => {
     if (allServicesAreStopped) {
+      setStopping(false);
       enqueue({
         message: "All services successfully stopped",
         overrides: styles.snackbar,
@@ -107,6 +125,8 @@ const ActionsWithData: FC = () => {
           onRestart={onRestartAll}
           onStop={onStopAll}
           allServicesAreRunning={allServicesAreRunning}
+          starting={starting}
+          stopping={stopping}
         />
       )}
     </>

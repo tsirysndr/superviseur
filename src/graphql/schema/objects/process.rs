@@ -1,10 +1,11 @@
-use async_graphql::Object;
+use async_graphql::{Object, ID};
 
 use crate::types;
 
 #[derive(Default, Clone)]
 pub struct Process {
     pub name: String,
+    pub service_id: ID,
     pub description: Option<String>,
     pub pid: Option<u32>,
     pub ppid: Option<u32>,
@@ -24,6 +25,10 @@ pub struct Process {
 impl Process {
     async fn name(&self) -> &str {
         &self.name
+    }
+
+    async fn service_id(&self) -> &ID {
+        &self.service_id
     }
 
     async fn description(&self) -> Option<&str> {
@@ -92,6 +97,26 @@ impl From<types::process::Process> for Process {
             log_file: process.stdout.clone(),
             up_time: process.up_time.map(|t| t.to_rfc3339()).unwrap_or_default(),
             working_directory: process.working_dir.clone(),
+            service_id: ID(process.service_id),
+            ..Default::default()
+        }
+    }
+}
+
+impl From<&mut types::process::Process> for Process {
+    fn from(process: &mut types::process::Process) -> Self {
+        Self {
+            name: process.name.clone(),
+            description: process.description.clone(),
+            pid: process.pid,
+            command: process.command.clone(),
+            state: process.state.to_string(),
+            r#type: process.r#type.to_string(),
+            stderr_file: process.stderr.clone(),
+            log_file: process.stdout.clone(),
+            up_time: process.up_time.map(|t| t.to_rfc3339()).unwrap_or_default(),
+            working_directory: process.working_dir.clone(),
+            service_id: ID(process.service_id.clone()),
             ..Default::default()
         }
     }

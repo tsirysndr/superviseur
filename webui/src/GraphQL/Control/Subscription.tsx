@@ -1,5 +1,5 @@
 import { gql } from "@apollo/client";
-import { SERVICE_FRAGMENT } from "../Fragments";
+import { PROCESS_FRAGMENT } from "../Fragments";
 
 export const ON_START = gql`
   subscription OnStart {
@@ -9,9 +9,12 @@ export const ON_START = gql`
         name
         status
       }
+      process {
+        ...ProcessFragment
+      }
     }
   }
-  ${SERVICE_FRAGMENT}
+  ${PROCESS_FRAGMENT}
 `;
 
 export const ON_STOP = gql`
@@ -22,9 +25,44 @@ export const ON_STOP = gql`
         name
         status
       }
+      process {
+        ...ProcessFragment
+      }
     }
   }
-  ${SERVICE_FRAGMENT}
+  ${PROCESS_FRAGMENT}
+`;
+
+export const ON_STARTING = gql`
+  subscription OnStarting {
+    onStarting {
+      payload {
+        id
+        name
+        status
+      }
+      process {
+        ...ProcessFragment
+      }
+    }
+  }
+  ${PROCESS_FRAGMENT}
+`;
+
+export const ON_STOPPING = gql`
+  subscription OnStopping {
+    onStopping {
+      payload {
+        id
+        name
+        status
+      }
+      process {
+        ...ProcessFragment
+      }
+    }
+  }
+  ${PROCESS_FRAGMENT}
 `;
 
 export const ON_RESTART = gql`
@@ -35,9 +73,12 @@ export const ON_RESTART = gql`
         name
         status
       }
+      process {
+        ...ProcessFragment
+      }
     }
   }
-  ${SERVICE_FRAGMENT}
+  ${PROCESS_FRAGMENT}
 `;
 
 export const ON_START_ALL = gql`
@@ -50,7 +91,6 @@ export const ON_START_ALL = gql`
       }
     }
   }
-  ${SERVICE_FRAGMENT}
 `;
 
 export const ON_STOP_ALL = gql`
@@ -63,7 +103,6 @@ export const ON_STOP_ALL = gql`
       }
     }
   }
-  ${SERVICE_FRAGMENT}
 `;
 
 export const ON_RESTART_ALL = gql`
@@ -76,5 +115,4 @@ export const ON_RESTART_ALL = gql`
       }
     }
   }
-  ${SERVICE_FRAGMENT}
 `;

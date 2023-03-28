@@ -9,6 +9,8 @@ export default {
     onStop: { action: "onStop" },
     onRestart: { action: "onRestart" },
     allServicesAreRunning: { control: "boolean" },
+    starting: { control: "boolean" },
+    stopping: { control: "boolean" },
   },
 } as ComponentMeta<typeof Actions>;
 
@@ -20,4 +22,6 @@ export const Default = Template.bind({});
 
 Default.args = {
   allServicesAreRunning: true,
+  starting: false,
+  stopping: false,
 };

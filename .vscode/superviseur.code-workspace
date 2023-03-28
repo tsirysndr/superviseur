@@ -5,6 +5,12 @@
 		},
 		{
 			"path": "../webui"
+		},
+		{
+			"path": "../examples/deno-fresh"
+		},
+		{
+			"path": "../examples"
 		}
 	],
 	"settings": {}

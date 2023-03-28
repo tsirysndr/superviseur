@@ -20,7 +20,7 @@ use crate::{
         schema::{Mutation, Query, Subscription},
         SuperviseurSchema,
     },
-    superviseur::{ProcessEvent, Superviseur, SuperviseurCommand},
+    superviseur::core::{ProcessEvent, Superviseur, SuperviseurCommand},
     types::{configuration::ConfigurationData, process::Process},
 };
 

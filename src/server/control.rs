@@ -1,10 +1,12 @@
 use std::{
     collections::HashMap,
+    path::Path,
     sync::{Arc, Mutex},
     thread,
     time::Duration,
 };
 
+use anyhow::Error;
 use names::Generator;
 use tokio::sync::mpsc;
 use tonic::{Request, Response};
@@ -19,19 +21,13 @@ use crate::{
             StatusRequest, StatusResponse, StopRequest, StopResponse,
         },
     },
-    graphql::{
-        self,
-        schema::objects::subscriptions::{
-            AllServicesRestarted, AllServicesStarted, AllServicesStopped,
-        },
-        simple_broker::SimpleBroker,
-    },
-    superviseur::{ProcessEvent, Superviseur, SuperviseurCommand},
+    superviseur::core::{ProcessEvent, Superviseur, SuperviseurCommand},
     types::{
         self,
         configuration::ConfigurationData,
         process::{Process, State},
     },
+    util::convert_dir_path_to_absolute_path,
 };
 
 pub struct Control {
@@ -83,35 +79,55 @@ impl ControlService for Control {
                 match old_config.services.iter().find(|s| s.name == service.name) {
                     Some(old_service) => {
                         service.id = old_service.id.clone();
-
-                        // rewacth the directory if working_dir changed
-                        if old_service.working_dir != service.working_dir {
-                            self.cmd_tx
-                                .send(SuperviseurCommand::WatchForChanges(
-                                    service.working_dir.clone(),
-                                    service.clone(),
-                                    config.project.clone(),
-                                ))
-                                .unwrap();
+                        service.working_dir = convert_dir_path_to_absolute_path(
+                            service.working_dir.as_str(),
+                            path.as_str(),
+                        )
+                        .map(|x| x.to_string())
+                        .map_err(|e| tonic::Status::internal(e.to_string()))?;
+                        // rewacth the directory if watch_dir changed
+                        match &service.watch_dir {
+                            Some(watch_dir) => {
+                                if old_service.watch_dir != Some(watch_dir.clone()) {
+                                    self.cmd_tx
+                                        .send(SuperviseurCommand::WatchForChanges(
+                                            watch_dir.clone(),
+                                            service.clone(),
+                                            config.project.clone(),
+                                        ))
+                                        .unwrap();
+                                }
+                            }
+                            None => {}
                         }
                     }
                     None => {
                         service.id = Some(generator.next().unwrap());
                     }
-                }
+                };
             }
             self.cmd_tx
-                .send(SuperviseurCommand::LoadConfig(config.clone(), path.clone()))
+                .send(SuperviseurCommand::LoadConfig(
+                    config.clone(),
+                    config.project.clone(),
+                ))
                 .unwrap();
+            config_map.insert(path.clone(), config.clone());
         } else {
             config.services = config
                 .services
                 .into_iter()
                 .map(|mut service| {
                     service.id = Some(generator.next().unwrap());
-                    service
+                    service.working_dir = convert_dir_path_to_absolute_path(
+                        service.working_dir.as_str(),
+                        path.as_str(),
+                    )
+                    .map(|x| x.to_string())?;
+                    Ok(service)
                 })
-                .collect();
+                .collect::<Result<Vec<_>, Error>>()
+                .map_err(|e| tonic::Status::internal(e.to_string()))?;
 
             config_map.insert(path.clone(), config.clone());
 
@@ -119,13 +135,18 @@ impl ControlService for Control {
             let project = config.project.clone();
 
             for service in services.into_iter() {
-                self.cmd_tx
-                    .send(SuperviseurCommand::WatchForChanges(
-                        service.working_dir.clone(),
-                        service,
-                        project.clone(),
-                    ))
-                    .unwrap();
+                match &service.watch_dir {
+                    Some(watch_dir) => {
+                        self.cmd_tx
+                            .send(SuperviseurCommand::WatchForChanges(
+                                watch_dir.clone(),
+                                service.clone(),
+                                project.clone(),
+                            ))
+                            .unwrap();
+                    }
+                    None => {}
+                }
             }
 
             self.cmd_tx
@@ -168,7 +189,7 @@ impl ControlService for Control {
                 .map_err(|e| tonic::Status::internal(e.to_string()))?;
         }
 
-        thread::sleep(Duration::from_millis(100));
+        thread::sleep(Duration::from_millis(500));
 
         Ok(Response::new(LoadConfigResponse { success: true }))
     }
@@ -204,21 +225,9 @@ impl ControlService for Control {
             return Ok(Response::new(StartResponse { success: true }));
         }
 
-        for service in &config.services {
-            self.cmd_tx
-                .send(SuperviseurCommand::Start(
-                    service.clone(),
-                    config.project.clone(),
-                ))
-                .map_err(|e| tonic::Status::internal(e.to_string()))?;
-        }
-
-        let services = config.services.clone();
-        let services = services
-            .iter()
-            .map(graphql::schema::objects::service::Service::from)
-            .collect::<Vec<graphql::schema::objects::service::Service>>();
-        SimpleBroker::publish(AllServicesStarted { payload: services });
+        self.cmd_tx
+            .send(SuperviseurCommand::StartAll(config.project.clone()))
+            .map_err(|e| tonic::Status::internal(e.to_string()))?;
 
         Ok(Response::new(StartResponse { success: true }))
     }
@@ -254,21 +263,9 @@ impl ControlService for Control {
             return Ok(Response::new(StopResponse { success: true }));
         }
 
-        for service in &config.services {
-            self.cmd_tx
-                .send(SuperviseurCommand::Stop(
-                    service.clone(),
-                    config.project.clone(),
-                ))
-                .unwrap();
-        }
-
-        let services = config.services.clone();
-        let services = services
-            .iter()
-            .map(graphql::schema::objects::service::Service::from)
-            .collect::<Vec<graphql::schema::objects::service::Service>>();
-        SimpleBroker::publish(AllServicesStopped { payload: services });
+        self.cmd_tx
+            .send(SuperviseurCommand::StopAll(config.project.clone()))
+            .unwrap();
 
         Ok(Response::new(StopResponse { success: true }))
     }
@@ -304,21 +301,9 @@ impl ControlService for Control {
             return Ok(Response::new(RestartResponse { success: true }));
         }
 
-        for service in &config.services {
-            self.cmd_tx
-                .send(SuperviseurCommand::Restart(
-                    service.clone(),
-                    config.project.clone(),
-                ))
-                .map_err(|e| tonic::Status::internal(e.to_string()))?;
-        }
-
-        let services = config.services.clone();
-        let services = services
-            .iter()
-            .map(graphql::schema::objects::service::Service::from)
-            .collect::<Vec<graphql::schema::objects::service::Service>>();
-        SimpleBroker::publish(AllServicesRestarted { payload: services });
+        self.cmd_tx
+            .send(SuperviseurCommand::RestartAll(config.project.clone()))
+            .map_err(|e| tonic::Status::internal(e.to_string()))?;
 
         Ok(Response::new(RestartResponse { success: true }))
     }

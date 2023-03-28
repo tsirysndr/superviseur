@@ -4,6 +4,8 @@ import {
   useOnRestartSubscription,
   useOnStartSubscription,
   useOnStopSubscription,
+  useOnStoppingSubscription,
+  useOnStartingSubscription,
 } from "../../Hooks/GraphQL";
 import ServicesGraph from "./ServicesGraph";
 import _ from "lodash";
@@ -13,9 +15,11 @@ import { Edge } from "../../Types/Edge";
 const ServicesGraphWithData: FC = () => {
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
-  const { data: onStartSubscription } = useOnStartSubscription();
-  const { data: onStopSubscription } = useOnStopSubscription();
-  const { data: onRestartSubscription } = useOnRestartSubscription();
+  const { data: _onStartSubscription } = useOnStartSubscription();
+  const { data: _onStopSubscription } = useOnStopSubscription();
+  const { data: _onRestartSubscription } = useOnRestartSubscription();
+  const { data: _onStartingSubscription } = useOnStartingSubscription();
+  const { data: _onStoppingSubscription } = useOnStoppingSubscription();
   const { data, loading } = useGetServicesQuery();
 
   useEffect(() => {

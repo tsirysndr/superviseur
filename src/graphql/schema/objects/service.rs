@@ -17,7 +17,7 @@ pub struct Service {
     pub working_directory: String,
     pub log_file: String,
     pub stderr_file: String,
-    pub port: i32,
+    pub port: Option<i32>,
 }
 
 #[Object]
@@ -74,7 +74,7 @@ impl Service {
         &self.stderr_file
     }
 
-    async fn port(&self) -> i32 {
+    async fn port(&self) -> Option<i32> {
         self.port
     }
 }
@@ -106,7 +106,7 @@ impl From<&mut types::configuration::Service> for Service {
             working_directory: service.working_dir.clone(),
             log_file: service.stdout.clone(),
             stderr_file: service.stderr.clone(),
-            port: service.port as i32,
+            port: service.port.map(|x| x as i32),
             ..Default::default()
         }
     }
@@ -139,7 +139,7 @@ impl From<&types::configuration::Service> for Service {
             working_directory: service.working_dir.clone(),
             log_file: service.stdout.clone(),
             stderr_file: service.stderr.clone(),
-            port: service.port as i32,
+            port: service.port.map(|x| x as i32),
             ..Default::default()
         }
     }

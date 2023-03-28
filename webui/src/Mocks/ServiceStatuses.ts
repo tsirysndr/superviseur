@@ -24,7 +24,7 @@ export const parseIntoStatuses = (process: Process): ServiceStatus[] => {
     },
     {
       name: "PID",
-      status: process.pid || "-",
+      status: process.state === "Stopped" ? "-" : process.pid || "-",
     },
     {
       name: "Command",

@@ -4,6 +4,19 @@ import styled from "@emotion/styled";
 import { StopFill } from "@styled-icons/bootstrap/StopFill";
 import { Reload } from "@styled-icons/ionicons-outline/Reload";
 import { Play } from "@styled-icons/fa-solid/Play";
+import { Spinner } from "baseui/spinner";
+
+const State = styled.div`
+  margin-right: 15px;
+  color: #630be2;
+`;
+
+const StateRow = styled.div`
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+`;
 
 const Container = styled.div`
   position: absolute;
@@ -17,13 +30,22 @@ export interface ActionsProps {
   onStop: () => void;
   onRestart: () => void;
   allServicesAreRunning: boolean;
+  starting: boolean;
+  stopping: boolean;
 }
 
 const Actions: FC<ActionsProps> = (props) => {
-  const { onStart, onStop, onRestart, allServicesAreRunning } = props;
+  const {
+    onStart,
+    onStop,
+    onRestart,
+    allServicesAreRunning,
+    starting,
+    stopping,
+  } = props;
   return (
     <Container>
-      {!allServicesAreRunning && (
+      {!allServicesAreRunning && !starting && !stopping && (
         <Button
           onClick={onStart}
           startEnhancer={() => <Play size={16} color="#630be2" />}
@@ -56,7 +78,7 @@ const Actions: FC<ActionsProps> = (props) => {
           Start
         </Button>
       )}
-      {allServicesAreRunning && (
+      {allServicesAreRunning && !starting && !stopping && (
         <>
           <Button
             onClick={onStop}
@@ -119,6 +141,18 @@ const Actions: FC<ActionsProps> = (props) => {
             Restart
           </Button>
         </>
+      )}
+      {starting && (
+        <StateRow>
+          <State>Starting</State>
+          <Spinner $size={"18px"} $borderWidth="3px" $color="#630be2" />
+        </StateRow>
+      )}
+      {stopping && (
+        <StateRow>
+          <State>Stopping</State>
+          <Spinner $size={"18px"} $borderWidth="3px" $color="#630be2" />
+        </StateRow>
       )}
     </Container>
   );

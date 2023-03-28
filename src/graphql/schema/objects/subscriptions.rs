@@ -1,6 +1,6 @@
 use async_graphql::Object;
 
-use super::service::Service;
+use super::{process::Process, service::Service};
 
 #[derive(Default, Clone)]
 pub struct TailLogStream {
@@ -29,8 +29,43 @@ impl LogStream {
 }
 
 #[derive(Default, Clone)]
+pub struct ServiceStarting {
+    pub payload: Service,
+    pub process: Process,
+}
+
+#[Object]
+impl ServiceStarting {
+    async fn payload(&self) -> &Service {
+        &self.payload
+    }
+
+    async fn process(&self) -> &Process {
+        &self.process
+    }
+}
+
+#[derive(Default, Clone)]
+pub struct ServiceStopping {
+    pub payload: Service,
+    pub process: Process,
+}
+
+#[Object]
+impl ServiceStopping {
+    async fn payload(&self) -> &Service {
+        &self.payload
+    }
+
+    async fn process(&self) -> &Process {
+        &self.process
+    }
+}
+
+#[derive(Default, Clone)]
 pub struct ServiceStarted {
     pub payload: Service,
+    pub process: Process,
 }
 
 #[Object]
@@ -38,11 +73,16 @@ impl ServiceStarted {
     async fn payload(&self) -> &Service {
         &self.payload
     }
+
+    async fn process(&self) -> &Process {
+        &self.process
+    }
 }
 
 #[derive(Default, Clone)]
 pub struct ServiceStopped {
     pub payload: Service,
+    pub process: Process,
 }
 
 #[Object]
@@ -50,17 +90,26 @@ impl ServiceStopped {
     async fn payload(&self) -> &Service {
         &self.payload
     }
+
+    async fn process(&self) -> &Process {
+        &self.process
+    }
 }
 
 #[derive(Default, Clone)]
 pub struct ServiceRestarted {
     pub payload: Service,
+    pub process: Process,
 }
 
 #[Object]
 impl ServiceRestarted {
     async fn payload(&self) -> &Service {
         &self.payload
+    }
+
+    async fn process(&self) -> &Process {
+        &self.process
     }
 }
 

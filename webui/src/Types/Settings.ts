@@ -4,7 +4,7 @@ export type SettingsList = Settings[];
 
 export type Settings = {
   name: string;
-  value?: string | boolean | number | Value;
+  value?: string | boolean | number | Value | null;
   multi: boolean;
   selectable: boolean;
   activable: boolean;

@@ -13,7 +13,7 @@ use crate::{
         core_service_server::CoreService, GetVersionRequest, GetVersionResponse,
         StartWebDashboardRequest, StartWebDashboardResponse,
     },
-    superviseur::{ProcessEvent, Superviseur, SuperviseurCommand},
+    superviseur::core::{ProcessEvent, Superviseur, SuperviseurCommand},
     types::{configuration::ConfigurationData, process::Process},
     webui::start_webui,
 };

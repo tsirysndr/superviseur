@@ -4,7 +4,7 @@ pub mod graphql;
 pub mod server;
 pub mod superviseur;
 pub mod types;
-pub mod watch;
+pub mod util;
 pub mod webui;
 pub mod api {
     #[path = ""]

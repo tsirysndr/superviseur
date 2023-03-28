@@ -6,10 +6,12 @@ use tabled::Tabled;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum State {
+    Starting,
     Running,
     Sleeping,
     Waiting,
     Zombie,
+    Stopping,
     Stopped,
     TracingStop,
     Dead,
@@ -53,10 +55,12 @@ impl FromStr for State {
 impl Display for State {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
+            State::Starting => write!(f, "Starting"),
             State::Running => write!(f, "Running"),
             State::Sleeping => write!(f, "Sleeping"),
             State::Waiting => write!(f, "Waiting"),
             State::Zombie => write!(f, "Zombie"),
+            State::Stopping => write!(f, "Stopping"),
             State::Stopped => write!(f, "Stopped"),
             State::TracingStop => write!(f, "TracingStop"),
             State::Dead => write!(f, "Dead"),
@@ -71,7 +75,7 @@ impl Display for State {
     }
 }
 
-#[derive(Default, Tabled, Clone)]
+#[derive(Default, Tabled, Clone, Debug)]
 pub struct Process {
     #[tabled(rename = "NAME")]
     pub name: String,
