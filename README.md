@@ -65,6 +65,7 @@ OPTIONS:
     -V, --version    Print version information
 
 SUBCOMMANDS:
+    build      Build all services or a specific one
     config     Get the config of a service
     down       Stop all services
     help       Print this message or the help of the given subcommand(s)
