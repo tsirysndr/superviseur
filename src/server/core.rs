@@ -4,6 +4,7 @@ use std::{
     thread,
 };
 
+use anyhow::Error;
 use tokio::{runtime::Handle, sync::mpsc};
 use tonic::{Request, Response};
 
@@ -23,6 +24,7 @@ pub struct Core {
     superviseur: Superviseur,
     processes: Arc<Mutex<Vec<(Process, String)>>>,
     config_map: Arc<Mutex<HashMap<String, ConfigurationData>>>,
+    project_map: Arc<Mutex<HashMap<String, String>>>,
 }
 
 impl Core {
@@ -32,6 +34,7 @@ impl Core {
         superviseur: Superviseur,
         processes: Arc<Mutex<Vec<(Process, String)>>>,
         config_map: Arc<Mutex<HashMap<String, ConfigurationData>>>,
+        project_map: Arc<Mutex<HashMap<String, String>>>,
     ) -> Self {
         Self {
             cmd_tx,
@@ -39,7 +42,16 @@ impl Core {
             superviseur,
             processes,
             config_map,
+            project_map,
         }
+    }
+
+    pub fn get_project_id(&self, path: String) -> Result<String, Error> {
+        let project_map = self.project_map.lock().unwrap();
+        project_map
+            .get(&path)
+            .map(|x| x.clone())
+            .ok_or_else(|| anyhow::anyhow!("The project with path {} is not loaded", path))
     }
 }
 
@@ -60,12 +72,16 @@ impl CoreService for Core {
     ) -> Result<Response<StartWebDashboardResponse>, tonic::Status> {
         let request = request.into_inner();
         let path = request.config_file_path;
+        let project_id = self
+            .get_project_id(path.clone())
+            .map_err(|e| tonic::Status::internal(e.to_string()))?;
 
         let cmd_tx = self.cmd_tx.clone();
         let event_tx = self.event_tx.clone();
         let superviseur = self.superviseur.clone();
         let processes = self.processes.clone();
         let config_map = self.config_map.clone();
+        let project_map = self.project_map.clone();
 
         let rt = Handle::current();
 
@@ -77,6 +93,7 @@ impl CoreService for Core {
                 superviseur,
                 processes,
                 config_map,
+                project_map,
             )) {
                 Ok(_) => {
                     std::process::exit(0);
@@ -93,7 +110,7 @@ impl CoreService for Core {
             .map_err(|e| tonic::Status::internal(e.to_string()))?;
         let port = 5478;
         Ok(Response::new(StartWebDashboardResponse {
-            url: format!("http://{}:{}", ip, port),
+            url: format!("http://{}:{}/projects/{}", ip, port, project_id),
         }))
     }
 }

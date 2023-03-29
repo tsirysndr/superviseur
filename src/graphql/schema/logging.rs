@@ -15,9 +15,12 @@ use crate::{
     types::configuration::ConfigurationData,
 };
 
-use super::objects::{
-    log::Log,
-    subscriptions::{self, LogStream},
+use super::{
+    get_project_id,
+    objects::{
+        log::Log,
+        subscriptions::{self, LogStream},
+    },
 };
 
 #[derive(Default, Clone)]
@@ -114,14 +117,16 @@ impl LoggingSubscription {
         let config_map = ctx
             .data::<Arc<Mutex<HashMap<String, ConfigurationData>>>>()
             .unwrap();
+        let project_map = ctx.data::<Arc<Mutex<HashMap<String, String>>>>().unwrap();
+        let project_id = get_project_id(config_file_path.clone(), &project_map)?;
 
         let config_map = config_map.lock().unwrap();
 
-        if !config_map.contains_key(config_file_path.as_str()) {
+        if !config_map.contains_key(&project_id) {
             return Err(Error::new("Config file not found"));
         }
 
-        let config = config_map.get(config_file_path.as_str()).unwrap();
+        let config = config_map.get(&project_id).unwrap();
 
         let service = config
             .services
@@ -172,14 +177,16 @@ impl LoggingSubscription {
         let config_map = ctx
             .data::<Arc<Mutex<HashMap<String, ConfigurationData>>>>()
             .unwrap();
+        let project_map = ctx.data::<Arc<Mutex<HashMap<String, String>>>>().unwrap();
+        let project_id = get_project_id(config_file_path.clone(), &project_map)?;
 
         let config_map = config_map.lock().unwrap();
 
-        if !config_map.contains_key(config_file_path.as_str()) {
+        if !config_map.contains_key(&project_id) {
             return Err(Error::new("Config file not found"));
         }
 
-        let config = config_map.get(config_file_path.as_str()).unwrap();
+        let config = config_map.get(&project_id).unwrap();
 
         let service = config
             .services

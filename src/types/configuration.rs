@@ -1,14 +1,9 @@
 use serde::{Deserialize, Serialize};
-use std::{collections::HashMap, path::PathBuf};
+use std::collections::HashMap;
 
 pub enum ConfigFormat {
     TOML,
     HCL,
-}
-
-pub struct Configuration {
-    pub path: PathBuf,
-    pub data: ConfigurationData,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]

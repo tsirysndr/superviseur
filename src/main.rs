@@ -89,7 +89,7 @@ A simple process supervisor"#,
         .subcommand(Command::new("daemon").about("Start the superviseur daemon"))
         .subcommand(Command::new("up").about("Start all services"))
         .subcommand(Command::new("down").about("Stop all services"))
-        .subcommand(Command::new("ui").about("Start the superviseur ui"))
+        .subcommand(Command::new("ui").about("Start the superviseur dashboard"))
         .subcommand(Command::new("build")
             .arg(arg!([name] "The name of the service to build, if not specified, all services will be built"))
         .about("Build all services or a specific one"))

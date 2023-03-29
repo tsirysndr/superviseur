@@ -80,7 +80,7 @@ SUBCOMMANDS:
     status     Get the status of a service
     stop       Stop all services or a specific one
     tail       Tail the log of a process
-    ui         Start the superviseur ui
+    ui         Start the superviseur dashboard
     up         Start all services
 ```
 

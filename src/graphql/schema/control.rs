@@ -15,12 +15,15 @@ use crate::{
     types::{self, configuration::ConfigurationData, process::State},
 };
 
-use super::objects::{
-    process::Process,
-    service::Service,
-    subscriptions::{
-        AllServicesRestarted, AllServicesStarted, AllServicesStopped, ServiceRestarted,
-        ServiceStarting, ServiceStopped, ServiceStopping,
+use super::{
+    get_project_id,
+    objects::{
+        process::Process,
+        service::Service,
+        subscriptions::{
+            AllServicesRestarted, AllServicesStarted, AllServicesStopped, ServiceRestarted,
+            ServiceStarting, ServiceStopped, ServiceStopping,
+        },
     },
 };
 
@@ -55,16 +58,18 @@ impl ControlQuery {
         let config_map = ctx
             .data::<Arc<Mutex<HashMap<String, ConfigurationData>>>>()
             .unwrap();
+        let project_map = ctx.data::<Arc<Mutex<HashMap<String, String>>>>().unwrap();
+        let project_id = get_project_id(config_file_path.clone(), &project_map)?;
 
         let processes = processes.lock().unwrap();
 
         let config_map = config_map.lock().unwrap();
 
-        if !config_map.contains_key(config_file_path.as_str()) {
+        if !config_map.contains_key(&project_id) {
             return Err(Error::new("Configuration file not found"));
         }
 
-        let config = config_map.get(config_file_path.as_str()).unwrap();
+        let config = config_map.get(&project_id).unwrap();
 
         let services = config.services.clone();
         let mut services = services.iter().map(Service::from).collect::<Vec<Service>>();
@@ -105,14 +110,16 @@ impl ControlQuery {
         let config_map = ctx
             .data::<Arc<Mutex<HashMap<String, ConfigurationData>>>>()
             .unwrap();
+        let project_map = ctx.data::<Arc<Mutex<HashMap<String, String>>>>().unwrap();
+        let project_id = get_project_id(config_file_path.clone(), &project_map)?;
 
         let config_map = config_map.lock().unwrap();
 
-        if !config_map.contains_key(config_file_path.as_str()) {
+        if !config_map.contains_key(&project_id) {
             return Err(Error::new("Configuration file not found"));
         }
 
-        let config = config_map.get(config_file_path.as_str()).unwrap();
+        let config = config_map.get(&project_id).unwrap();
 
         let processes = processes.lock().unwrap();
 
@@ -164,14 +171,16 @@ impl ControlMutation {
         let config_map = ctx
             .data::<Arc<Mutex<HashMap<String, ConfigurationData>>>>()
             .unwrap();
+        let project_map = ctx.data::<Arc<Mutex<HashMap<String, String>>>>().unwrap();
+        let project_id = get_project_id(config_file_path.clone(), &project_map)?;
 
         let config_map = config_map.lock().unwrap();
 
-        if !config_map.contains_key(config_file_path.as_str()) {
+        if !config_map.contains_key(&project_id) {
             return Err(Error::new("Configuration file not found"));
         }
 
-        let config = config_map.get(config_file_path.as_str()).unwrap();
+        let config = config_map.get(&project_id).unwrap();
 
         if id.is_none() {
             for service in &config.services {
@@ -224,14 +233,16 @@ impl ControlMutation {
         let config_map = ctx
             .data::<Arc<Mutex<HashMap<String, ConfigurationData>>>>()
             .unwrap();
+        let project_map = ctx.data::<Arc<Mutex<HashMap<String, String>>>>().unwrap();
+        let project_id = get_project_id(config_file_path.clone(), &project_map)?;
 
         let config_map = config_map.lock().unwrap();
 
-        if !config_map.contains_key(config_file_path.as_str()) {
+        if !config_map.contains_key(&project_id) {
             return Err(Error::new("Configuration file not found"));
         }
 
-        let config = config_map.get(config_file_path.as_str()).unwrap();
+        let config = config_map.get(&project_id).unwrap();
 
         if id.is_none() {
             for service in &config.services {
@@ -282,14 +293,16 @@ impl ControlMutation {
         let config_map = ctx
             .data::<Arc<Mutex<HashMap<String, ConfigurationData>>>>()
             .unwrap();
+        let project_map = ctx.data::<Arc<Mutex<HashMap<String, String>>>>().unwrap();
+        let project_id = get_project_id(config_file_path.clone(), &project_map)?;
 
         let config_map = config_map.lock().unwrap();
 
-        if !config_map.contains_key(config_file_path.as_str()) {
+        if !config_map.contains_key(&project_id) {
             return Err(Error::new("Configuration file not found"));
         }
 
-        let config = config_map.get(config_file_path.as_str()).unwrap();
+        let config = config_map.get(&project_id).unwrap();
 
         if id.is_none() {
             for service in &config.services {
@@ -345,14 +358,16 @@ impl ControlMutation {
         let config_map = ctx
             .data::<Arc<Mutex<HashMap<String, ConfigurationData>>>>()
             .unwrap();
+        let project_map = ctx.data::<Arc<Mutex<HashMap<String, String>>>>().unwrap();
+        let project_id = get_project_id(config_file_path.clone(), &project_map)?;
 
         let mut config_map = config_map.lock().unwrap();
 
-        if !config_map.contains_key(config_file_path.as_str()) {
+        if !config_map.contains_key(&project_id) {
             return Err(Error::new("Configuration file not found"));
         }
 
-        let config = config_map.get_mut(config_file_path.as_str()).unwrap();
+        let config = config_map.get_mut(&project_id).unwrap();
 
         let service = config
             .services
@@ -386,14 +401,16 @@ impl ControlMutation {
         let config_map = ctx
             .data::<Arc<Mutex<HashMap<String, ConfigurationData>>>>()
             .unwrap();
+        let project_map = ctx.data::<Arc<Mutex<HashMap<String, String>>>>().unwrap();
+        let project_id = get_project_id(config_file_path.clone(), &project_map)?;
 
         let mut config_map = config_map.lock().unwrap();
 
-        if !config_map.contains_key(config_file_path.as_str()) {
+        if !config_map.contains_key(&project_id) {
             return Err(Error::new("Configuration file not found"));
         }
 
-        let config = config_map.get_mut(config_file_path.as_str()).unwrap();
+        let config = config_map.get_mut(&project_id).unwrap();
 
         let service = config
             .services
@@ -429,14 +446,16 @@ impl ControlMutation {
         let config_map = ctx
             .data::<Arc<Mutex<HashMap<String, ConfigurationData>>>>()
             .unwrap();
+        let project_map = ctx.data::<Arc<Mutex<HashMap<String, String>>>>().unwrap();
+        let project_id = get_project_id(config_file_path.clone(), &project_map)?;
 
         let mut config_map = config_map.lock().unwrap();
 
-        if !config_map.contains_key(config_file_path.as_str()) {
+        if !config_map.contains_key(&project_id) {
             return Err(Error::new("Configuration file not found"));
         }
 
-        let config = config_map.get_mut(config_file_path.as_str()).unwrap();
+        let config = config_map.get_mut(&project_id).unwrap();
 
         let service = config
             .services
