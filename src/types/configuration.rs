@@ -39,6 +39,8 @@ pub struct Service {
     pub wait_for: Option<Vec<String>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub flox: Option<Flox>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub build: Option<Build>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Default, Clone)]
@@ -50,4 +52,9 @@ pub struct ConfigurationData {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Flox {
     pub environment: String,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct Build {
+    pub command: String,
 }

@@ -16,8 +16,9 @@ use crate::{
         schema::{
             self,
             objects::subscriptions::{
-                AllServicesRestarted, AllServicesStarted, AllServicesStopped, ServiceRestarted,
-                ServiceStarted, ServiceStarting, ServiceStopped, ServiceStopping,
+                AllServicesBuilt, AllServicesRestarted, AllServicesStarted, AllServicesStopped,
+                ServiceBuilding, ServiceBuilt, ServiceRestarted, ServiceStarted, ServiceStarting,
+                ServiceStopped, ServiceStopping,
             },
         },
         simple_broker::SimpleBroker,
@@ -69,12 +70,14 @@ pub enum SuperviseurCommand {
     Start(Service, String),
     Stop(Service, String),
     Restart(Service, String),
+    Build(Service, String),
     LoadConfig(ConfigurationData, String),
     WatchForChanges(String, Service, String),
     StartDependency(Service, String),
     StartAll(String),
     StopAll(String),
     RestartAll(String),
+    BuildAll(String),
 }
 
 #[derive(Debug)]
@@ -87,6 +90,9 @@ pub enum ProcessEvent {
     AllStarted(String),
     AllStopped(String),
     AllRestarted(String),
+    Building(String, String),
+    Built(String, String),
+    AllBuilt(String),
 }
 
 struct SuperviseurInternal {
@@ -282,6 +288,27 @@ impl SuperviseurInternal {
         Ok(())
     }
 
+    fn handle_build(&mut self, service: Service, project: String) -> Result<(), Error> {
+        self.event_tx
+            .send(ProcessEvent::Building(
+                service.name.clone(),
+                project.clone(),
+            ))
+            .unwrap();
+
+        let service_graph = self.service_graph.lock().unwrap();
+        let graph = service_graph
+            .clone()
+            .into_iter()
+            .filter(|(_, key)| *key == project)
+            .map(|(s, _)| s)
+            .next()
+            .ok_or(anyhow::anyhow!("Project {} not found", project))?;
+        let mut visited = vec![false; graph.size()];
+        graph.build_service(&service, &mut visited);
+        Ok(())
+    }
+
     fn handle_watch_for_changes(
         &mut self,
         dir: String,
@@ -330,6 +357,19 @@ impl SuperviseurInternal {
         Ok(())
     }
 
+    fn handle_build_all(&mut self, project: String) -> Result<(), Error> {
+        let service_graph = self.service_graph.lock().unwrap();
+        let graph = service_graph
+            .clone()
+            .into_iter()
+            .filter(|(_, key)| *key == project)
+            .map(|(s, _)| s)
+            .next()
+            .ok_or(anyhow::anyhow!("Project {} not found", project))?;
+        graph.build_services();
+        Ok(())
+    }
+
     fn handle_command(&mut self, cmd: SuperviseurCommand) -> Result<(), Error> {
         match cmd {
             SuperviseurCommand::Load(service, project) => self.handle_load(service, project),
@@ -346,6 +386,8 @@ impl SuperviseurInternal {
             SuperviseurCommand::StartAll(project) => self.handle_start_all(project),
             SuperviseurCommand::StopAll(project) => self.handle_stop_all(project),
             SuperviseurCommand::RestartAll(project) => self.handle_restart_all(project),
+            SuperviseurCommand::Build(service, project) => self.handle_build(service, project),
+            SuperviseurCommand::BuildAll(project) => self.handle_build_all(project),
         }
     }
 
@@ -449,6 +491,43 @@ impl SuperviseurInternal {
                     payload: service.clone(),
                     process: process.into(),
                 });
+            }
+            ProcessEvent::Building(service_name, project) => {
+                let mut process = &mut processes
+                    .iter_mut()
+                    .find(|(p, key)| p.name == service_name && key == &project)
+                    .unwrap()
+                    .0;
+                process.state = State::Building;
+                // call SimpleBroker::publish
+                let service = self.get_service(&service_name, &project)?;
+                let mut service = schema::objects::service::Service::from(&service);
+                service.status = String::from("BUILDING");
+                SimpleBroker::publish(ServiceBuilding {
+                    payload: service.clone(),
+                    process: process.into(),
+                });
+            }
+            ProcessEvent::Built(service_name, project) => {
+                let mut process = &mut processes
+                    .iter_mut()
+                    .find(|(p, key)| p.name == service_name && key == &project)
+                    .unwrap()
+                    .0;
+                process.state = State::Stopped;
+                // call SimpleBroker::publish
+                let service = self.get_service(&service_name, &project)?;
+                let mut service = schema::objects::service::Service::from(&service);
+                service.status = String::from("STOPPED");
+                SimpleBroker::publish(ServiceBuilt {
+                    payload: service.clone(),
+                    process: process.into(),
+                });
+            }
+            ProcessEvent::AllBuilt(project) => {
+                // call SimpleBroker::publish
+                let services = self.get_project_services(&project)?;
+                SimpleBroker::publish(AllServicesBuilt { payload: services });
             }
         }
         Ok(())

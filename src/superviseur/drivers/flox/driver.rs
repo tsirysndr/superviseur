@@ -1,11 +1,13 @@
 use std::{
     collections::HashMap,
     io::{BufRead, Write},
+    process::{ChildStderr, ChildStdout},
     sync::{Arc, Mutex},
     thread,
 };
 
 use anyhow::Error;
+use owo_colors::OwoColorize;
 use tokio::sync::mpsc;
 
 use crate::{
@@ -59,11 +61,8 @@ impl Driver {
             event_tx,
         }
     }
-}
 
-impl DriverPlugin for Driver {
-    fn start(&self, project: String) -> Result<(), Error> {
-        let cfg = self.service.flox.as_ref().unwrap();
+    pub fn setup_flox_env(&self, cfg: &Flox) -> Result<(), Error> {
         std::process::Command::new("sh")
             .arg("-c")
             .arg("flox --version")
@@ -81,52 +80,12 @@ impl DriverPlugin for Driver {
             .arg(command)
             .stdout(std::process::Stdio::piped())
             .stderr(std::process::Stdio::piped())
-            .spawn()
-            .unwrap();
-        child.wait().unwrap();
+            .spawn()?;
+        child.wait()?;
+        Ok(())
+    }
 
-        let command = format!(
-            "flox activate -e {} -- {}",
-            cfg.environment, &self.service.command
-        );
-        println!("command: {}", command);
-
-        let envs = self.service.env.clone();
-        let working_dir = self.service.working_dir.clone();
-        let mut child = std::process::Command::new("sh")
-            .arg("-c")
-            .arg(command)
-            .current_dir(working_dir)
-            .envs(envs)
-            .stdout(std::process::Stdio::piped())
-            .stderr(std::process::Stdio::piped())
-            .spawn()
-            .unwrap();
-
-        let mut processes = self.processes.lock().unwrap();
-
-        let mut process = &mut processes
-            .iter_mut()
-            .find(|(p, key)| p.name == self.service.name && key == &project)
-            .unwrap()
-            .0;
-        process.pid = Some(child.id());
-        process.up_time = Some(chrono::Utc::now());
-        let service_key = format!("{}-{}", project, self.service.name);
-        self.childs
-            .lock()
-            .unwrap()
-            .insert(service_key, process.pid.unwrap() as i32);
-
-        self.event_tx
-            .send(ProcessEvent::Started(
-                self.service.name.clone(),
-                project.clone(),
-            ))
-            .unwrap();
-
-        let stdout = child.stdout.take().unwrap();
-        let stderr = child.stderr.take().unwrap();
+    pub fn write_logs(&self, stdout: ChildStdout, stderr: ChildStderr) {
         let cloned_service = self.service.clone();
 
         thread::spawn(move || {
@@ -147,6 +106,8 @@ impl DriverPlugin for Driver {
                     id: id.clone(),
                     line: line.clone(),
                 });
+                let service_name = format!("{} | ", service.name);
+                print!("{} {}", service_name.cyan(), line);
                 log_file.write_all(line.as_bytes()).unwrap();
             }
 
@@ -158,7 +119,54 @@ impl DriverPlugin for Driver {
                 err_file.write_all(line.as_bytes()).unwrap();
             }
         });
+    }
+}
 
+impl DriverPlugin for Driver {
+    fn start(&self, project: String) -> Result<(), Error> {
+        let cfg = self.service.flox.as_ref().unwrap();
+        self.setup_flox_env(cfg)?;
+
+        let command = format!(
+            "flox activate -e {} -- {}",
+            cfg.environment, &self.service.command
+        );
+        println!("command: {}", command);
+
+        let envs = self.service.env.clone();
+        let working_dir = self.service.working_dir.clone();
+        let mut child = std::process::Command::new("sh")
+            .arg("-c")
+            .arg(command)
+            .current_dir(working_dir)
+            .envs(envs)
+            .stdout(std::process::Stdio::piped())
+            .stderr(std::process::Stdio::piped())
+            .spawn()?;
+
+        let mut processes = self.processes.lock().unwrap();
+
+        let mut process = &mut processes
+            .iter_mut()
+            .find(|(p, key)| p.name == self.service.name && key == &project)
+            .unwrap()
+            .0;
+        process.pid = Some(child.id());
+        process.up_time = Some(chrono::Utc::now());
+        let service_key = format!("{}-{}", project, self.service.name);
+        self.childs
+            .lock()
+            .unwrap()
+            .insert(service_key, process.pid.unwrap() as i32);
+
+        self.event_tx.send(ProcessEvent::Started(
+            self.service.name.clone(),
+            project.clone(),
+        ))?;
+
+        let stdout = child.stdout.take().unwrap();
+        let stderr = child.stderr.take().unwrap();
+        self.write_logs(stdout, stderr);
         Ok(())
     }
 
@@ -239,6 +247,39 @@ impl DriverPlugin for Driver {
     }
 
     fn exec(&self) -> Result<(), Error> {
+        Ok(())
+    }
+
+    fn build(&self, project: String) -> Result<(), Error> {
+        if let Some(build) = self.service.build.clone() {
+            let envs = self.service.env.clone();
+            let working_dir = self.service.working_dir.clone();
+            let cfg = self.service.flox.as_ref().unwrap();
+            self.setup_flox_env(cfg)?;
+
+            let build_command =
+                format!("flox activate -e {} -- {}", cfg.environment, build.command);
+            println!("build_command: {}", build_command);
+            let mut child = std::process::Command::new("sh")
+                .arg("-c")
+                .arg(build_command)
+                .current_dir(working_dir)
+                .envs(envs)
+                .stdout(std::process::Stdio::piped())
+                .stderr(std::process::Stdio::piped())
+                .spawn()?;
+            let stdout = child.stdout.take().unwrap();
+            let stderr = child.stderr.take().unwrap();
+            self.write_logs(stdout, stderr);
+            child.wait()?;
+
+            self.event_tx
+                .send(ProcessEvent::Built(
+                    self.service.name.clone(),
+                    project.clone(),
+                ))
+                .unwrap();
+        }
         Ok(())
     }
 }

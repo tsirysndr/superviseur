@@ -2,9 +2,10 @@ use anyhow::Error;
 use clap::{arg, Command};
 use superviseur::{
     cmd::{
-        config::execute_config, init::execute_init, list::execute_list, log::execute_log,
-        new::execute_new, ps::execute_ps, restart::execute_restart, start::execute_start,
-        status::execute_status, stop::execute_stop, tail::execute_tail, ui::execute_ui,
+        build::execute_build, config::execute_config, init::execute_init, list::execute_list,
+        log::execute_log, new::execute_new, ps::execute_ps, restart::execute_restart,
+        start::execute_start, status::execute_status, stop::execute_stop, tail::execute_tail,
+        ui::execute_ui,
     },
     server,
     types::configuration::ConfigFormat,
@@ -89,6 +90,9 @@ A simple process supervisor"#,
         .subcommand(Command::new("up").about("Start all services"))
         .subcommand(Command::new("down").about("Stop all services"))
         .subcommand(Command::new("ui").about("Start the superviseur ui"))
+        .subcommand(Command::new("build")
+            .arg(arg!([name] "The name of the service to build, if not specified, all services will be built"))
+        .about("Build all services or a specific one"))
 }
 
 #[tokio::main]
@@ -147,6 +151,10 @@ async fn main() -> Result<(), Error> {
         Some(("up", _)) => execute_start(None).await?,
         Some(("down", _)) => execute_stop(None).await?,
         Some(("ui", _)) => execute_ui().await?,
+        Some(("build", args)) => {
+            let name = args.value_of("name");
+            execute_build(name).await?;
+        }
         _ => cli().print_help()?,
     }
     Ok(())

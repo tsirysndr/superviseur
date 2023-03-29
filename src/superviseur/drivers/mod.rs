@@ -11,4 +11,5 @@ pub trait DriverPlugin: DynClone {
     fn status(&self) -> Result<(), Error>;
     fn logs(&self) -> Result<(), Error>;
     fn exec(&self) -> Result<(), Error>;
+    fn build(&self, project: String) -> Result<(), Error>;
 }

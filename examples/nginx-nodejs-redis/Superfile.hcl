@@ -20,6 +20,9 @@ services = [
     flox = {
       "environment" = ".#nginx-nodejs-redis"
     }
+    build = {
+     "command" = "npm install"
+    }
   },
   {
     "name" = "redis"

@@ -30,6 +30,7 @@ pub fn execute_new(cfg_format: ConfigFormat) {
             stderr: "/tmp/demo-stderr.log".to_string(),
             wait_for: None,
             flox: None,
+            build: None,
         }],
     };
     let serialized = match cfg_format {
