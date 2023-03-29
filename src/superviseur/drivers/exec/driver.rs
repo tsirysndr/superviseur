@@ -1,11 +1,13 @@
 use std::{
     collections::HashMap,
     io::{BufRead, Write},
+    process::{ChildStderr, ChildStdout},
     sync::{Arc, Mutex},
     thread,
 };
 
 use anyhow::Error;
+use owo_colors::OwoColorize;
 use tokio::sync::mpsc;
 
 use crate::{
@@ -56,6 +58,42 @@ impl Driver {
             event_tx,
         }
     }
+
+    pub fn write_logs(&self, stdout: ChildStdout, stderr: ChildStderr) {
+        let cloned_service = self.service.clone();
+
+        thread::spawn(move || {
+            let service = cloned_service;
+            let id = service.id.unwrap_or("-".to_string());
+            // write stdout to file
+            let mut log_file = std::fs::File::create(service.stdout).unwrap();
+
+            let stdout = std::io::BufReader::new(stdout);
+            for line in stdout.lines() {
+                let line = line.unwrap();
+                let line = format!("{}\n", line);
+                SimpleBroker::publish(TailLogStream {
+                    id: id.clone(),
+                    line: line.clone(),
+                });
+                SimpleBroker::publish(LogStream {
+                    id: id.clone(),
+                    line: line.clone(),
+                });
+                let service_name = format!("{} | ", service.name);
+                print!("{} {}", service_name.cyan(), line);
+                log_file.write_all(line.as_bytes()).unwrap();
+            }
+
+            // write stderr to file
+            let mut err_file = std::fs::File::create(service.stderr).unwrap();
+            let stderr = std::io::BufReader::new(stderr);
+            for line in stderr.lines() {
+                let line = line.unwrap();
+                err_file.write_all(line.as_bytes()).unwrap();
+            }
+        });
+    }
 }
 
 impl DriverPlugin for Driver {
@@ -63,6 +101,7 @@ impl DriverPlugin for Driver {
         let command = &self.service.command;
         let envs = self.service.env.clone();
         let working_dir = self.service.working_dir.clone();
+        println!("command: {}", command);
         let mut child = std::process::Command::new("sh")
             .arg("-c")
             .arg(command)
@@ -97,37 +136,7 @@ impl DriverPlugin for Driver {
 
         let stdout = child.stdout.take().unwrap();
         let stderr = child.stderr.take().unwrap();
-        let cloned_service = self.service.clone();
-
-        thread::spawn(move || {
-            let service = cloned_service;
-            let id = service.id.unwrap_or("-".to_string());
-            // write stdout to file
-            let mut log_file = std::fs::File::create(service.stdout).unwrap();
-
-            let stdout = std::io::BufReader::new(stdout);
-            for line in stdout.lines() {
-                let line = line.unwrap();
-                let line = format!("{}\n", line);
-                SimpleBroker::publish(TailLogStream {
-                    id: id.clone(),
-                    line: line.clone(),
-                });
-                SimpleBroker::publish(LogStream {
-                    id: id.clone(),
-                    line: line.clone(),
-                });
-                log_file.write_all(line.as_bytes()).unwrap();
-            }
-
-            // write stderr to file
-            let mut err_file = std::fs::File::create(service.stderr).unwrap();
-            let stderr = std::io::BufReader::new(stderr);
-            for line in stderr.lines() {
-                let line = line.unwrap();
-                err_file.write_all(line.as_bytes()).unwrap();
-            }
-        });
+        self.write_logs(stdout, stderr);
 
         Ok(())
     }
@@ -207,6 +216,35 @@ impl DriverPlugin for Driver {
     }
 
     fn exec(&self) -> Result<(), Error> {
+        Ok(())
+    }
+
+    fn build(&self, project: String) -> Result<(), Error> {
+        if let Some(build) = self.service.build.clone() {
+            let envs = self.service.env.clone();
+            let working_dir = self.service.working_dir.clone();
+
+            let build_command = build.command.clone();
+            println!("build_command: {}", build_command);
+            let mut child = std::process::Command::new("sh")
+                .arg("-c")
+                .arg(build_command)
+                .current_dir(working_dir)
+                .envs(envs)
+                .stdout(std::process::Stdio::piped())
+                .stderr(std::process::Stdio::piped())
+                .spawn()?;
+            let stdout = child.stdout.take().unwrap();
+            let stderr = child.stderr.take().unwrap();
+            self.write_logs(stdout, stderr);
+
+            child.wait()?;
+
+            self.event_tx.send(ProcessEvent::Built(
+                self.service.name.clone(),
+                project.clone(),
+            ))?;
+        }
         Ok(())
     }
 }

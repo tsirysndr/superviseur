@@ -22,6 +22,7 @@ pub enum State {
     Locked,
     WaitingForCpu,
     Unknown,
+    Building,
 }
 
 impl Default for State {
@@ -71,6 +72,7 @@ impl Display for State {
             State::Locked => write!(f, "Locked"),
             State::WaitingForCpu => write!(f, "WaitingForCpu"),
             State::Unknown => write!(f, "Unknown"),
+            State::Building => write!(f, "Building"),
         }
     }
 }

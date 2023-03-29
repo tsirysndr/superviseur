@@ -200,4 +200,33 @@ impl DependencyGraph {
             .stop(self.project.clone())
             .unwrap();
     }
+
+    pub fn build_services(&self) {
+        let mut visited = vec![false; self.vertices.len()];
+        for vertex in self.vertices.clone().into_iter() {
+            self.build_service(&vertex.into(), &mut visited);
+        }
+    }
+
+    pub fn build_service(&self, service: &Service, visited: &mut Vec<bool>) {
+        let index = self
+            .vertices
+            .iter()
+            .position(|v| v.name == service.name)
+            .unwrap();
+        if visited[index] {
+            return;
+        }
+        visited[index] = true;
+        for edge in self.edges.iter().filter(|e| e.from == index) {
+            let service = self.vertices[edge.to].clone().into();
+            self.build_service(&service, visited);
+        }
+
+        println!("Building service {}", self.vertices[index].name);
+        self.vertices[index]
+            .driver
+            .build(self.project.clone())
+            .unwrap();
+    }
 }

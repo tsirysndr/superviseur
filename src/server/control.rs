@@ -1,6 +1,5 @@
 use std::{
     collections::HashMap,
-    path::Path,
     sync::{Arc, Mutex},
     thread,
     time::Duration,
@@ -15,10 +14,10 @@ use crate::{
     api::{
         objects::v1alpha1::Service,
         superviseur::v1alpha1::{
-            control_service_server::ControlService, ListRequest, ListResponse,
-            ListRunningProcessesRequest, ListRunningProcessesResponse, LoadConfigRequest,
-            LoadConfigResponse, RestartRequest, RestartResponse, StartRequest, StartResponse,
-            StatusRequest, StatusResponse, StopRequest, StopResponse,
+            control_service_server::ControlService, BuildRequest, BuildResponse, ListRequest,
+            ListResponse, ListRunningProcessesRequest, ListRunningProcessesResponse,
+            LoadConfigRequest, LoadConfigResponse, RestartRequest, RestartResponse, StartRequest,
+            StartResponse, StatusRequest, StatusResponse, StopRequest, StopResponse,
         },
     },
     superviseur::core::{ProcessEvent, Superviseur, SuperviseurCommand},
@@ -400,5 +399,47 @@ impl ControlService for Control {
                 .collect(),
         };
         Ok(Response::new(list_response))
+    }
+
+    async fn build(
+        &self,
+        request: Request<BuildRequest>,
+    ) -> Result<Response<BuildResponse>, tonic::Status> {
+        let request = request.into_inner();
+        let path = request.config_file_path;
+        let name = request.name;
+        let config_map = self.config_map.lock().unwrap();
+
+        if !config_map.contains_key(&path) {
+            return Err(tonic::Status::not_found("Config file not found"));
+        }
+
+        let config = config_map.get(&path).unwrap();
+
+        if name.len() > 0 {
+            let service = config
+                .services
+                .iter()
+                .find(|s| s.name == name)
+                .ok_or_else(|| tonic::Status::not_found("Service not found"))?;
+
+            service
+                .build
+                .as_ref()
+                .ok_or_else(|| tonic::Status::invalid_argument("Service has no build command"))?;
+
+            self.cmd_tx
+                .send(SuperviseurCommand::Build(
+                    service.clone(),
+                    config.project.clone(),
+                ))
+                .map_err(|e| tonic::Status::internal(e.to_string()))?;
+            return Ok(Response::new(BuildResponse { success: true }));
+        }
+
+        self.cmd_tx
+            .send(SuperviseurCommand::BuildAll(config.project.clone()))
+            .map_err(|e| tonic::Status::internal(e.to_string()))?;
+        Ok(Response::new(BuildResponse { success: true }))
     }
 }

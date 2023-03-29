@@ -1,6 +1,5 @@
 use std::{
     collections::HashMap,
-    error::Error,
     sync::{Arc, Mutex},
     thread,
 };

@@ -52,5 +52,4 @@ pub async fn execute_ui() -> Result<(), Error> {
         tokio::time::sleep(tokio::time::Duration::from_secs(1)).await;
     }
 
-    Ok(())
 }

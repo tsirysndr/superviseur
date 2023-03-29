@@ -66,6 +66,15 @@ message ListResponse {
   repeated objects.v1alpha1.Service services = 1;
 }
 
+message BuildRequest {
+  string name = 1;
+  string config_file_path = 2;
+}
+
+message BuildResponse {
+  bool success = 1;
+}
+
 service ControlService {
   rpc LoadConfig (LoadConfigRequest) returns (LoadConfigResponse) {}
   rpc Start (StartRequest) returns (StartResponse) {}
@@ -73,5 +82,6 @@ service ControlService {
   rpc Restart (RestartRequest) returns (RestartResponse) {}
   rpc Status (StatusRequest) returns (StatusResponse) {}
   rpc List (ListRequest) returns (ListResponse) {}
+  rpc Build (BuildRequest) returns (BuildResponse) {}
   rpc ListRunningProcesses (ListRunningProcessesRequest) returns (ListRunningProcessesResponse) {}
 }

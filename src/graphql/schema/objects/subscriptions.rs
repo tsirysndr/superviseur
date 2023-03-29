@@ -148,3 +148,41 @@ impl AllServicesRestarted {
         &self.payload
     }
 }
+
+#[derive(Default, Clone)]
+pub struct ServiceBuilding {
+    pub payload: Service,
+    pub process: Process,
+}
+
+#[Object]
+impl ServiceBuilding {
+    async fn payload(&self) -> &Service {
+        &self.payload
+    }
+}
+
+#[derive(Default, Clone)]
+pub struct ServiceBuilt {
+    pub payload: Service,
+    pub process: Process,
+}
+
+#[Object]
+impl ServiceBuilt {
+    async fn payload(&self) -> &Service {
+        &self.payload
+    }
+}
+
+#[derive(Default, Clone)]
+pub struct AllServicesBuilt {
+    pub payload: Vec<Service>,
+}
+
+#[Object]
+impl AllServicesBuilt {
+    async fn payload(&self) -> &Vec<Service> {
+        &self.payload
+    }
+}

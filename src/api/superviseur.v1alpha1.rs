@@ -92,6 +92,20 @@ pub struct ListResponse {
     #[prost(message, repeated, tag = "1")]
     pub services: ::prost::alloc::vec::Vec<super::super::objects::v1alpha1::Service>,
 }
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct BuildRequest {
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub config_file_path: ::prost::alloc::string::String,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct BuildResponse {
+    #[prost(bool, tag = "1")]
+    pub success: bool,
+}
 /// Generated client implementations.
 pub mod control_service_client {
     #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
@@ -275,6 +289,25 @@ pub mod control_service_client {
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
+        pub async fn build(
+            &mut self,
+            request: impl tonic::IntoRequest<super::BuildRequest>,
+        ) -> Result<tonic::Response<super::BuildResponse>, tonic::Status> {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::new(
+                        tonic::Code::Unknown,
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/superviseur.v1alpha1.ControlService/Build",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
         pub async fn list_running_processes(
             &mut self,
             request: impl tonic::IntoRequest<super::ListRunningProcessesRequest>,
@@ -330,6 +363,10 @@ pub mod control_service_server {
             &self,
             request: tonic::Request<super::ListRequest>,
         ) -> Result<tonic::Response<super::ListResponse>, tonic::Status>;
+        async fn build(
+            &self,
+            request: tonic::Request<super::BuildRequest>,
+        ) -> Result<tonic::Response<super::BuildResponse>, tonic::Status>;
         async fn list_running_processes(
             &self,
             request: tonic::Request<super::ListRunningProcessesRequest>,
@@ -608,6 +645,43 @@ pub mod control_service_server {
                     let fut = async move {
                         let inner = inner.0;
                         let method = ListSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/superviseur.v1alpha1.ControlService/Build" => {
+                    #[allow(non_camel_case_types)]
+                    struct BuildSvc<T: ControlService>(pub Arc<T>);
+                    impl<
+                        T: ControlService,
+                    > tonic::server::UnaryService<super::BuildRequest> for BuildSvc<T> {
+                        type Response = super::BuildResponse;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::BuildRequest>,
+                        ) -> Self::Future {
+                            let inner = self.0.clone();
+                            let fut = async move { (*inner).build(request).await };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let inner = inner.0;
+                        let method = BuildSvc(inner);
                         let codec = tonic::codec::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
