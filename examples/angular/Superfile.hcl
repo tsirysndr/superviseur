@@ -16,5 +16,8 @@ services = [
     flox = {
       "environment" = ".#angular"
     }
+    build = {
+      "command" = "npm install"
+    }
   }
 ]
