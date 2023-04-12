@@ -1,4 +1,5 @@
-pub mod process;
-pub mod service;
 pub mod log;
+pub mod process;
+pub mod project;
+pub mod service;
 pub mod subscriptions;

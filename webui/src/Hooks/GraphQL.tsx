@@ -54,6 +54,7 @@ export type Mutation = {
 export type MutationCreateEnvVarArgs = {
   id: Scalars['ID'];
   name: Scalars['String'];
+  projectId: Scalars['ID'];
   value: Scalars['String'];
 };
 
@@ -61,27 +62,32 @@ export type MutationCreateEnvVarArgs = {
 export type MutationDeleteEnvVarArgs = {
   id: Scalars['ID'];
   name: Scalars['String'];
+  projectId: Scalars['ID'];
 };
 
 
 export type MutationRestartArgs = {
   id?: InputMaybe<Scalars['ID']>;
+  projectId: Scalars['ID'];
 };
 
 
 export type MutationStartArgs = {
   id?: InputMaybe<Scalars['ID']>;
+  projectId: Scalars['ID'];
 };
 
 
 export type MutationStopArgs = {
   id?: InputMaybe<Scalars['ID']>;
+  projectId: Scalars['ID'];
 };
 
 
 export type MutationUpdateEnvVarArgs = {
   id: Scalars['ID'];
   name: Scalars['String'];
+  projectId: Scalars['ID'];
   value: Scalars['String'];
 };
 
@@ -104,10 +110,19 @@ export type Process = {
   workingDirectory: Scalars['String'];
 };
 
+export type Project = {
+  __typename?: 'Project';
+  configPath: Scalars['String'];
+  id: Scalars['String'];
+  name: Scalars['String'];
+};
+
 export type Query = {
   __typename?: 'Query';
   logs: Log;
   processes: Array<Process>;
+  project: Project;
+  projects: Array<Project>;
   service: Service;
   services: Array<Service>;
   status: Process;
@@ -117,11 +132,23 @@ export type Query = {
 
 export type QueryLogsArgs = {
   id: Scalars['ID'];
+  projectId: Scalars['ID'];
+};
+
+
+export type QueryProjectArgs = {
+  id: Scalars['ID'];
 };
 
 
 export type QueryServiceArgs = {
   id: Scalars['ID'];
+  projectId: Scalars['ID'];
+};
+
+
+export type QueryServicesArgs = {
+  projectId: Scalars['ID'];
 };
 
 
@@ -133,6 +160,7 @@ export type QueryStatusArgs = {
 export type QueryTailArgs = {
   id: Scalars['ID'];
   numLines?: InputMaybe<Scalars['Int']>;
+  projectId: Scalars['ID'];
 };
 
 export type Service = {
@@ -200,11 +228,13 @@ export type Subscription = {
 
 export type SubscriptionLogsArgs = {
   id: Scalars['ID'];
+  projectId: Scalars['ID'];
 };
 
 
 export type SubscriptionTailArgs = {
   id: Scalars['ID'];
+  projectId: Scalars['ID'];
 };
 
 export type TailLogStream = {
@@ -214,6 +244,7 @@ export type TailLogStream = {
 
 export type StartMutationVariables = Exact<{
   id?: InputMaybe<Scalars['ID']>;
+  projectId: Scalars['ID'];
 }>;
 
 
@@ -221,6 +252,7 @@ export type StartMutation = { __typename?: 'Mutation', start: { __typename?: 'Pr
 
 export type StopMutationVariables = Exact<{
   id?: InputMaybe<Scalars['ID']>;
+  projectId: Scalars['ID'];
 }>;
 
 
@@ -228,6 +260,7 @@ export type StopMutation = { __typename?: 'Mutation', stop: { __typename?: 'Proc
 
 export type RestartMutationVariables = Exact<{
   id?: InputMaybe<Scalars['ID']>;
+  projectId: Scalars['ID'];
 }>;
 
 
@@ -237,6 +270,7 @@ export type CreateEnvVarMutationVariables = Exact<{
   id: Scalars['ID'];
   name: Scalars['String'];
   value: Scalars['String'];
+  projectId: Scalars['ID'];
 }>;
 
 
@@ -245,6 +279,7 @@ export type CreateEnvVarMutation = { __typename?: 'Mutation', createEnvVar: { __
 export type DeleteEnvVarMutationVariables = Exact<{
   id: Scalars['ID'];
   name: Scalars['String'];
+  projectId: Scalars['ID'];
 }>;
 
 
@@ -254,6 +289,7 @@ export type UpdateEnvVarMutationVariables = Exact<{
   id: Scalars['ID'];
   name: Scalars['String'];
   value: Scalars['String'];
+  projectId: Scalars['ID'];
 }>;
 
 
@@ -271,13 +307,16 @@ export type GetProcessesQueryVariables = Exact<{ [key: string]: never; }>;
 
 export type GetProcessesQuery = { __typename?: 'Query', processes: Array<{ __typename?: 'Process', name: string, serviceId: string, description?: string | null, pid?: number | null, ppid?: number | null, command: string, workingDirectory: string, project: string, type: string, logFile: string, stderrFile: string, autoRestart: boolean, env: Array<string>, state: string, upTime: string }> };
 
-export type GetServicesQueryVariables = Exact<{ [key: string]: never; }>;
+export type GetServicesQueryVariables = Exact<{
+  projectId: Scalars['ID'];
+}>;
 
 
 export type GetServicesQuery = { __typename?: 'Query', services: Array<{ __typename?: 'Service', id: string, name: string, command: string, description?: string | null, namespace: string, type: string, status: string, dependsOn: Array<string>, env: Array<string>, autoRestart: boolean, workingDirectory: string, logFile: string, stderrFile: string, port?: number | null }> };
 
 export type GetServiceQueryVariables = Exact<{
   id: Scalars['ID'];
+  projectId: Scalars['ID'];
 }>;
 
 
@@ -285,10 +324,23 @@ export type GetServiceQuery = { __typename?: 'Query', service: { __typename?: 'S
 
 export type GetEnvVarsQueryVariables = Exact<{
   id: Scalars['ID'];
+  projectId: Scalars['ID'];
 }>;
 
 
 export type GetEnvVarsQuery = { __typename?: 'Query', service: { __typename?: 'Service', id: string, env: Array<string> } };
+
+export type GetProjectsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetProjectsQuery = { __typename?: 'Query', projects: Array<{ __typename?: 'Project', id: string, name: string, configPath: string }> };
+
+export type GetProjectQueryVariables = Exact<{
+  id: Scalars['ID'];
+}>;
+
+
+export type GetProjectQuery = { __typename?: 'Query', project: { __typename?: 'Project', id: string, name: string, configPath: string } };
 
 export type OnStartSubscriptionVariables = Exact<{ [key: string]: never; }>;
 
@@ -336,6 +388,7 @@ export type ServiceFragmentFragment = { __typename?: 'Service', id: string, name
 
 export type GetLogsQueryVariables = Exact<{
   id: Scalars['ID'];
+  projectId: Scalars['ID'];
 }>;
 
 
@@ -344,6 +397,7 @@ export type GetLogsQuery = { __typename?: 'Query', logs: { __typename?: 'Log', l
 export type TailLogsQueryVariables = Exact<{
   id: Scalars['ID'];
   numLines?: InputMaybe<Scalars['Int']>;
+  projectId: Scalars['ID'];
 }>;
 
 
@@ -351,6 +405,7 @@ export type TailLogsQuery = { __typename?: 'Query', tail: { __typename?: 'Log', 
 
 export type LogsSubscriptionVariables = Exact<{
   id: Scalars['ID'];
+  projectId: Scalars['ID'];
 }>;
 
 
@@ -358,6 +413,7 @@ export type LogsSubscription = { __typename?: 'Subscription', logs: { __typename
 
 export type TailSubscriptionVariables = Exact<{
   id: Scalars['ID'];
+  projectId: Scalars['ID'];
 }>;
 
 
@@ -401,8 +457,8 @@ export const ServiceFragmentFragmentDoc = gql`
 }
     `;
 export const StartDocument = gql`
-    mutation Start($id: ID) {
-  start(id: $id) {
+    mutation Start($id: ID, $projectId: ID!) {
+  start(id: $id, projectId: $projectId) {
     ...ProcessFragment
   }
 }
@@ -423,6 +479,7 @@ export type StartMutationFn = Apollo.MutationFunction<StartMutation, StartMutati
  * const [startMutation, { data, loading, error }] = useStartMutation({
  *   variables: {
  *      id: // value for 'id'
+ *      projectId: // value for 'projectId'
  *   },
  * });
  */
@@ -434,8 +491,8 @@ export type StartMutationHookResult = ReturnType<typeof useStartMutation>;
 export type StartMutationResult = Apollo.MutationResult<StartMutation>;
 export type StartMutationOptions = Apollo.BaseMutationOptions<StartMutation, StartMutationVariables>;
 export const StopDocument = gql`
-    mutation Stop($id: ID) {
-  stop(id: $id) {
+    mutation Stop($id: ID, $projectId: ID!) {
+  stop(id: $id, projectId: $projectId) {
     ...ProcessFragment
   }
 }
@@ -456,6 +513,7 @@ export type StopMutationFn = Apollo.MutationFunction<StopMutation, StopMutationV
  * const [stopMutation, { data, loading, error }] = useStopMutation({
  *   variables: {
  *      id: // value for 'id'
+ *      projectId: // value for 'projectId'
  *   },
  * });
  */
@@ -467,8 +525,8 @@ export type StopMutationHookResult = ReturnType<typeof useStopMutation>;
 export type StopMutationResult = Apollo.MutationResult<StopMutation>;
 export type StopMutationOptions = Apollo.BaseMutationOptions<StopMutation, StopMutationVariables>;
 export const RestartDocument = gql`
-    mutation Restart($id: ID) {
-  restart(id: $id) {
+    mutation Restart($id: ID, $projectId: ID!) {
+  restart(id: $id, projectId: $projectId) {
     ...ProcessFragment
   }
 }
@@ -489,6 +547,7 @@ export type RestartMutationFn = Apollo.MutationFunction<RestartMutation, Restart
  * const [restartMutation, { data, loading, error }] = useRestartMutation({
  *   variables: {
  *      id: // value for 'id'
+ *      projectId: // value for 'projectId'
  *   },
  * });
  */
@@ -500,8 +559,8 @@ export type RestartMutationHookResult = ReturnType<typeof useRestartMutation>;
 export type RestartMutationResult = Apollo.MutationResult<RestartMutation>;
 export type RestartMutationOptions = Apollo.BaseMutationOptions<RestartMutation, RestartMutationVariables>;
 export const CreateEnvVarDocument = gql`
-    mutation CreateEnvVar($id: ID!, $name: String!, $value: String!) {
-  createEnvVar(id: $id, name: $name, value: $value) {
+    mutation CreateEnvVar($id: ID!, $name: String!, $value: String!, $projectId: ID!) {
+  createEnvVar(id: $id, name: $name, value: $value, projectId: $projectId) {
     id
     env
   }
@@ -525,6 +584,7 @@ export type CreateEnvVarMutationFn = Apollo.MutationFunction<CreateEnvVarMutatio
  *      id: // value for 'id'
  *      name: // value for 'name'
  *      value: // value for 'value'
+ *      projectId: // value for 'projectId'
  *   },
  * });
  */
@@ -536,8 +596,8 @@ export type CreateEnvVarMutationHookResult = ReturnType<typeof useCreateEnvVarMu
 export type CreateEnvVarMutationResult = Apollo.MutationResult<CreateEnvVarMutation>;
 export type CreateEnvVarMutationOptions = Apollo.BaseMutationOptions<CreateEnvVarMutation, CreateEnvVarMutationVariables>;
 export const DeleteEnvVarDocument = gql`
-    mutation DeleteEnvVar($id: ID!, $name: String!) {
-  deleteEnvVar(id: $id, name: $name) {
+    mutation DeleteEnvVar($id: ID!, $name: String!, $projectId: ID!) {
+  deleteEnvVar(id: $id, name: $name, projectId: $projectId) {
     id
     env
   }
@@ -560,6 +620,7 @@ export type DeleteEnvVarMutationFn = Apollo.MutationFunction<DeleteEnvVarMutatio
  *   variables: {
  *      id: // value for 'id'
  *      name: // value for 'name'
+ *      projectId: // value for 'projectId'
  *   },
  * });
  */
@@ -571,8 +632,8 @@ export type DeleteEnvVarMutationHookResult = ReturnType<typeof useDeleteEnvVarMu
 export type DeleteEnvVarMutationResult = Apollo.MutationResult<DeleteEnvVarMutation>;
 export type DeleteEnvVarMutationOptions = Apollo.BaseMutationOptions<DeleteEnvVarMutation, DeleteEnvVarMutationVariables>;
 export const UpdateEnvVarDocument = gql`
-    mutation UpdateEnvVar($id: ID!, $name: String!, $value: String!) {
-  updateEnvVar(id: $id, name: $name, value: $value) {
+    mutation UpdateEnvVar($id: ID!, $name: String!, $value: String!, $projectId: ID!) {
+  updateEnvVar(id: $id, name: $name, value: $value, projectId: $projectId) {
     id
     env
   }
@@ -596,6 +657,7 @@ export type UpdateEnvVarMutationFn = Apollo.MutationFunction<UpdateEnvVarMutatio
  *      id: // value for 'id'
  *      name: // value for 'name'
  *      value: // value for 'value'
+ *      projectId: // value for 'projectId'
  *   },
  * });
  */
@@ -676,8 +738,8 @@ export type GetProcessesQueryHookResult = ReturnType<typeof useGetProcessesQuery
 export type GetProcessesLazyQueryHookResult = ReturnType<typeof useGetProcessesLazyQuery>;
 export type GetProcessesQueryResult = Apollo.QueryResult<GetProcessesQuery, GetProcessesQueryVariables>;
 export const GetServicesDocument = gql`
-    query GetServices {
-  services {
+    query GetServices($projectId: ID!) {
+  services(projectId: $projectId) {
     ...ServiceFragment
   }
 }
@@ -695,10 +757,11 @@ export const GetServicesDocument = gql`
  * @example
  * const { data, loading, error } = useGetServicesQuery({
  *   variables: {
+ *      projectId: // value for 'projectId'
  *   },
  * });
  */
-export function useGetServicesQuery(baseOptions?: Apollo.QueryHookOptions<GetServicesQuery, GetServicesQueryVariables>) {
+export function useGetServicesQuery(baseOptions: Apollo.QueryHookOptions<GetServicesQuery, GetServicesQueryVariables>) {
         const options = {...defaultOptions, ...baseOptions}
         return Apollo.useQuery<GetServicesQuery, GetServicesQueryVariables>(GetServicesDocument, options);
       }
@@ -710,8 +773,8 @@ export type GetServicesQueryHookResult = ReturnType<typeof useGetServicesQuery>;
 export type GetServicesLazyQueryHookResult = ReturnType<typeof useGetServicesLazyQuery>;
 export type GetServicesQueryResult = Apollo.QueryResult<GetServicesQuery, GetServicesQueryVariables>;
 export const GetServiceDocument = gql`
-    query GetService($id: ID!) {
-  service(id: $id) {
+    query GetService($id: ID!, $projectId: ID!) {
+  service(id: $id, projectId: $projectId) {
     ...ServiceFragment
   }
 }
@@ -730,6 +793,7 @@ export const GetServiceDocument = gql`
  * const { data, loading, error } = useGetServiceQuery({
  *   variables: {
  *      id: // value for 'id'
+ *      projectId: // value for 'projectId'
  *   },
  * });
  */
@@ -745,8 +809,8 @@ export type GetServiceQueryHookResult = ReturnType<typeof useGetServiceQuery>;
 export type GetServiceLazyQueryHookResult = ReturnType<typeof useGetServiceLazyQuery>;
 export type GetServiceQueryResult = Apollo.QueryResult<GetServiceQuery, GetServiceQueryVariables>;
 export const GetEnvVarsDocument = gql`
-    query GetEnvVars($id: ID!) {
-  service(id: $id) {
+    query GetEnvVars($id: ID!, $projectId: ID!) {
+  service(id: $id, projectId: $projectId) {
     id
     env
   }
@@ -766,6 +830,7 @@ export const GetEnvVarsDocument = gql`
  * const { data, loading, error } = useGetEnvVarsQuery({
  *   variables: {
  *      id: // value for 'id'
+ *      projectId: // value for 'projectId'
  *   },
  * });
  */
@@ -780,6 +845,79 @@ export function useGetEnvVarsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions
 export type GetEnvVarsQueryHookResult = ReturnType<typeof useGetEnvVarsQuery>;
 export type GetEnvVarsLazyQueryHookResult = ReturnType<typeof useGetEnvVarsLazyQuery>;
 export type GetEnvVarsQueryResult = Apollo.QueryResult<GetEnvVarsQuery, GetEnvVarsQueryVariables>;
+export const GetProjectsDocument = gql`
+    query GetProjects {
+  projects {
+    id
+    name
+    configPath
+  }
+}
+    `;
+
+/**
+ * __useGetProjectsQuery__
+ *
+ * To run a query within a React component, call `useGetProjectsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetProjectsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetProjectsQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGetProjectsQuery(baseOptions?: Apollo.QueryHookOptions<GetProjectsQuery, GetProjectsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetProjectsQuery, GetProjectsQueryVariables>(GetProjectsDocument, options);
+      }
+export function useGetProjectsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetProjectsQuery, GetProjectsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetProjectsQuery, GetProjectsQueryVariables>(GetProjectsDocument, options);
+        }
+export type GetProjectsQueryHookResult = ReturnType<typeof useGetProjectsQuery>;
+export type GetProjectsLazyQueryHookResult = ReturnType<typeof useGetProjectsLazyQuery>;
+export type GetProjectsQueryResult = Apollo.QueryResult<GetProjectsQuery, GetProjectsQueryVariables>;
+export const GetProjectDocument = gql`
+    query GetProject($id: ID!) {
+  project(id: $id) {
+    id
+    name
+    configPath
+  }
+}
+    `;
+
+/**
+ * __useGetProjectQuery__
+ *
+ * To run a query within a React component, call `useGetProjectQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetProjectQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetProjectQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useGetProjectQuery(baseOptions: Apollo.QueryHookOptions<GetProjectQuery, GetProjectQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetProjectQuery, GetProjectQueryVariables>(GetProjectDocument, options);
+      }
+export function useGetProjectLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetProjectQuery, GetProjectQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetProjectQuery, GetProjectQueryVariables>(GetProjectDocument, options);
+        }
+export type GetProjectQueryHookResult = ReturnType<typeof useGetProjectQuery>;
+export type GetProjectLazyQueryHookResult = ReturnType<typeof useGetProjectLazyQuery>;
+export type GetProjectQueryResult = Apollo.QueryResult<GetProjectQuery, GetProjectQueryVariables>;
 export const OnStartDocument = gql`
     subscription OnStart {
   onStart {
@@ -1060,8 +1198,8 @@ export function useOnRestartAllSubscription(baseOptions?: Apollo.SubscriptionHoo
 export type OnRestartAllSubscriptionHookResult = ReturnType<typeof useOnRestartAllSubscription>;
 export type OnRestartAllSubscriptionResult = Apollo.SubscriptionResult<OnRestartAllSubscription>;
 export const GetLogsDocument = gql`
-    query GetLogs($id: ID!) {
-  logs(id: $id) {
+    query GetLogs($id: ID!, $projectId: ID!) {
+  logs(id: $id, projectId: $projectId) {
     lines
   }
 }
@@ -1080,6 +1218,7 @@ export const GetLogsDocument = gql`
  * const { data, loading, error } = useGetLogsQuery({
  *   variables: {
  *      id: // value for 'id'
+ *      projectId: // value for 'projectId'
  *   },
  * });
  */
@@ -1095,8 +1234,8 @@ export type GetLogsQueryHookResult = ReturnType<typeof useGetLogsQuery>;
 export type GetLogsLazyQueryHookResult = ReturnType<typeof useGetLogsLazyQuery>;
 export type GetLogsQueryResult = Apollo.QueryResult<GetLogsQuery, GetLogsQueryVariables>;
 export const TailLogsDocument = gql`
-    query TailLogs($id: ID!, $numLines: Int) {
-  tail(id: $id, numLines: $numLines) {
+    query TailLogs($id: ID!, $numLines: Int, $projectId: ID!) {
+  tail(id: $id, numLines: $numLines, projectId: $projectId) {
     lines
   }
 }
@@ -1116,6 +1255,7 @@ export const TailLogsDocument = gql`
  *   variables: {
  *      id: // value for 'id'
  *      numLines: // value for 'numLines'
+ *      projectId: // value for 'projectId'
  *   },
  * });
  */
@@ -1131,8 +1271,8 @@ export type TailLogsQueryHookResult = ReturnType<typeof useTailLogsQuery>;
 export type TailLogsLazyQueryHookResult = ReturnType<typeof useTailLogsLazyQuery>;
 export type TailLogsQueryResult = Apollo.QueryResult<TailLogsQuery, TailLogsQueryVariables>;
 export const LogsDocument = gql`
-    subscription Logs($id: ID!) {
-  logs(id: $id) {
+    subscription Logs($id: ID!, $projectId: ID!) {
+  logs(id: $id, projectId: $projectId) {
     line
   }
 }
@@ -1151,6 +1291,7 @@ export const LogsDocument = gql`
  * const { data, loading, error } = useLogsSubscription({
  *   variables: {
  *      id: // value for 'id'
+ *      projectId: // value for 'projectId'
  *   },
  * });
  */
@@ -1161,8 +1302,8 @@ export function useLogsSubscription(baseOptions: Apollo.SubscriptionHookOptions<
 export type LogsSubscriptionHookResult = ReturnType<typeof useLogsSubscription>;
 export type LogsSubscriptionResult = Apollo.SubscriptionResult<LogsSubscription>;
 export const TailDocument = gql`
-    subscription Tail($id: ID!) {
-  tail(id: $id) {
+    subscription Tail($id: ID!, $projectId: ID!) {
+  tail(id: $id, projectId: $projectId) {
     line
   }
 }
@@ -1181,6 +1322,7 @@ export const TailDocument = gql`
  * const { data, loading, error } = useTailSubscription({
  *   variables: {
  *      id: // value for 'id'
+ *      projectId: // value for 'projectId'
  *   },
  * });
  */

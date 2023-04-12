@@ -11,6 +11,7 @@ import ServicesGraph from "./ServicesGraph";
 import _ from "lodash";
 import { Node } from "../../Types/Node";
 import { Edge } from "../../Types/Edge";
+import { useParams } from "react-router-dom";
 
 const ServicesGraphWithData: FC = () => {
   const [nodes, setNodes] = useState<Node[]>([]);
@@ -20,7 +21,10 @@ const ServicesGraphWithData: FC = () => {
   const { data: _onRestartSubscription } = useOnRestartSubscription();
   const { data: _onStartingSubscription } = useOnStartingSubscription();
   const { data: _onStoppingSubscription } = useOnStoppingSubscription();
-  const { data, loading } = useGetServicesQuery();
+  const { projectId } = useParams();
+  const { data, loading } = useGetServicesQuery({
+    variables: { projectId: projectId! },
+  });
 
   useEffect(() => {
     if (data?.services) {

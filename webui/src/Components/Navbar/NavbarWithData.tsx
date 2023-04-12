@@ -1,10 +1,14 @@
 import { FC, useState } from "react";
 import { Service, useGetServicesQuery } from "../../Hooks/GraphQL";
 import Navbar from "./Navbar";
+import { useParams } from "react-router-dom";
 
 const NavbarWithData: FC = () => {
   const [results, setResults] = useState<Service[]>([]);
-  const { data } = useGetServicesQuery();
+  const { projectId } = useParams();
+  const { data } = useGetServicesQuery({
+    variables: { projectId: projectId! },
+  });
   const onSearch = (search: string) => {
     if (search === "") {
       setResults([]);

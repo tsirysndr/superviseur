@@ -7,18 +7,21 @@ import {
 } from "../../Hooks/GraphQL";
 import { EnvironmentVariable } from "../../Types/EnvironmentVariable";
 import Variables from "./Variables";
+import { useParams } from "react-router-dom";
 
 export interface VariablesWithDataProps {
   serviceId: string;
 }
 
 const VariablesWithData: FC<VariablesWithDataProps> = ({ serviceId }) => {
+  const { projectId } = useParams();
   const [createEnvVar] = useCreateEnvVarMutation();
   const [deleteEnvVar] = useDeleteEnvVarMutation();
   const [updateEnvVar] = useUpdateEnvVarMutation();
   const { data, loading } = useGetEnvVarsQuery({
     variables: {
       id: serviceId,
+      projectId: projectId!,
     },
   });
   const variables =
@@ -33,6 +36,7 @@ const VariablesWithData: FC<VariablesWithDataProps> = ({ serviceId }) => {
         id: data!.service.id,
         name: variable.name,
         value: variable.value,
+        projectId: projectId!,
       },
     });
   };
@@ -43,6 +47,7 @@ const VariablesWithData: FC<VariablesWithDataProps> = ({ serviceId }) => {
         id: data!.service.id,
         name: variable.name,
         value: variable.value,
+        projectId: projectId!,
       },
     });
   };
@@ -52,6 +57,7 @@ const VariablesWithData: FC<VariablesWithDataProps> = ({ serviceId }) => {
       variables: {
         id: data!.service.id,
         name: variable.name,
+        projectId: projectId!,
       },
     });
   };

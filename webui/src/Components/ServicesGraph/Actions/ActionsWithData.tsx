@@ -10,6 +10,7 @@ import {
 } from "../../../Hooks/GraphQL";
 import { useSnackbar } from "baseui/snackbar";
 import Actions from "./Actions";
+import { useParams } from "react-router-dom";
 
 const styles = {
   snackbar: {
@@ -28,6 +29,7 @@ const styles = {
 };
 
 const ActionsWithData: FC = () => {
+  const { projectId } = useParams();
   const { enqueue } = useSnackbar();
   const [starting, setStarting] = useState(false);
   const [stopping, setStopping] = useState(false);
@@ -41,7 +43,9 @@ const ActionsWithData: FC = () => {
     data: getServicesData,
     loading: getServicesLoading,
     refetch,
-  } = useGetServicesQuery();
+  } = useGetServicesQuery({
+    variables: { projectId: projectId! },
+  });
   const allServicesAreRunning = useMemo(
     () =>
       !getServicesLoading &&
@@ -52,15 +56,27 @@ const ActionsWithData: FC = () => {
   );
   const onStartAll = () => {
     setStarting(true);
-    startMutation();
+    startMutation({
+      variables: {
+        projectId: projectId!,
+      },
+    });
   };
   const onRestartAll = () => {
     setStarting(true);
-    restartMutation();
+    restartMutation({
+      variables: {
+        projectId: projectId!,
+      },
+    });
   };
   const onStopAll = () => {
     setStopping(true);
-    stopMutation();
+    stopMutation({
+      variables: {
+        projectId: projectId!,
+      },
+    });
   };
 
   const allServicesAreStarted = useMemo(

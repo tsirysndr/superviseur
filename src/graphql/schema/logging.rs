@@ -33,19 +33,20 @@ impl LoggingQuery {
         ctx: &Context<'_>,
         id: ID,
         num_lines: Option<usize>,
+        project_id: ID,
     ) -> Result<Log, Error> {
-        let config_file_path = ctx.data::<String>().unwrap();
+        let project_id = project_id.to_string();
         let config_map = ctx
             .data::<Arc<Mutex<HashMap<String, ConfigurationData>>>>()
             .unwrap();
 
         let config_map = config_map.lock().unwrap();
 
-        if !config_map.contains_key(config_file_path.as_str()) {
+        if !config_map.contains_key(&project_id) {
             return Err(Error::new("Config file not found"));
         }
 
-        let config = config_map.get(config_file_path.as_str()).unwrap();
+        let config = config_map.get(&project_id).unwrap();
 
         let service = config
             .services
@@ -69,19 +70,19 @@ impl LoggingQuery {
         Ok(Log { lines: tail_lines })
     }
 
-    async fn logs(&self, ctx: &Context<'_>, id: ID) -> Result<Log, Error> {
-        let config_file_path = ctx.data::<String>().unwrap();
+    async fn logs(&self, ctx: &Context<'_>, id: ID, project_id: ID) -> Result<Log, Error> {
+        let project_id = project_id.to_string();
         let config_map = ctx
             .data::<Arc<Mutex<HashMap<String, ConfigurationData>>>>()
             .unwrap();
 
         let config_map = config_map.lock().unwrap();
 
-        if !config_map.contains_key(config_file_path.as_str()) {
+        if !config_map.contains_key(&project_id) {
             return Err(Error::new("Config file not found"));
         }
 
-        let config = config_map.get(config_file_path.as_str()).unwrap();
+        let config = config_map.get(&project_id).unwrap();
 
         let service = config
             .services
@@ -112,13 +113,12 @@ impl LoggingSubscription {
         &self,
         ctx: &Context<'_>,
         id: ID,
+        project_id: ID,
     ) -> Result<impl Stream<Item = TailLogStream>, Error> {
-        let config_file_path = ctx.data::<String>().unwrap();
+        let project_id = project_id.to_string();
         let config_map = ctx
             .data::<Arc<Mutex<HashMap<String, ConfigurationData>>>>()
             .unwrap();
-        let project_map = ctx.data::<Arc<Mutex<HashMap<String, String>>>>().unwrap();
-        let project_id = get_project_id(config_file_path.clone(), &project_map)?;
 
         let config_map = config_map.lock().unwrap();
 
@@ -172,13 +172,12 @@ impl LoggingSubscription {
         &self,
         ctx: &Context<'_>,
         id: ID,
+        project_id: ID,
     ) -> Result<impl Stream<Item = subscriptions::LogStream>, Error> {
-        let config_file_path = ctx.data::<String>().unwrap();
+        let project_id = project_id.to_string();
         let config_map = ctx
             .data::<Arc<Mutex<HashMap<String, ConfigurationData>>>>()
             .unwrap();
-        let project_map = ctx.data::<Arc<Mutex<HashMap<String, String>>>>().unwrap();
-        let project_id = get_project_id(config_file_path.clone(), &project_map)?;
 
         let config_map = config_map.lock().unwrap();
 

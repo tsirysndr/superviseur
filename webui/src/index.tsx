@@ -7,6 +7,7 @@ import { Client as Styletron } from "styletron-engine-atomic";
 import { Provider as StyletronProvider } from "styletron-react";
 import Providers from "./Providers";
 import ApolloProvider from "./Providers/ApolloProvider";
+import { RecoilRoot } from "recoil";
 
 import "@fontsource/ubuntu";
 import "reactflow/dist/style.css";
@@ -18,13 +19,15 @@ const root = ReactDOM.createRoot(
 );
 root.render(
   <React.StrictMode>
-    <StyletronProvider value={engine}>
-      <ApolloProvider>
-        <Providers>
-          <App />
-        </Providers>
-      </ApolloProvider>
-    </StyletronProvider>
+    <RecoilRoot>
+      <StyletronProvider value={engine}>
+        <ApolloProvider>
+          <Providers>
+            <App />
+          </Providers>
+        </ApolloProvider>
+      </StyletronProvider>
+    </RecoilRoot>
   </React.StrictMode>
 );
 
