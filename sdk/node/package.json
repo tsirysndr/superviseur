@@ -1,0 +1,21 @@
+{
+  "name": "@superviseur/sdk",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Tsiry Sandratraina",
+  "license": "MIT",
+  "devDependencies": {
+    "esbuild": "^0.17.18",
+    "prettier": "^2.8.8",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.0.4"
+  },
+  "dependencies": {
+    "graphql-request": "^6.0.0"
+  }
+}
