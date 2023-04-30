@@ -7,6 +7,7 @@ use std::{
 
 use async_graphql::{Context, Error, Object, Subscription, ID};
 use futures_util::Stream;
+use names::Generator;
 use tokio::sync::mpsc;
 
 use crate::{
@@ -61,13 +62,11 @@ impl ControlQuery {
         let projects = config_map
             .iter()
             .map(|(id, config)| {
-                let config_path = project_map
-                    .clone()
-                    .into_iter()
-                    .find(|(_, v)| v == id)
-                    .unwrap()
-                    .0
-                    .clone();
+                let config_path = match project_map.clone().into_iter().find(|(_, v)| v == id) {
+                    Some((k, _)) => Some(k),
+                    None => None,
+                };
+
                 Project {
                     id: ID(id.clone()),
                     name: config.project.clone(),
@@ -129,13 +128,14 @@ impl ControlQuery {
 
         match config_map.get(&project_id) {
             Some(config) => {
-                let config_path = project_map
+                let config_path = match project_map
                     .clone()
                     .into_iter()
                     .find(|(_, v)| v == &project_id)
-                    .unwrap()
-                    .0
-                    .clone();
+                {
+                    Some((k, _)) => Some(k),
+                    None => None,
+                };
 
                 Ok(Project {
                     id: ID(project_id),
@@ -221,7 +221,23 @@ impl ControlMutation {
         ctx: &Context<'_>,
         name: String,
     ) -> Result<ProjectConfiguration, Error> {
+        let config_map = ctx
+            .data::<Arc<Mutex<HashMap<String, ConfigurationData>>>>()
+            .unwrap();
+
+        let mut generator = Generator::default();
+        let id = generator.next().unwrap();
+        let config = ConfigurationData {
+            project: name.clone(),
+            services: vec![],
+        };
+
+        let mut config_map = config_map.lock().unwrap();
+        config_map.insert(id.clone(), config);
+        drop(config_map);
+
         return Ok(ProjectConfiguration {
+            id: ID(id),
             name,
             ..Default::default()
         });
