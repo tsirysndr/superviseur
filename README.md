@@ -22,14 +22,15 @@
     <img alt="release" src="https://github.com/tsirysndr/superviseur/actions/workflows/release.yml/badge.svg" />
   </a>
 </p>
-<p style="margin-top: 20px; margin-bottom: 50px;">
-<img src="./preview.png" width="100%" />
-</p>
 
+<img src="./astronauts.png" width="100%" style="margin-top: 20px; margin-bottom: 20px;" />
 
 A simple process supervisor for UNIX-like systems. Currently only supports running executables, but I plan to add support for managing wasm and docker containers in the future.
 
 Project Status: 🐲 Unstable, alpha-ish quality.
+
+<img src="./preview.png" width="100%" style="margin-top: 20px;margin-bottom: 20px;" />
+
 ## 🚚 Installation
 
 ```bash
