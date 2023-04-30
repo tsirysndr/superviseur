@@ -14,6 +14,7 @@ import {
 } from "../../Hooks/GraphQL";
 import { useSnackbar } from "baseui/snackbar";
 import { ServiceStatus } from "../../Types/ServiceStatus";
+import { useParams } from "react-router-dom";
 
 const styles = {
   snackbar: {
@@ -37,6 +38,7 @@ export interface StatusWithDataProps {
 
 const StatusWithData: FC<StatusWithDataProps> = ({ selectedNode }) => {
   const { enqueue } = useSnackbar();
+  const { projectId } = useParams();
   const [statuses, setStatuses] = useState<ServiceStatus[]>([]);
   const [startMutation] = useStartMutation();
   const [stopMutation] = useStopMutation();
@@ -52,9 +54,12 @@ const StatusWithData: FC<StatusWithDataProps> = ({ selectedNode }) => {
     },
     fetchPolicy: "network-only",
   });
-  const onStart = () => startMutation({ variables: { id: selectedNode } });
-  const onRestart = () => restartMutation({ variables: { id: selectedNode } });
-  const onStop = () => stopMutation({ variables: { id: selectedNode } });
+  const onStart = () =>
+    startMutation({ variables: { id: selectedNode, projectId: projectId! } });
+  const onRestart = () =>
+    restartMutation({ variables: { id: selectedNode, projectId: projectId! } });
+  const onStop = () =>
+    stopMutation({ variables: { id: selectedNode, projectId: projectId! } });
 
   useEffect(() => {
     setStatuses(loading ? [] : parseIntoStatuses(data!.status));

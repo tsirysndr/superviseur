@@ -47,7 +47,8 @@ async fn index() -> impl Responder {
     handle_embedded_file("index.html")
 }
 
-async fn _index_spa() -> impl Responder {
+#[actix_web::get("/projects/{_:.*}")]
+async fn index_projects() -> impl Responder {
     handle_embedded_file("index.html")
 }
 
@@ -99,6 +100,7 @@ pub async fn start_webui(
     superviseur: Superviseur,
     processes: Arc<Mutex<Vec<(Process, String)>>>,
     config_map: Arc<Mutex<HashMap<String, ConfigurationData>>>,
+    project_map: Arc<Mutex<HashMap<String, String>>>,
 ) -> std::io::Result<()> {
     let addr = format!("0.0.0.0:{}", 5478);
 
@@ -113,6 +115,7 @@ pub async fn start_webui(
     .data(event_tx)
     .data(processes)
     .data(config_map)
+    .data(project_map)
     .finish();
 
     HttpServer::new(move || {
@@ -129,6 +132,7 @@ pub async fn start_webui(
                     .to(index_ws),
             )
             .service(index)
+            .service(index_projects)
             .service(dist)
     })
     .bind(addr)?

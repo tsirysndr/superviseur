@@ -36,6 +36,7 @@ pub async fn exec(port: u16, serve: bool) -> Result<(), Error> {
         println!("Listening on {} 🚀", addr.cyan());
     }
 
+    let project_map = Arc::new(Mutex::new(HashMap::new()));
     let config_map = Arc::new(Mutex::new(HashMap::new()));
     let (cmd_tx, cmd_rx) = tokio::sync::mpsc::unbounded_channel();
     let (event_tx, events) = tokio::sync::mpsc::unbounded_channel();
@@ -60,6 +61,7 @@ pub async fn exec(port: u16, serve: bool) -> Result<(), Error> {
     let cloned_superviseur = superviseur.clone();
     let cloned_processes = processes.clone();
     let cloned_config_map = config_map.clone();
+    let cloned_project_map = project_map.clone();
 
     // create a one-shot channel to wait for the server to start
     let (tx, rx) = tokio::sync::oneshot::channel::<bool>();
@@ -79,6 +81,7 @@ pub async fn exec(port: u16, serve: bool) -> Result<(), Error> {
                 cloned_superviseur.clone(),
                 cloned_processes.clone(),
                 cloned_config_map.clone(),
+                cloned_project_map.clone(),
             ))))
             .add_service(tonic_web::enable(ControlServiceServer::new(Control::new(
                 cloned_cmd_tx.clone(),
@@ -86,6 +89,7 @@ pub async fn exec(port: u16, serve: bool) -> Result<(), Error> {
                 cloned_superviseur.clone(),
                 cloned_processes.clone(),
                 cloned_config_map.clone(),
+                cloned_project_map.clone(),
             ))))
             .add_service(tonic_web::enable(CoreServiceServer::new(core::Core::new(
                 cloned_cmd_tx,
@@ -93,6 +97,7 @@ pub async fn exec(port: u16, serve: bool) -> Result<(), Error> {
                 cloned_superviseur,
                 cloned_processes,
                 cloned_config_map,
+                cloned_project_map,
             ))))
             .serve_with_incoming(UnixListenerStream::new(listener))
             .await
@@ -107,6 +112,7 @@ pub async fn exec(port: u16, serve: bool) -> Result<(), Error> {
                 superviseur.clone(),
                 processes.clone(),
                 config_map.clone(),
+                project_map.clone(),
             ))))
             .add_service(tonic_web::enable(ControlServiceServer::new(Control::new(
                 cmd_tx.clone(),
@@ -114,6 +120,7 @@ pub async fn exec(port: u16, serve: bool) -> Result<(), Error> {
                 superviseur.clone(),
                 processes.clone(),
                 config_map.clone(),
+                project_map.clone(),
             ))))
             .add_service(tonic_web::enable(CoreServiceServer::new(core::Core::new(
                 cmd_tx,
@@ -121,6 +128,7 @@ pub async fn exec(port: u16, serve: bool) -> Result<(), Error> {
                 superviseur,
                 processes,
                 config_map,
+                project_map,
             ))))
             .serve(addr)
             .await?;

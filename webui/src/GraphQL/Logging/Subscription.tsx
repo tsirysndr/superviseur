@@ -1,16 +1,16 @@
 import { gql } from "@apollo/client";
 
 export const LOGS = gql`
-  subscription Logs($id: ID!) {
-    logs(id: $id) {
+  subscription Logs($id: ID!, $projectId: ID!) {
+    logs(id: $id, projectId: $projectId) {
       line
     }
   }
 `;
 
 export const TAIL = gql`
-  subscription Tail($id: ID!) {
-    tail(id: $id) {
+  subscription Tail($id: ID!, $projectId: ID!) {
+    tail(id: $id, projectId: $projectId) {
       line
     }
   }

@@ -6,12 +6,14 @@ import {
   useTailLogsQuery,
 } from "../../Hooks/GraphQL";
 import Log from "./Log";
+import { useParams } from "react-router-dom";
 
 export interface LogWithDataProps {
   serviceId: string;
 }
 
 const LogWithData: FC<LogWithDataProps> = ({ serviceId }) => {
+  const { projectId } = useParams();
   const { data: getStatusData } = useGetStatusQuery({
     variables: {
       id: serviceId,
@@ -21,12 +23,14 @@ const LogWithData: FC<LogWithDataProps> = ({ serviceId }) => {
     variables: {
       id: serviceId,
       numLines: 100,
+      projectId: projectId!,
     },
   });
   const [lines, setLines] = useState<string[]>([]);
   const { data, loading } = useLogsSubscription({
     variables: {
       id: serviceId,
+      projectId: projectId!,
     },
   });
 

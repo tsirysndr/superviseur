@@ -12,6 +12,7 @@ use crate::{
     superviseur::core::Superviseur,
     types::{configuration::ConfigurationData, process::Process},
 };
+use anyhow::Error;
 use tokio_stream::wrappers::ReceiverStream;
 use tonic::{Request, Response, Status};
 
@@ -19,6 +20,7 @@ pub struct Logging {
     superviseur: Superviseur,
     processes: Arc<Mutex<Vec<(Process, String)>>>,
     config_map: Arc<Mutex<HashMap<String, ConfigurationData>>>,
+    project_map: Arc<Mutex<HashMap<String, String>>>,
 }
 
 impl Logging {
@@ -26,12 +28,22 @@ impl Logging {
         superviseur: Superviseur,
         processes: Arc<Mutex<Vec<(Process, String)>>>,
         config_map: Arc<Mutex<HashMap<String, ConfigurationData>>>,
+        project_map: Arc<Mutex<HashMap<String, String>>>,
     ) -> Self {
         Self {
             superviseur,
             processes,
             config_map,
+            project_map,
         }
+    }
+
+    pub fn get_project_id(&self, path: String) -> Result<String, Error> {
+        let project_map = self.project_map.lock().unwrap();
+        project_map
+            .get(&path)
+            .map(|x| x.clone())
+            .ok_or_else(|| anyhow::anyhow!("The project with path {} is not loaded", path))
     }
 }
 
@@ -44,13 +56,16 @@ impl LoggingService for Logging {
         let request = request.into_inner();
         let path = request.config_file_path;
         let name = request.service;
+        let project_id = self
+            .get_project_id(path.clone())
+            .map_err(|e| tonic::Status::not_found(e.to_string()))?;
         let config_map = self.config_map.lock().unwrap();
 
-        if !config_map.contains_key(&path) {
+        if !config_map.contains_key(&project_id) {
             return Err(tonic::Status::not_found("Config file not found"));
         }
 
-        let config = config_map.get(&path).unwrap();
+        let config = config_map.get(&project_id).unwrap();
 
         let service = config
             .services
@@ -110,13 +125,16 @@ impl LoggingService for Logging {
         let request = request.into_inner();
         let path = request.config_file_path;
         let name = request.service;
+        let project_id = self
+            .get_project_id(path.clone())
+            .map_err(|e| tonic::Status::not_found(e.to_string()))?;
         let config_map = self.config_map.lock().unwrap();
 
-        if !config_map.contains_key(&path) {
+        if !config_map.contains_key(&project_id) {
             return Err(tonic::Status::not_found("Config file not found"));
         }
 
-        let config = config_map.get(&path).unwrap();
+        let config = config_map.get(&project_id).unwrap();
 
         let service = config
             .services
