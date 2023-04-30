@@ -18,6 +18,7 @@ use crate::{
 use super::objects::{
     process::Process,
     project::Project,
+    project_configuration::ProjectConfiguration,
     service::Service,
     subscriptions::{
         AllServicesRestarted, AllServicesStarted, AllServicesStopped, ServiceRestarted,
@@ -215,6 +216,17 @@ pub struct ControlMutation;
 
 #[Object]
 impl ControlMutation {
+    async fn new_project(
+        &self,
+        ctx: &Context<'_>,
+        name: String,
+    ) -> Result<ProjectConfiguration, Error> {
+        return Ok(ProjectConfiguration {
+            name,
+            ..Default::default()
+        });
+    }
+
     async fn start(
         &self,
         ctx: &Context<'_>,
