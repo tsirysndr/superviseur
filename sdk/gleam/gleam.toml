@@ -11,6 +11,8 @@ description = "A Gleam project"
 
 [dependencies]
 gleam_stdlib = "~> 0.28"
+gleam_hackney = "~> 1.0"
+gleam_json = "~> 0.5"
 
 [dev-dependencies]
 gleeunit = "~> 0.10"

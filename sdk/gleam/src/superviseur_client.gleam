@@ -1,6 +1,7 @@
 import gleam/io
 import project.{
-  list, logs, restart_all, start_all, status, stop_all, with_service,
+  list_services, logs, restart_all, start_all, status, stdout, stop_all,
+  with_service,
 }
 import service.{new_service, with_name}
 import client.{connect, with_project}
@@ -27,13 +28,16 @@ pub fn main() {
     |> with_service(service3)
 
   project
+  |> stdout()
+
+  project
   |> start_all()
 
   project
   |> logs("my-service-1")
 
   project
-  |> list()
+  |> list_services()
 
   project
   |> status("my-service-1")
