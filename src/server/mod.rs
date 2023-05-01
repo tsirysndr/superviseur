@@ -8,9 +8,9 @@ use std::{
 use crate::{
     api::superviseur::v1alpha1::{
         control_service_server::ControlServiceServer, core_service_server::CoreServiceServer,
-        logging_service_server::LoggingServiceServer,
+        logging_service_server::LoggingServiceServer, project_service_server::ProjectServiceServer,
     },
-    server::{control::Control, logging::Logging},
+    server::{control::Control, logging::Logging, project::Project},
     superviseur::{core::Superviseur, dependencies::DependencyGraph},
     types::{configuration::Service, process::Process, BANNER, UNIX_SOCKET_PATH},
 };
@@ -23,6 +23,7 @@ use tonic::transport::Server;
 pub mod control;
 pub mod core;
 pub mod logging;
+pub mod project;
 
 pub async fn exec(port: u16, serve: bool) -> Result<(), Error> {
     let addr: SocketAddr = format!("0.0.0.0:{}", port).parse().unwrap();
@@ -92,9 +93,15 @@ pub async fn exec(port: u16, serve: bool) -> Result<(), Error> {
                 cloned_project_map.clone(),
             ))))
             .add_service(tonic_web::enable(CoreServiceServer::new(core::Core::new(
-                cloned_cmd_tx,
+                cloned_cmd_tx.clone(),
                 cloned_event_tx,
                 cloned_superviseur,
+                cloned_processes.clone(),
+                cloned_config_map.clone(),
+                cloned_project_map.clone(),
+            ))))
+            .add_service(tonic_web::enable(ProjectServiceServer::new(Project::new(
+                cloned_cmd_tx,
                 cloned_processes,
                 cloned_config_map,
                 cloned_project_map,
@@ -123,9 +130,15 @@ pub async fn exec(port: u16, serve: bool) -> Result<(), Error> {
                 project_map.clone(),
             ))))
             .add_service(tonic_web::enable(CoreServiceServer::new(core::Core::new(
-                cmd_tx,
+                cmd_tx.clone(),
                 event_tx,
                 superviseur,
+                processes.clone(),
+                config_map.clone(),
+                project_map.clone(),
+            ))))
+            .add_service(tonic_web::enable(ProjectServiceServer::new(Project::new(
+                cmd_tx,
                 processes,
                 config_map,
                 project_map,

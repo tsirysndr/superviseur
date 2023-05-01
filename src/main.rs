@@ -1,10 +1,20 @@
 use anyhow::Error;
-use clap::{arg, Command};
+use clap::{arg, Command, SubCommand};
 use superviseur::{
     cmd::{
-        build::execute_build, config::execute_config, init::execute_init, list::execute_list,
-        log::execute_log, new::execute_new, ps::execute_ps, restart::execute_restart,
-        start::execute_start, status::execute_status, stop::execute_stop, tail::execute_tail,
+        build::execute_build,
+        config::execute_config,
+        init::execute_init,
+        list::execute_list,
+        log::execute_log,
+        new::execute_new,
+        project::{execute_get_project, execute_list_projects},
+        ps::execute_ps,
+        restart::execute_restart,
+        start::execute_start,
+        status::execute_status,
+        stop::execute_stop,
+        tail::execute_tail,
         ui::execute_ui,
     },
     server,
@@ -93,6 +103,20 @@ A simple process supervisor"#,
         .subcommand(Command::new("build")
             .arg(arg!([name] "The name of the service to build, if not specified, all services will be built"))
         .about("Build all services or a specific one"))
+        .subcommand(
+            Command::new("project")
+                .subcommand(
+                    Command::new("details")
+                        .arg(arg!(<id> "The id of the project to get the details of"))
+                        .about("Get the details of a project"),
+                )
+                .subcommand(
+                    Command::new("list")
+                        .alias("ls")
+                        .about("List all projects"),
+                )
+            .about("Manage projects")
+        )
 }
 
 #[tokio::main]
@@ -155,6 +179,14 @@ async fn main() -> Result<(), Error> {
             let name = args.value_of("name");
             execute_build(name).await?;
         }
+        Some(("project", args)) => match args.subcommand() {
+            Some(("details", args)) => {
+                let id = args.value_of("id").unwrap();
+                execute_get_project(id).await?;
+            }
+            Some(("list", _)) => execute_list_projects().await?,
+            _ => SubCommand::with_name("project").print_help()?,
+        },
         _ => cli().print_help()?,
     }
     Ok(())

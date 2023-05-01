@@ -4,6 +4,7 @@ pub mod init;
 pub mod list;
 pub mod log;
 pub mod new;
+pub mod project;
 pub mod ps;
 pub mod restart;
 pub mod start;

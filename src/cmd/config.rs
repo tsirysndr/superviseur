@@ -1,3 +1,3 @@
-pub fn execute_config(name: &str) {
+pub fn execute_config(_name: &str) {
     todo!("config")
 }

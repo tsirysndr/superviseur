@@ -100,14 +100,7 @@ impl ControlService for Control {
             hcl::from_str(&config).map_err(|e| tonic::Status::internal(e.to_string()))?;
 
         // get directory of the config file
-        config.context = Some(
-            std::path::Path::new(&path)
-                .parent()
-                .unwrap()
-                .to_str()
-                .unwrap()
-                .to_string(),
-        );
+        config.context = Some(path.clone());
 
         let (project_id, is_new_config) =
             self.insert_config_and_get_project_id(path.clone(), config.clone());
