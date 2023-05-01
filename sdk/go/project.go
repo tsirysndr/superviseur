@@ -6,7 +6,7 @@ type Project struct {
 }
 
 func (p *Project) New() *Project {
-	return nil
+	return &Project{}
 }
 
 func (p *Project) WithName(name string) *Project {
@@ -48,5 +48,9 @@ func (p *Project) StopAll() {
 }
 
 func (p *Project) RestartAll() {
+
+}
+
+func (p *Project) Logs(service string) {
 
 }
