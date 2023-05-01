@@ -14,7 +14,7 @@ class Project {
     return this;
   }
 
-  addService(service: Service) {
+  addService(service: Service): Project {
     this.services.push(service);
     return this;
   }
