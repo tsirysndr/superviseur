@@ -10,6 +10,7 @@ pub fn execute_new(cfg_format: ConfigFormat) {
 
     let config = ConfigurationData {
         project: "demo".to_string(),
+        context: None,
         services: vec![Service {
             id: None,
             name: "demo".to_string(),

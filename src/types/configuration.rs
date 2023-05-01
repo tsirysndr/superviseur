@@ -41,6 +41,7 @@ pub struct Service {
 #[derive(Serialize, Deserialize, Debug, Default, Clone)]
 pub struct ConfigurationData {
     pub project: String,
+    pub context: Option<String>,
     pub services: Vec<Service>,
 }
 

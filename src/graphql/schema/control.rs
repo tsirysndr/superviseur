@@ -220,6 +220,7 @@ impl ControlMutation {
         &self,
         ctx: &Context<'_>,
         name: String,
+        context: String,
     ) -> Result<ProjectConfiguration, Error> {
         let config_map = ctx
             .data::<Arc<Mutex<HashMap<String, ConfigurationData>>>>()
@@ -230,15 +231,17 @@ impl ControlMutation {
         let config = ConfigurationData {
             project: name.clone(),
             services: vec![],
+            context: Some(context.clone()),
         };
 
         let mut config_map = config_map.lock().unwrap();
-        config_map.insert(id.clone(), config);
+        config_map.insert(id.clone(), config.clone());
         drop(config_map);
 
         return Ok(ProjectConfiguration {
             id: ID(id),
             name,
+            context,
             ..Default::default()
         });
     }

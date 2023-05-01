@@ -335,6 +335,8 @@ impl SuperviseurInternal {
             .next()
             .ok_or(anyhow::anyhow!("Project {} not found", project))?;
         graph.start_services();
+        let services = self.get_project_services(&project)?;
+        SimpleBroker::publish(AllServicesStarted { payload: services });
         Ok(())
     }
 

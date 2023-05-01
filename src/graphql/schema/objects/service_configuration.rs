@@ -5,7 +5,7 @@ pub struct ServiceConfiguration {
     pub name: String,
     pub description: Option<String>,
     pub command: String,
-    pub working_directory: String,
+    pub working_directory: Option<String>,
     pub r#type: Option<String>,
     pub log_file: Option<String>,
     pub stderr_file: Option<String>,
