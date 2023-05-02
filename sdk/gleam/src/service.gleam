@@ -17,11 +17,30 @@ pub type Service {
     stderr: String,
     flox: Option(Flox),
     build_command: String,
+    enable_docker: Option(Bool),
+    enable_nix: Option(Bool),
   )
 }
 
 pub fn new_service() -> Service {
-  Service("", "", "", "", [], [], False, False, "default", 0, "", "", None, "")
+  Service(
+    "",
+    "",
+    "",
+    "",
+    [],
+    [],
+    False,
+    False,
+    "default",
+    0,
+    "",
+    "",
+    None,
+    "",
+    None,
+    None,
+  )
 }
 
 pub fn with_name(service: Service, name: String) -> Service {
@@ -78,4 +97,12 @@ pub fn with_flox(service: Service, flox: Flox) -> Service {
 
 pub fn with_build_command(service: Service, build_command: String) -> Service {
   Service(..service, build_command: build_command)
+}
+
+pub fn with_enable_docker(service: Service, enable_docker: Bool) -> Service {
+  Service(..service, enable_docker: Some(enable_docker))
+}
+
+pub fn with_enable_nix(service: Service, enable_nix: Bool) -> Service {
+  Service(..service, enable_nix: Some(enable_nix))
 }

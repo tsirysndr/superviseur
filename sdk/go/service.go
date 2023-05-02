@@ -14,6 +14,8 @@ type Service struct {
 	Stderr          string
 	BuildCommand    string
 	FloxEnvrionment *string
+	EnableDocker    *bool
+	EnableNix       *bool
 }
 
 func NewService() *Service {
@@ -82,5 +84,15 @@ func (s *Service) WithBuildCommand(buildCommand string) *Service {
 
 func (s *Service) WithFloxEnvironment(floxEnvironment *string) *Service {
 	s.FloxEnvrionment = floxEnvironment
+	return s
+}
+
+func (s *Service) WithEnableDocker(enableDocker *bool) *Service {
+	s.EnableDocker = enableDocker
+	return s
+}
+
+func (s *Service) WithEnableNix(enableNix *bool) *Service {
+	s.EnableNix = enableNix
 	return s
 }

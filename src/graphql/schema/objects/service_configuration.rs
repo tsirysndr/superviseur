@@ -12,4 +12,8 @@ pub struct ServiceConfiguration {
     pub auto_restart: Option<bool>,
     pub auto_start: Option<bool>,
     pub env: Option<Vec<String>>,
+    pub enable_docker: Option<bool>,
+    pub enable_flox: Option<bool>,
+    pub enable_nix: Option<bool>,
+    pub flox_enviroment: Option<String>,
 }

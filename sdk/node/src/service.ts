@@ -12,6 +12,8 @@ class Service {
   stderr: string;
   buildCommand: string;
   floxEnvironment: string;
+  enableDocker?: boolean;
+  enableNix?: boolean;
 
   constructor() {
     this.name = "";
@@ -36,6 +38,16 @@ class Service {
 
   withAutoRestart(autoRestart: boolean) {
     this.autorestart = autoRestart;
+    return this;
+  }
+
+  withEnableDocker(enableDocker: boolean) {
+    this.enableDocker = enableDocker;
+    return this;
+  }
+
+  withEnableNix(enableNix: boolean) {
+    this.enableNix = enableNix;
     return this;
   }
 }

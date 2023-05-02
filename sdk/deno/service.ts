@@ -13,6 +13,8 @@ class Service {
   stderr: string;
   buildCommand: string;
   floxEnvironment: string;
+  enableDocker?: boolean;
+  enableNix?: boolean;
 
   constructor() {
     this.name = "";
@@ -98,6 +100,16 @@ class Service {
 
   withFloxEnvironment(floxEnvironment: string): Service {
     this.floxEnvironment = floxEnvironment;
+    return this;
+  }
+
+  withEnableDocker(enableDocker: boolean): Service {
+    this.enableDocker = enableDocker;
+    return this;
+  }
+
+  withEnableNix(enableNix: boolean): Service {
+    this.enableNix = enableNix;
     return this;
   }
 }

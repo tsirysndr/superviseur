@@ -16,6 +16,8 @@ pub struct Service {
     pub stderr: String,
     pub build_command: String,
     pub flox_enviroment: Option<String>,
+    pub enable_docker: Option<bool>,
+    pub enable_nix: Option<bool>,
 }
 
 impl Service {
@@ -86,6 +88,16 @@ impl Service {
 
     pub fn with_flox_enviroment(mut self, flox_enviroment: &str) -> Service {
         self.flox_enviroment = Some(flox_enviroment.to_string());
+        self
+    }
+
+    pub fn with_enable_docker(mut self, enable_docker: bool) -> Service {
+        self.enable_docker = Some(enable_docker);
+        self
+    }
+
+    pub fn with_enable_nix(mut self, enable_nix: bool) -> Service {
+        self.enable_nix = Some(enable_nix);
         self
     }
 }
