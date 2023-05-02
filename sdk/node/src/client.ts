@@ -1,11 +1,11 @@
-import Project from "./project.ts";
+import Project from "./project";
 
 class Client {
   newProject(): Project {
     return new Project(this);
   }
 
-  project(_id: string): Project {
+  project(id: string): Project {
     return new Project(this);
   }
 

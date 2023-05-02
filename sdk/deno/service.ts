@@ -2,6 +2,7 @@ class Service {
   name: string;
   command: string;
   execType: string;
+  dependsOn: string[];
   workingDir: string;
   description: string;
   env: Map<string, string>;
@@ -17,6 +18,7 @@ class Service {
     this.name = "";
     this.command = "";
     this.execType = "";
+    this.dependsOn = [];
     this.workingDir = "";
     this.description = "";
     this.env = new Map();
@@ -41,6 +43,11 @@ class Service {
 
   withExecType(execType: string): Service {
     this.execType = execType;
+    return this;
+  }
+
+  withDependsOn(dependsOn: string[]): Service {
+    this.dependsOn = dependsOn;
     return this;
   }
 

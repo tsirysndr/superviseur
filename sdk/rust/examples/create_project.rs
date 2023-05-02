@@ -1,1 +1,13 @@
-fn main() {}
+use superviseur_client::{client::connect, service::new_service};
+
+fn main() {
+    let deno_fresh = new_service()
+        .with_name("deno-fresh")
+        .with_command("./dev.ts");
+
+    connect()
+        .new_project("deno-example")
+        .with_context("/Users/tsirysandratraina/Documents/GitHub/superviseur/examples/deno-fresh")
+        .with_service(deno_fresh)
+        .stdout();
+}

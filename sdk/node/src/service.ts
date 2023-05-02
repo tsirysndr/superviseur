@@ -33,6 +33,11 @@ class Service {
     this.description = description;
     return this;
   }
+
+  withAutoRestart(autoRestart: boolean) {
+    this.autorestart = autoRestart;
+    return this;
+  }
 }
 
 export default Service;

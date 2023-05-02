@@ -1,3 +1,5 @@
+import { connect } from "../client.ts";
+
 if (import.meta.main) {
-  console.log("Hello, World!");
+  connect().projects();
 }

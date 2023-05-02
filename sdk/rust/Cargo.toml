@@ -3,6 +3,47 @@ name = "superviseur-client"
 version = "0.1.0"
 edition = "2021"
 
+[[example]]
+name = "create_project"
+path = "examples/create_project.rs"
+
+[[example]]
+name = "list_processes"
+path = "examples/list_processes.rs"
+
+[[example]]
+name = "list-projects"
+path = "examples/list_projects.rs"
+
+[[example]]
+name = "list_services"
+path = "examples/list_services.rs"
+
+[[example]]
+name = "restart_services"
+path = "examples/restart_services.rs"
+
+[[example]]
+name = "start_all"
+path = "examples/start_all.rs"
+
+[[example]]
+name = "start_service"
+path = "examples/start_service.rs"
+
+[[example]]
+name = "status"
+path = "examples/status.rs"
+
+[[example]]
+name = "stop_all"
+path = "examples/stop_all.rs"
+
+[[example]]
+name = "stop_service"
+path = "examples/stop_service.rs"
+
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]

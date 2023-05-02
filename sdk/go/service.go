@@ -16,8 +16,8 @@ type Service struct {
 	FloxEnvrionment *string
 }
 
-func (s *Service) New() *Service {
-	return nil
+func NewService() *Service {
+	return &Service{}
 }
 
 func (s *Service) WithName(name string) *Service {

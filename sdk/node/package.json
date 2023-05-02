@@ -6,7 +6,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "ex:create_project": "ts-node-esm src/examples/create_project.mts"
+    "ex:create_project": "ts-node src/examples/create_project.ts"
   },
   "author": "Tsiry Sandratraina",
   "license": "MIT",

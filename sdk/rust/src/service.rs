@@ -19,12 +19,6 @@ pub struct Service {
 }
 
 impl Service {
-    pub fn new() -> Service {
-        Service {
-            ..Default::default()
-        }
-    }
-
     pub fn with_name(mut self, name: &str) -> Service {
         self.name = name.to_string();
         self
@@ -93,5 +87,11 @@ impl Service {
     pub fn with_flox_enviroment(mut self, flox_enviroment: &str) -> Service {
         self.flox_enviroment = Some(flox_enviroment.to_string());
         self
+    }
+}
+
+pub fn new_service() -> Service {
+    Service {
+        ..Default::default()
     }
 }

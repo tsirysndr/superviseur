@@ -1,12 +1,17 @@
-import Service from "./service.mjs";
+import Service from "./service";
+import Client from "./client";
 
 class Project {
   name: string;
+  client: Client;
+  context: string;
   services: Service[];
 
-  constructor() {
+  constructor(client: Client) {
     this.name = "";
     this.services = [];
+    this.context = "";
+    this.client = client;
   }
 
   withName(name: string) {
@@ -14,12 +19,17 @@ class Project {
     return this;
   }
 
-  addService(service: Service): Project {
+  withContext(context: string) {
+    this.context = context;
+    return this;
+  }
+
+  withService(service: Service): Project {
     this.services.push(service);
     return this;
   }
 
-  list(): Service[] {
+  listServices(): Service[] {
     return [];
   }
 
@@ -32,6 +42,14 @@ class Project {
   restart(service?: string) {}
 
   status(service: string) {}
+
+  ps() {}
+
+  processes() {
+    this.ps();
+  }
+
+  stdout() {}
 }
 
 export default Project;
