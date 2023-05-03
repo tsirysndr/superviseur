@@ -1,7 +1,9 @@
-import { connect } from "../Client";
+import { connect } from "../client";
 
-function main() {
-  connect().project("deno-example").status("deno");
+async function main() {
+  const project = await connect().project("obese-ants");
+  const response = await project.status("happy-poison");
+  console.log(response);
 }
 
 main();

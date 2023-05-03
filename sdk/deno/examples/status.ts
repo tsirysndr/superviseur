@@ -1,5 +1,7 @@
 import { connect } from "../client.ts";
 
 if (import.meta.main) {
-  connect().project("deno-example").status("deno");
+  const project = await connect().project("obese-ants");
+  const status = await project.status("happy-poison");
+  console.log(status);
 }

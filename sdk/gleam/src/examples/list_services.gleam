@@ -3,6 +3,6 @@ import client.{connect, get_project}
 
 pub fn main() {
   connect()
-  |> get_project("test")
+  |> get_project("obese-ants")
   |> list_services()
 }

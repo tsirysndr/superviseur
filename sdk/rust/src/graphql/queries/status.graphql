@@ -1,0 +1,10 @@
+query Status($id: ID!) {
+  status(id: $id) {
+    name
+    serviceId
+    pid
+    project
+    state
+    upTime
+  }
+}

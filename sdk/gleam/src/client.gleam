@@ -1,8 +1,10 @@
 import gleam/io
 import project.{Project, new_project}
-import base.{Client}
+import base.{Client, send}
 import gleam/http.{Http, Post}
 import gleam/http/request
+import gleam/option.{None}
+import gleam/json.{object, string}
 
 pub fn connect() -> Client {
   io.println("Connecting to server...")
@@ -24,10 +26,26 @@ pub fn with_project(client: Client, name: String) -> Project {
 
 pub fn get_project(client: Client, id: String) -> Project {
   io.println("Fetching project...")
-  new_project(id, client)
+  let body =
+    object([
+      #(
+        "query",
+        string("query Project($id: ID!) { project(id: $id) { id name } }"),
+      ),
+      #("variables", object([#("id", string(id))])),
+    ])
+    |> json.to_string()
+  client
+  |> send(body)
+  Project(id, "", [], client, None)
 }
 
 pub fn projects(client: Client) -> List(String) {
   io.println("Fetching projects...")
+  let body =
+    object([#("query", string("query { projects { id name } }"))])
+    |> json.to_string()
+  client
+  |> send(body)
   []
 }

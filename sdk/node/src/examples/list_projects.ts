@@ -1,7 +1,8 @@
-import { connect } from "../Client";
+import { connect } from "../client";
 
-function main() {
-  connect().projects();
+async function main() {
+  const projects = await connect().projects();
+  console.log(projects);
 }
 
 main();

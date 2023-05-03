@@ -1,0 +1,5 @@
+query Logs($id: ID!, $projectId: ID!) {
+  logs(id: $id, projectId: $projectId) {
+    lines
+  }
+}

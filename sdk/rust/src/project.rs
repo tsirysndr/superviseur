@@ -1,4 +1,4 @@
-use crate::{client::Client, service::Service};
+use crate::{client::Client, query::build_nested_with_service_query, service::Service};
 
 #[derive(Default)]
 pub struct Project {
@@ -53,5 +53,13 @@ impl Project {
 
     pub fn logs(self, service_id: &str) {}
 
-    pub fn stdout(self) {}
+    pub fn stdout(self) {
+        build_nested_with_service_query(self.services);
+    }
+
+    pub fn add_env_var(self, service_id: &str, name: &str, value: &str) {}
+
+    pub fn remove_env_var(self, service_id: &str, name: &str) {}
+
+    pub fn update_env_var(self, service_id: &str, name: &str, value: &str) {}
 }

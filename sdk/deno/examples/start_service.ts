@@ -1,5 +1,6 @@
-import {connect} from "../client.ts";
+import { connect } from "../client.ts";
 
 if (import.meta.main) {
-  connect().project("deno-example").start("deno-fresh");
+  const project = await connect().project("obese-ants");
+  await project.start("deno-fresh");
 }

@@ -6,7 +6,16 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "ex:create_project": "ts-node src/examples/create_project.ts"
+    "ex:create_project": "ts-node src/examples/create_project.ts",
+    "ex:list_processes": "ts-node src/examples/list_processes.ts",
+    "ex:list_projects": "ts-node src/examples/list_projects.ts",
+    "ex:list_services": "ts-node src/examples/list_services.ts",
+    "ex:restart_all": "ts-node src/examples/restart_all.ts",
+    "ex:start_all": "ts-node src/examples/start_all.ts",
+    "ex:start_service": "ts-node src/examples/start_service.ts",
+    "ex:status": "ts-node src/examples/status.ts",
+    "ex:stop_all": "ts-node src/examples/stop_all.ts",
+    "ex:stop_service": "ts-node src/examples/stop_service.ts"
   },
   "author": "Tsiry Sandratraina",
   "license": "MIT",
@@ -18,6 +27,7 @@
     "typescript": "^5.0.4"
   },
   "dependencies": {
+    "graphql": "^16.6.0",
     "graphql-request": "^6.0.0"
   }
 }

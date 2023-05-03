@@ -1,5 +1,7 @@
 pub mod client;
+pub mod graphql;
 pub mod project;
+pub mod query;
 pub mod service;
 
 pub fn add(left: usize, right: usize) -> usize {

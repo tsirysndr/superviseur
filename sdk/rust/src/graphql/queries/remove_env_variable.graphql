@@ -1,0 +1,6 @@
+mutation DeleteEnvVar($projectId: ID!, $id: ID!, $name: String!) {
+  deleteEnvVar(projectId: $projectId, id: $id, name: $name) {
+    id
+    env
+  }
+}

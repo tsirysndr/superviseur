@@ -8,6 +8,11 @@ pub fn main() {
     |> with_name("deno-fresh")
     |> with_command("./dev.ts")
 
+  let angular =
+    new_service()
+    |> with_name("angular")
+    |> with_command("npm start")
+
   let project =
     connect()
     |> with_project("deno-example")
@@ -15,6 +20,7 @@ pub fn main() {
       "/Users/tsirysandratraina/Documents/GitHub/superviseur/examples/deno-fresh",
     )
     |> with_service(deno_fresh)
+    |> with_service(angular)
 
   project
   |> stdout()

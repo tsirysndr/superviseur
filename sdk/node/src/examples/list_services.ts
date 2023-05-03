@@ -1,7 +1,9 @@
-import { connect } from "../Client";
+import { connect } from "../client";
 
-function main() {
-  connect().project("deno-example").listServices();
+async function main() {
+  const project = await connect().project("obese-ants");
+  const services = await project.listServices();
+  console.log(services);
 }
 
 main();

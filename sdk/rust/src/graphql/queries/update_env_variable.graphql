@@ -1,0 +1,11 @@
+mutation UpdateEnvVar(
+  $projectId: ID!
+  $id: ID!
+  $name: String!
+  $value: String!
+) {
+  updateEnvVar(projectId: $projectId, id: $id, name: $name, value: $value) {
+    id
+    env
+  }
+}

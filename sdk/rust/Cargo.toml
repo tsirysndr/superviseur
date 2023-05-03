@@ -47,4 +47,7 @@ path = "examples/stop_service.rs"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+anyhow = "1.0.71"
+graphql_client = "0.12.0"
+serde = "1.0.160"
 surf = "2.3.2"
