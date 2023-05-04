@@ -2,6 +2,7 @@ package superviseur
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/machinebox/graphql"
 	"github.com/mitchellh/mapstructure"
@@ -32,6 +33,23 @@ func (p *Project) WithService(service *Service) *Project {
 }
 
 func (p *Project) Stdout() {
+	nestedQuery := BuildNestedQuery(p.services)
+	req := graphql.NewRequest(fmt.Sprintf(`
+		mutation NewProject($name: String!, $context: String!) {
+			newProject(name: $name, context: $context) {
+				%s
+			}
+		}
+	`, nestedQuery))
+	req.Var("name", p.Name)
+	req.Var("context", p.context)
+	ctx := context.Background()
+
+	var responseData map[string]interface{}
+
+	if err := p.client.client.Run(ctx, req, &responseData); err != nil {
+		panic(err)
+	}
 
 }
 

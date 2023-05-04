@@ -1,5 +1,6 @@
 import Service from "./service";
 import Client from "./client";
+import { buildNestedWithServiceQuery } from "./query";
 import { gql } from "graphql-request";
 
 class Project {
@@ -136,9 +137,23 @@ class Project {
 
   processes = this.ps;
 
-  stdout() {
-    const query = gql``;
-    this.client.send(query, {});
+  async stdout() {
+    if (this.services.length === 0) {
+      throw new Error("Project must have at least one service");
+    }
+    const nestedQuery = buildNestedWithServiceQuery(this.services);
+    const query = gql`
+      mutation NewProject($name: String!, $context: String!) {
+        newProject(name: $name, context: $context) {
+         ${nestedQuery}
+        }
+      }
+    `;
+    const response = await this.client.send(query, {
+      name: this.name,
+      context: this.context,
+    });
+    return response.newProject;
   }
 
   async addEnvVariable(serviceId: string, name: string, value: string) {

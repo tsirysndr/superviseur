@@ -5,6 +5,7 @@ pub struct ServiceConfiguration {
     pub name: String,
     pub description: Option<String>,
     pub command: String,
+    pub depends_on: Option<Vec<String>>,
     pub working_directory: Option<String>,
     pub r#type: Option<String>,
     pub log_file: Option<String>,

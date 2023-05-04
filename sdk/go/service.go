@@ -3,16 +3,17 @@ package superviseur
 type Service struct {
 	Name            string
 	Command         string
-	ExecType        string
-	WorkingDir      string
-	Description     string
+	ExecType        *string
+	WorkingDir      *string
+	Description     *string
 	Env             map[string]string
-	AutoStart       bool
-	AutoRestart     bool
-	Namespace       string
-	Stdout          string
-	Stderr          string
-	BuildCommand    string
+	DependsOn       []string
+	AutoStart       *bool
+	AutoRestart     *bool
+	Namespace       *string
+	Stdout          *string
+	Stderr          *string
+	BuildCommand    *string
 	FloxEnvrionment *string
 	EnableDocker    *bool
 	EnableNix       *bool
@@ -33,17 +34,17 @@ func (s *Service) WithCommand(command string) *Service {
 }
 
 func (s *Service) WithDescription(description string) *Service {
-	s.Description = description
+	s.Description = &description
 	return s
 }
 
 func (s *Service) WithExecType(execType string) *Service {
-	s.ExecType = execType
+	s.ExecType = &execType
 	return s
 }
 
 func (s *Service) WithWorkingDir(workingDir string) *Service {
-	s.WorkingDir = workingDir
+	s.WorkingDir = &workingDir
 	return s
 }
 
@@ -53,32 +54,32 @@ func (s *Service) WithEnv(env map[string]string) *Service {
 }
 
 func (s *Service) WithAutoStart(autoStart bool) *Service {
-	s.AutoStart = autoStart
+	s.AutoStart = &autoStart
 	return s
 }
 
 func (s *Service) WithAutoRestart(autoRestart bool) *Service {
-	s.AutoRestart = autoRestart
+	s.AutoRestart = &autoRestart
 	return s
 }
 
 func (s *Service) WithNamespace(namespace string) *Service {
-	s.Namespace = namespace
+	s.Namespace = &namespace
 	return s
 }
 
 func (s *Service) WithStdout(stdout string) *Service {
-	s.Stdout = stdout
+	s.Stdout = &stdout
 	return s
 }
 
 func (s *Service) WithStderr(stderr string) *Service {
-	s.Stderr = stderr
+	s.Stderr = &stderr
 	return s
 }
 
 func (s *Service) WithBuildCommand(buildCommand string) *Service {
-	s.BuildCommand = buildCommand
+	s.BuildCommand = &buildCommand
 	return s
 }
 

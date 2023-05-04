@@ -3,7 +3,8 @@ import Service from "../service.ts";
 
 if (import.meta.main) {
   const deno = new Service().withName("deno-fresh").withCommand("./dev.ts");
-  connect()
+
+  const response = await connect()
     .newProject()
     .withName("deno-example")
     .withContext(
@@ -11,4 +12,5 @@ if (import.meta.main) {
     )
     .withService(deno)
     .stdout();
+  console.log(response);
 }

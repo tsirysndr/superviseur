@@ -3,10 +3,7 @@ import Service from "../service";
 import { connect } from "../client";
 
 function main() {
-  const deno = new Service()
-    .withName("deno-fresh")
-    .withCommand("./dev.ts")
-    .withAutoRestart(true);
+  const deno = new Service().withName("deno-fresh").withCommand("./dev.ts");
 
   connect()
     .newProject()

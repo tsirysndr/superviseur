@@ -11,7 +11,10 @@ import (
 func TestCreateProject(t *testing.T) {
 	deno := sdk.NewService().
 		WithName("deno-fresh").
-		WithCommand("./dev.ts")
+		WithCommand("./dev.ts").
+		WithEnv(map[string]string{
+			"PORT": "8000",
+		})
 
 	client := sdk.Connect()
 	client.NewProject().

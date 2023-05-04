@@ -1,6 +1,7 @@
 import { connect } from "../client.ts";
 
 if (import.meta.main) {
-  const project = await connect().project("obese-ants");
-  await project.stop();
+  const project = await connect().project("near-suit");
+  const response = await project.stop();
+  console.log(response);
 }

@@ -1,24 +1,24 @@
 class Service {
   name: string;
   command: string;
-  execType: string;
-  workingDir: string;
-  description: string;
-  env: Map<string, string>;
-  autostart: boolean;
-  autorestart: boolean;
-  namespace: string;
-  stdout: string;
-  stderr: string;
-  buildCommand: string;
-  floxEnvironment: string;
+  execType?: string;
+  workingDir?: string;
+  description?: string;
+  env: { [key: string]: string };
+  dependsOn?: string[];
+  autostart?: boolean;
+  autorestart?: boolean;
+  namespace?: string;
+  stdout?: string;
+  stderr?: string;
+  buildCommand?: string;
+  floxEnvironment?: string;
   enableDocker?: boolean;
   enableNix?: boolean;
 
   constructor() {
     this.name = "";
     this.command = "";
-    this.description = "";
   }
 
   withName(name: string) {
@@ -38,6 +38,21 @@ class Service {
 
   withAutoRestart(autoRestart: boolean) {
     this.autorestart = autoRestart;
+    return this;
+  }
+
+  withDependsOn(dependsOn: string[]) {
+    this.dependsOn = dependsOn;
+    return this;
+  }
+
+  withWorkingDir(workingDir: string) {
+    this.workingDir = workingDir;
+    return this;
+  }
+
+  withEnv(env: { [key: string]: string }) {
+    this.env = env;
     return this;
   }
 

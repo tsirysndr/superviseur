@@ -1,4 +1,5 @@
 import Client from "./client.ts";
+import { buildNestedWithServiceQuery } from "./query.ts";
 import Service from "./service.ts";
 import { gql } from "https://raw.githubusercontent.com/ArtCodeStudio/graphql-request/main/mod.ts";
 
@@ -146,9 +147,23 @@ class Project {
 
   processes = this.ps;
 
-  stdout() {
-    let query = gql``;
-    this.client.send(query, {});
+  async stdout() {
+    if (this.services.length === 0) {
+      throw new Error("Project must have at least one service");
+    }
+    const nestedQuery = buildNestedWithServiceQuery(this.services);
+    const query = gql`
+      mutation NewProject($name: String!, $context: String!) {
+        newProject(name: $name, context: $context) {
+         ${nestedQuery}
+        }
+      }
+    `;
+    const response = await this.client.send(query, {
+      name: this.name,
+      context: this.context,
+    });
+    return response.newProject;
   }
 
   async addEnvVariable(serviceId: string, name: string, value: string) {

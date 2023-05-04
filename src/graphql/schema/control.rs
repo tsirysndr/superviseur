@@ -235,6 +235,14 @@ impl ControlMutation {
         };
 
         let mut config_map = config_map.lock().unwrap();
+        // check if project already exists by verifying if the context is already used
+        if config_map
+            .values()
+            .any(|c| c.context == Some(context.clone()))
+        {
+            return Err(Error::new("Project already exists with this context"));
+        }
+
         config_map.insert(id.clone(), config.clone());
         drop(config_map);
 

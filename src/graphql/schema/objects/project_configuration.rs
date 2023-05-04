@@ -95,6 +95,7 @@ impl ProjectConfiguration {
             autorestart: service.auto_restart.unwrap_or(false),
             autostart: service.auto_start.unwrap_or(false),
             env,
+            depends_on: service.depends_on.unwrap_or(vec![]),
             ..Default::default()
         };
         config.services.push(service);

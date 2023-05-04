@@ -15,7 +15,7 @@ pub fn build_nested_with_service_query(services: List(Service)) -> String {
       services,
       query,
       fn(acc, service) {
-        "withService(" <> build_params(service) <> ") { " <> acc <> " }"
+        "withService(service: { " <> build_params(service) <> " }) { " <> acc <> " }"
       },
     )
   sub_query
@@ -25,5 +25,7 @@ pub fn build_nested_with_service_query(services: List(Service)) -> String {
 fn build_params(service: Service) -> String {
   let params =
     "name: \"" <> service.name <> "\", command: \"" <> service.command <> "\""
+  // TODO: add env vars
+  // TODO: add dependencies
   params
 }

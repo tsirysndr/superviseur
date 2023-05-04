@@ -12,6 +12,11 @@ use crate::{
     project::Project,
 };
 
+#[derive(Debug, Serialize)]
+pub struct RawQuery {
+    pub query: String,
+}
+
 #[derive(Default, Clone)]
 pub struct Client {
     pub http_client: surf::Client,
@@ -65,6 +70,17 @@ impl Client {
         let mut response = self.http_client.post("/graphql").body_json(&body)?.await?;
         let response_body = response.body_json::<T>().await?;
         Ok(response_body)
+    }
+
+    pub async fn send_query(&self, body: &str) -> Result<String, Error> {
+        let mut response = self
+            .http_client
+            .post("/graphql")
+            .body_json(&RawQuery {
+                query: body.to_string(),
+            })?
+            .await?;
+        Ok(response.body_string().await?)
     }
 }
 

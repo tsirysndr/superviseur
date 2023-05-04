@@ -187,7 +187,18 @@ impl Project {
     }
 
     pub async fn stdout(self) -> Result<(), Error> {
-        build_nested_with_service_query(self.services);
+        let nested_query = build_nested_with_service_query(self.services);
+        let query = format!(
+            r#"
+        mutation {{
+            newProject(name: "{}", context: "{}") {{
+                {}
+            }}
+        }}
+        "#,
+            self.name, self.context, nested_query
+        );
+        self.client.send_query(&query).await?;
         Ok(())
     }
 
