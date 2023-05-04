@@ -1,14 +1,20 @@
-use graphql_client::GraphQLQuery;
-use surf::Error;
+use std::time::Duration;
+
+use crate::graphql::query::project_query::ProjectQueryProject;
+use graphql_client::{GraphQLQuery, Response};
+use serde::{de::DeserializeOwned, Serialize};
+use surf::{Config, Error, Url};
+
+const BASE_URL: &str = "http://localhost:5478";
 
 use crate::{
-    graphql::query::{self, project as project_query},
+    graphql::query::{self, project_query, projects_query},
     project::Project,
 };
 
 #[derive(Default, Clone)]
 pub struct Client {
-    http_client: surf::Client,
+    pub http_client: surf::Client,
 }
 
 impl Client {
@@ -24,22 +30,49 @@ impl Client {
         let variables = project_query::Variables {
             id: name.to_string(),
         };
-        let body = query::Project::build_query(variables);
-        self.http_client.post("/graphql").body_json(&body)?.await?;
-
+        let body = query::ProjectQuery::build_query(variables);
+        let response_body = self
+            .execute_query::<Response<project_query::ResponseData>>(&body)
+            .await?;
+        let p: ProjectQueryProject = response_body.data.expect("missing response data").project;
         Ok(Project {
             client: self.clone(),
-            name: name.to_string(),
-            ..Default::default()
+            ..Project::from(p)
         })
     }
 
-    pub fn projects(&self) -> Vec<Project> {
-        vec![]
+    pub async fn projects(&self) -> Result<Vec<Project>, Error> {
+        let variables = projects_query::Variables {};
+        let body = query::ProjectsQuery::build_query(variables);
+        let response_body = self
+            .execute_query::<Response<projects_query::ResponseData>>(&body)
+            .await?;
+        let projects = response_body.data.expect("missing response data").projects;
+
+        Ok(projects
+            .into_iter()
+            .map(|p| Project {
+                client: self.clone(),
+                ..Project::from(p)
+            })
+            .collect())
+    }
+
+    pub async fn execute_query<T: DeserializeOwned>(
+        &self,
+        body: &impl Serialize,
+    ) -> Result<T, Error> {
+        let mut response = self.http_client.post("/graphql").body_json(&body)?.await?;
+        let response_body = response.body_json::<T>().await?;
+        Ok(response_body)
     }
 }
 
 pub fn connect() -> Client {
-    let http_client = surf::Client::new();
+    let http_client = Config::new()
+        .set_base_url(Url::parse(BASE_URL).unwrap())
+        .set_timeout(Some(Duration::from_secs(5)))
+        .try_into()
+        .unwrap();
     Client { http_client }
 }

@@ -6,7 +6,7 @@ use graphql_client::GraphQLQuery;
     query_path = "src/graphql/queries/get_project.graphql",
     response_derives = "Debug"
 )]
-pub struct Project;
+pub struct ProjectQuery;
 
 #[derive(GraphQLQuery)]
 #[graphql(
@@ -14,7 +14,15 @@ pub struct Project;
     query_path = "src/graphql/queries/list_projects.graphql",
     response_derives = "Debug"
 )]
-pub struct Projects;
+pub struct ProjectsQuery;
+
+#[derive(GraphQLQuery)]
+#[graphql(
+    schema_path = "src/graphql/schema.json",
+    query_path = "src/graphql/queries/list_services.graphql",
+    response_derives = "Debug"
+)]
+pub struct ServicesQuery;
 
 #[derive(GraphQLQuery)]
 #[graphql(
@@ -46,7 +54,7 @@ pub struct DeleteEnvVar;
     query_path = "src/graphql/queries/processes.graphql",
     response_derives = "Debug"
 )]
-pub struct Processes;
+pub struct ProcessesQuery;
 
 #[derive(GraphQLQuery)]
 #[graphql(
@@ -54,7 +62,7 @@ pub struct Processes;
     query_path = "src/graphql/queries/logs.graphql",
     response_derives = "Debug"
 )]
-pub struct Logs;
+pub struct LogsQuery;
 
 #[derive(GraphQLQuery)]
 #[graphql(
@@ -86,7 +94,7 @@ pub struct RestartService;
     query_path = "src/graphql/queries/status.graphql",
     response_derives = "Debug"
 )]
-pub struct Status;
+pub struct StatusQuery;
 
 #[derive(GraphQLQuery)]
 #[graphql(

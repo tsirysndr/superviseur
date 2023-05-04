@@ -1,5 +1,8 @@
 use superviseur_client::client::connect;
 
-fn main() {
-    connect().project("deno-example").start("deno-fresh");
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let project = connect().project("obese-ants").await?;
+    project.start("").await?;
+    Ok(())
 }

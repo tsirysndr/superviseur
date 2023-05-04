@@ -3,6 +3,7 @@ pub mod graphql;
 pub mod project;
 pub mod query;
 pub mod service;
+pub mod types;
 
 pub fn add(left: usize, right: usize) -> usize {
     left + right

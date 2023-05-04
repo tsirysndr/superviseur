@@ -1,4 +1,4 @@
-query Processes {
+query ProcessesQuery {
   processes {
     name
     pid
