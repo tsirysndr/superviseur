@@ -195,10 +195,26 @@ pub fn logs(project: Project, service: String) {
 }
 
 pub fn stdout(project: Project) {
-  io.println(build_nested_with_service_query(project.services))
+  let nested_query = build_nested_with_service_query(project.services)
+
+  let context = case project.context {
+    Some(context) -> context
+    None -> "default"
+  }
 
   let body =
-    object([#("query", string("query Projects { projects { id name } }"))])
+    object([
+      #(
+        "query",
+        string(
+          "mutation NewProject($name: String!, $context: String!) { newProject(name: $name, context: $context) {" <> nested_query <> " } }",
+        ),
+      ),
+      #(
+        "variables",
+        object([#("name", string(project.name)), #("context", string(context))]),
+      ),
+    ])
     |> json.to_string()
   project.client
   |> send(body)

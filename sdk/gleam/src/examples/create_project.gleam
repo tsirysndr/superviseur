@@ -1,5 +1,5 @@
 import project.{stdout, with_context, with_service}
-import service.{new_service, with_command, with_name}
+import service.{new_service, with_command, with_env, with_name}
 import client.{connect, with_project}
 
 pub fn main() {
@@ -7,11 +7,7 @@ pub fn main() {
     new_service()
     |> with_name("deno-fresh")
     |> with_command("./dev.ts")
-
-  let angular =
-    new_service()
-    |> with_name("angular")
-    |> with_command("npm start")
+    |> with_env(["PORT=8000"])
 
   let project =
     connect()
@@ -20,7 +16,6 @@ pub fn main() {
       "/Users/tsirysandratraina/Documents/GitHub/superviseur/examples/deno-fresh",
     )
     |> with_service(deno_fresh)
-    |> with_service(angular)
 
   project
   |> stdout()
