@@ -12,7 +12,7 @@ name = "list_processes"
 path = "examples/list_processes.rs"
 
 [[example]]
-name = "list-projects"
+name = "list_projects"
 path = "examples/list_projects.rs"
 
 [[example]]

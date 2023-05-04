@@ -4,6 +4,8 @@ import (
 	"context"
 
 	"github.com/machinebox/graphql"
+	"github.com/mitchellh/mapstructure"
+	"github.com/tsirysndr/superviseur-go/types"
 )
 
 type Client struct {
@@ -43,14 +45,21 @@ func (c *Client) Project(ID string) *Project {
 		panic(err)
 	}
 
+	var p types.Project
+
+	if err := mapstructure.Decode(responseData["project"], &p); err != nil {
+		panic(err)
+	}
+
 	return &Project{
-		Name:     "",
+		ID:       &p.ID,
+		Name:     p.Name,
 		services: []Service{},
 		client:   c,
 	}
 }
 
-func (c *Client) Projects() {
+func (c *Client) Projects() []types.Project {
 	req := graphql.NewRequest(`
 		query Projects {
 			projects {
@@ -67,4 +76,12 @@ func (c *Client) Projects() {
 	if err := c.client.Run(ctx, req, &responseData); err != nil {
 		panic(err)
 	}
+
+	var projects []types.Project
+
+	if err := mapstructure.Decode(responseData["projects"], &projects); err != nil {
+		panic(err)
+	}
+
+	return projects
 }
