@@ -2,6 +2,7 @@ package examples
 
 import (
 	"fmt"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -16,10 +17,15 @@ func TestCreateProject(t *testing.T) {
 			"PORT": "8000",
 		})
 
+	projectDir, err := filepath.Abs("../../../examples/deno-fresh")
+	if err != nil {
+		panic(err)
+	}
+
 	client := sdk.Connect()
 	client.NewProject().
 		WithName("deno-example").
-		WithContext("/Users/tsirysandratraina/Documents/GitHub/superviseur/examples/deno-fresh").
+		WithContext(projectDir).
 		WithService(deno).
 		Stdout()
 	assert.Nil(nil, nil)
