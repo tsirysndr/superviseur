@@ -1,16 +1,11 @@
-use std::collections::HashMap;
-
 use superviseur_client::{client::connect, service::new_service};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let mut env = HashMap::new();
-    env.insert("PORT".to_string(), "8000".to_string());
-
     let deno_fresh = new_service()
         .with_name("deno-fresh")
         .with_command("./dev.ts")
-        .with_env(env);
+        .with_env("PORT", "8000");
 
     connect()
         .new_project("deno-example")

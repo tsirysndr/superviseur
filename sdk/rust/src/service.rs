@@ -51,8 +51,8 @@ impl Service {
         self
     }
 
-    pub fn with_env(mut self, env: HashMap<String, String>) -> Service {
-        self.env = env;
+    pub fn with_env(mut self, name: &str, value: &str) -> Service {
+        self.env.insert(name.to_string(), value.to_string());
         self
     }
 
