@@ -99,7 +99,7 @@ impl ProjectConfiguration {
             port: service.port,
             ..Default::default()
         };
-        config.services.push(service);
+        config.services.insert(service.name.clone(), service);
 
         Ok(&self)
     }
@@ -129,11 +129,11 @@ impl ProjectConfiguration {
         let mut services = services.into_iter();
 
         // convert services dependencies to ids
-        for service in &mut config.services {
+        for (_, service) in &mut config.services {
             let mut dependencies = vec![];
             for dependency in &service.depends_on {
-                match services.find(|s| s.name == *dependency) {
-                    Some(service) => {
+                match services.find(|(name, _)| *name == *dependency) {
+                    Some((_, service)) => {
                         dependencies.push(service.id.clone().unwrap());
                     }
                     None => {
@@ -144,7 +144,7 @@ impl ProjectConfiguration {
             service.dependencies = dependencies;
         }
 
-        for service in services.into_iter() {
+        for (_, service) in services.into_iter() {
             cmd_tx.send(SuperviseurCommand::Load(service, config.project.clone()))?;
         }
 
@@ -153,7 +153,7 @@ impl ProjectConfiguration {
         futures::executor::block_on_stream(SimpleBroker::<AllServicesStarted>::subscribe()).next();
 
         let mut stdout = vec![];
-        for service in &config.services {
+        for (_, service) in &config.services {
             // loop while the file does not exist
             while !Path::new(&service.stdout).exists() {
                 sleep(Duration::from_secs(2));

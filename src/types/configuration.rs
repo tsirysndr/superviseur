@@ -1,3 +1,4 @@
+use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -10,6 +11,7 @@ pub enum ConfigFormat {
 pub struct Service {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub id: Option<String>,
+    #[serde(skip_serializing, skip_deserializing)]
     pub name: String,
     pub r#type: String, // docker, podman, exec, wasm
     pub command: String,
@@ -41,8 +43,10 @@ pub struct Service {
 #[derive(Serialize, Deserialize, Debug, Default, Clone)]
 pub struct ConfigurationData {
     pub project: String,
+    #[serde(skip_serializing, skip_deserializing)]
     pub context: Option<String>,
-    pub services: Vec<Service>,
+    #[serde(rename = "service", serialize_with = "hcl::ser::labeled_block")]
+    pub services: IndexMap<String, Service>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

@@ -30,6 +30,7 @@ fn display_command(command: &str) -> String {
 
 fn display_port(port: &Option<u32>) -> String {
     match port {
+        Some(0) => "-".to_string(),
         Some(port) => port.clone().to_string(),
         None => "-".to_string(),
     }

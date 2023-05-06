@@ -113,7 +113,6 @@ impl DriverPlugin for Driver {
             .unwrap();
 
         let mut processes = self.processes.lock().unwrap();
-
         let mut process = &mut processes
             .iter_mut()
             .find(|(p, key)| p.name == self.service.name && key == &project)

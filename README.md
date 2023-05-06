@@ -105,25 +105,22 @@ Start by initializing a new project. This will create a `Superfile.hcl` file in 
 
 ```hcl
 project = "demo"
-services = [
-  {
-    "name" = "demo"
-    "type" = "exec"
-    "command" = "ping $GITHUB_DOMAIN"
-    "working_dir" = "/tmp"
-    "description" = "Ping Service Example"
-    "depends_on" = []
-    "env" = {
-      "GITHUB_DOMAIN" = "github.com"
-    }
-    "autostart" = true
-    "autorestart" = false
-    "namespace" = "demo_namespace"
-    "port" = 5060
-    "stdout" = "/tmp/demo-stdout.log"
-    "stderr" = "/tmp/demo-stderr.log"
+
+service "demo" {
+  type = "exec"
+  command = "ping $GITHUB_DOMAIN"
+  working_dir = "/tmp"
+  description = "Ping Service Example"
+  depends_on = []
+  env = {
+    "GITHUB_DOMAIN" = "github.com"
   }
-]
+  autostart = true
+  autorestart = false
+  namespace = "demo_namespace"
+  stdout = "/tmp/demo-stdout.log"
+  stderr = "/tmp/demo-stderr.log"
+}
 ```
 
 ### Start the service

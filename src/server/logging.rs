@@ -67,10 +67,10 @@ impl LoggingService for Logging {
 
         let config = config_map.get(&project_id).unwrap();
 
-        let service = config
+        let (_, service) = config
             .services
             .iter()
-            .find(|s| s.name == name)
+            .find(|(_, s)| s.name == name)
             .ok_or_else(|| tonic::Status::not_found("Service not found"))?;
 
         let log_file =
@@ -136,10 +136,10 @@ impl LoggingService for Logging {
 
         let config = config_map.get(&project_id).unwrap();
 
-        let service = config
+        let (_, service) = config
             .services
             .iter()
-            .find(|s| s.name == name)
+            .find(|(_, s)| s.name == name)
             .ok_or_else(|| tonic::Status::not_found("Service not found"))?;
 
         let log_file =

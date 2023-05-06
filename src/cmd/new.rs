@@ -1,5 +1,6 @@
 use std::{collections::HashMap, io::Write};
 
+use indexmap::IndexMap;
 use owo_colors::OwoColorize;
 
 use crate::types::configuration::{ConfigFormat, ConfigurationData, Service};
@@ -8,10 +9,10 @@ pub fn execute_new(cfg_format: ConfigFormat) {
     let mut env = HashMap::new();
     env.insert("GITHUB_DOMAIN".to_string(), "github.com".to_string());
 
-    let config = ConfigurationData {
-        project: "demo".to_string(),
-        context: None,
-        services: vec![Service {
+    let mut services = IndexMap::new();
+    services.insert(
+        String::from("demo"),
+        Service {
             id: None,
             name: "demo".to_string(),
             r#type: "exec".to_string(),
@@ -32,7 +33,13 @@ pub fn execute_new(cfg_format: ConfigFormat) {
             wait_for: None,
             flox: None,
             build: None,
-        }],
+        },
+    );
+
+    let config = ConfigurationData {
+        project: "demo".to_string(),
+        context: None,
+        services,
     };
     let serialized = match cfg_format {
         ConfigFormat::HCL => hcl::to_string(&config).unwrap(),
