@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package superviseur.v1alpha1;
+
+import "objects/v1alpha1/project.proto";
+
+message ListProjectsRequest {
+  string filter = 1;
+}
+
+message ListProjectsResponse {
+  repeated objects.v1alpha1.Project projects = 1;
+}
+
+message GetProjectRequest {
+  string id = 1;
+}
+
+message GetProjectResponse {
+  objects.v1alpha1.Project project = 1;
+}
+
+service ProjectService {
+  rpc ListProjects(ListProjectsRequest) returns (ListProjectsResponse);
+  rpc GetProject(GetProjectRequest) returns (GetProjectResponse);
+}

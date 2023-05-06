@@ -1,0 +1,11 @@
+mutation CreateEnvVar(
+  $projectId: ID!
+  $id: ID!
+  $name: String!
+  $value: String!
+) {
+  createEnvVar(projectId: $projectId, id: $id, name: $name, value: $value) {
+    id
+    env
+  }
+}

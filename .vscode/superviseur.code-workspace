@@ -11,6 +11,21 @@
 		},
 		{
 			"path": "../examples"
+		},
+		{
+			"path": "../sdk/deno"
+		},
+		{
+			"path": "../sdk/gleam"
+		},
+		{
+			"path": "../sdk/go"
+		},
+		{
+			"path": "../sdk/node"
+		},
+		{
+			"path": "../sdk/rust"
 		}
 	],
 	"settings": {}

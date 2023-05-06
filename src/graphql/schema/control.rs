@@ -7,6 +7,7 @@ use std::{
 
 use async_graphql::{Context, Error, Object, Subscription, ID};
 use futures_util::Stream;
+use names::Generator;
 use tokio::sync::mpsc;
 
 use crate::{
@@ -18,6 +19,7 @@ use crate::{
 use super::objects::{
     process::Process,
     project::Project,
+    project_configuration::ProjectConfiguration,
     service::Service,
     subscriptions::{
         AllServicesRestarted, AllServicesStarted, AllServicesStopped, ServiceRestarted,
@@ -60,13 +62,11 @@ impl ControlQuery {
         let projects = config_map
             .iter()
             .map(|(id, config)| {
-                let config_path = project_map
-                    .clone()
-                    .into_iter()
-                    .find(|(_, v)| v == id)
-                    .unwrap()
-                    .0
-                    .clone();
+                let config_path = match project_map.clone().into_iter().find(|(_, v)| v == id) {
+                    Some((k, _)) => Some(k),
+                    None => None,
+                };
+
                 Project {
                     id: ID(id.clone()),
                     name: config.project.clone(),
@@ -128,13 +128,14 @@ impl ControlQuery {
 
         match config_map.get(&project_id) {
             Some(config) => {
-                let config_path = project_map
+                let config_path = match project_map
                     .clone()
                     .into_iter()
                     .find(|(_, v)| v == &project_id)
-                    .unwrap()
-                    .0
-                    .clone();
+                {
+                    Some((k, _)) => Some(k),
+                    None => None,
+                };
 
                 Ok(Project {
                     id: ID(project_id),
@@ -215,6 +216,44 @@ pub struct ControlMutation;
 
 #[Object]
 impl ControlMutation {
+    async fn new_project(
+        &self,
+        ctx: &Context<'_>,
+        name: String,
+        context: String,
+    ) -> Result<ProjectConfiguration, Error> {
+        let config_map = ctx
+            .data::<Arc<Mutex<HashMap<String, ConfigurationData>>>>()
+            .unwrap();
+
+        let mut generator = Generator::default();
+        let id = generator.next().unwrap();
+        let config = ConfigurationData {
+            project: name.clone(),
+            services: vec![],
+            context: Some(context.clone()),
+        };
+
+        let mut config_map = config_map.lock().unwrap();
+        // check if project already exists by verifying if the context is already used
+        if config_map
+            .values()
+            .any(|c| c.context == Some(context.clone()))
+        {
+            return Err(Error::new("Project already exists with this context"));
+        }
+
+        config_map.insert(id.clone(), config.clone());
+        drop(config_map);
+
+        return Ok(ProjectConfiguration {
+            id: ID(id),
+            name,
+            context,
+            ..Default::default()
+        });
+    }
+
     async fn start(
         &self,
         ctx: &Context<'_>,

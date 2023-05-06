@@ -1,0 +1,5 @@
+mutation RestartAllServices($projectId: ID!) {
+  restart(projectId: $projectId) {
+    pid
+  }
+}

@@ -1,0 +1,5 @@
+mutation StopAllServices($projectId: ID!) {
+  stop(projectId: $projectId) {
+    pid
+  }
+}

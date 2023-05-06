@@ -102,8 +102,6 @@ pub struct Process {
     #[tabled(skip)]
     pub working_dir: String,
     #[tabled(skip)]
-    pub port: Option<u16>,
-    #[tabled(skip)]
     pub env: HashMap<String, String>,
     #[tabled(skip)]
     pub project: String,
@@ -117,6 +115,8 @@ pub struct Process {
     pub stderr: String,
     #[tabled(rename = "SERVICE_ID")]
     pub service_id: String,
+    #[tabled(rename = "PORT", display_with = "display_port")]
+    pub port: Option<u32>,
 }
 
 fn display_option<T: ToString>(value: &Option<T>) -> String {
@@ -155,4 +155,11 @@ pub fn format_duration(duration: Duration) -> String {
     }
     let days = duration.num_days();
     format!("{} {} ago", days, if days == 1 { "day" } else { "days" })
+}
+
+fn display_port(port: &Option<u32>) -> String {
+    match port {
+        Some(port) => port.clone().to_string(),
+        None => "-".to_string(),
+    }
 }

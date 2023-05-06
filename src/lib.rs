@@ -32,6 +32,7 @@ pub mod api {
                     depends_on: self.depends_on,
                     command: self.command,
                     r#type: self.r#type,
+                    port: Some(self.port as u32),
                     ..Default::default()
                 }
             }
@@ -45,6 +46,7 @@ pub mod api {
                     depends_on: service.depends_on,
                     command: service.command,
                     r#type: service.r#type,
+                    port: service.port.unwrap_or_default() as i32,
                     ..Default::default()
                 }
             }
@@ -76,6 +78,7 @@ pub mod api {
                     auto_restart: self.auto_restart,
                     env,
                     service_id: self.service_id,
+                    port: Some(self.port as u32),
                     ..Default::default()
                 }
             }
@@ -102,6 +105,7 @@ pub mod api {
                     auto_restart: process.auto_restart,
                     env,
                     service_id: process.service_id,
+                    port: process.port.unwrap_or_default() as i32,
                     ..Default::default()
                 }
             }

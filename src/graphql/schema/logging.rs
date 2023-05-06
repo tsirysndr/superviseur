@@ -13,14 +13,12 @@ use tokio_stream::StreamExt;
 use crate::{
     graphql::{schema::objects::subscriptions::TailLogStream, simple_broker::SimpleBroker},
     types::configuration::ConfigurationData,
+    util::read_lines,
 };
 
-use super::{
-    get_project_id,
-    objects::{
-        log::Log,
-        subscriptions::{self, LogStream},
-    },
+use super::objects::{
+    log::Log,
+    subscriptions::{self, LogStream},
 };
 
 #[derive(Default, Clone)]
@@ -90,15 +88,7 @@ impl LoggingQuery {
             .find(|s| s.id == Some(id.to_string()))
             .ok_or_else(|| Error::new("Service not found"))?;
 
-        let log_file = File::open(&service.stdout).map_err(|e| Error::new(e.to_string()))?;
-
-        let reader = BufReader::new(log_file);
-
-        let mut lines = vec![];
-        for line in reader.lines() {
-            let line = line.map_err(|e| Error::new(e.to_string()))?;
-            lines.push(line);
-        }
+        let lines = read_lines(&service.stdout)?;
 
         Ok(Log { lines })
     }

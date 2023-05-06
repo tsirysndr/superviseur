@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "outDir": "dist",
+    "lib": ["ES2020", "DOM"],
+    "module": "nodenext", /* Specify what module code is generated. */
+    "target": "ES2020",
+    "moduleResolution": "node",
+    "skipLibCheck": true,
+    "allowImportingTsExtensions": false,
+    "emitDeclarationOnly": false,
+    "declaration": true
+  }
+}

@@ -210,6 +210,7 @@ impl SuperviseurInternal {
             process.auto_restart = service.autorestart;
             process.stdout = service.stdout;
             process.stderr = service.stderr;
+            process.port = service.port;
             return Ok(());
         }
 
@@ -335,6 +336,8 @@ impl SuperviseurInternal {
             .next()
             .ok_or(anyhow::anyhow!("Project {} not found", project))?;
         graph.start_services();
+        let services = self.get_project_services(&project)?;
+        SimpleBroker::publish(AllServicesStarted { payload: services });
         Ok(())
     }
 

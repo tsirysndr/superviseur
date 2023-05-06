@@ -19,6 +19,7 @@ pub struct Process {
     pub env: Vec<String>,
     pub state: String,
     pub up_time: String,
+    pub port: Option<u32>,
 }
 
 #[Object]

@@ -1,0 +1,5 @@
+mutation StartAllServices($projectId: ID!) {
+  start(projectId: $projectId) {
+    pid
+  }
+}

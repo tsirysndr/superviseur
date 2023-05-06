@@ -1,0 +1,10 @@
+query ProcessesQuery {
+  processes {
+    name
+    pid
+    project
+    serviceId
+    command
+    upTime
+  }
+}

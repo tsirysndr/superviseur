@@ -31,7 +31,7 @@ struct Vertex {
     autostart: bool,
     autorestart: bool,
     namespace: Option<String>,
-    port: Option<u16>,
+    port: Option<u32>,
     stdout: String,
     stderr: String,
     driver: Box<dyn DriverPlugin + Send>,

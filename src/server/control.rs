@@ -99,6 +99,9 @@ impl ControlService for Control {
         let mut config: ConfigurationData =
             hcl::from_str(&config).map_err(|e| tonic::Status::internal(e.to_string()))?;
 
+        // get directory of the config file
+        config.context = Some(path.clone());
+
         let (project_id, is_new_config) =
             self.insert_config_and_get_project_id(path.clone(), config.clone());
         let mut generator = Generator::default();
@@ -393,6 +396,7 @@ impl ControlService for Control {
                 auto_restart: service.autorestart,
                 stdout: service.stdout.clone(),
                 stderr: service.stderr.clone(),
+                port: service.port,
                 ..Default::default()
             });
         Ok(Response::new(StatusResponse {

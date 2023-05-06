@@ -4,7 +4,7 @@ use async_graphql::{Object, ID};
 pub struct Project {
     pub id: ID,
     pub name: String,
-    pub config_path: String,
+    pub config_path: Option<String>,
 }
 
 #[Object]
@@ -17,7 +17,7 @@ impl Project {
         &self.name
     }
 
-    async fn config_path(&self) -> &str {
-        &self.config_path
+    async fn config_path(&self) -> Option<&str> {
+        self.config_path.as_deref()
     }
 }

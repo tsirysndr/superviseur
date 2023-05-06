@@ -27,7 +27,7 @@ pub struct Service {
     pub autorestart: bool,
     pub namespace: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub port: Option<u16>,
+    pub port: Option<u32>,
     pub stdout: String,
     pub stderr: String,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -41,6 +41,7 @@ pub struct Service {
 #[derive(Serialize, Deserialize, Debug, Default, Clone)]
 pub struct ConfigurationData {
     pub project: String,
+    pub context: Option<String>,
     pub services: Vec<Service>,
 }
 

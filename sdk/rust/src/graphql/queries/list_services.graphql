@@ -1,0 +1,8 @@
+query ServicesQuery($projectId: ID!) {
+  services(projectId: $projectId) {
+    id
+    name
+    command
+    status
+  }
+}
