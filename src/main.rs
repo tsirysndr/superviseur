@@ -8,6 +8,7 @@ use superviseur::{
         list::execute_list,
         log::execute_log,
         new::execute_new,
+        preview::execute_preview,
         project::{execute_get_project, execute_list_projects},
         ps::execute_ps,
         restart::execute_restart,
@@ -117,6 +118,11 @@ A simple process supervisor"#,
                 )
             .about("Manage projects")
         )
+        .subcommand(
+            Command::new("preview")
+                .arg(arg!(<name> "The name of the service to preview"))
+                .about("Open URL of a service in the browser"),   
+        )
 }
 
 #[tokio::main]
@@ -187,6 +193,10 @@ async fn main() -> Result<(), Error> {
             Some(("list", _)) => execute_list_projects().await?,
             _ => SubCommand::with_name("project").print_help()?,
         },
+        Some(("preview", args)) => {
+            let name = args.value_of("name");
+            execute_preview(name.unwrap()).await?;
+        }
         _ => cli().print_help()?,
     }
     Ok(())

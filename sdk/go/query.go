@@ -26,6 +26,10 @@ func BuildParams(service Service) string {
 		params = fmt.Sprintf(`%s command: "%s", `, params, service.Command)
 	}
 
+	if service.Port != nil {
+		params = fmt.Sprintf(`%s port: %d, `, params, *service.Port)
+	}
+
 	if len(service.Env) > 0 {
 		env := ""
 		for key, value := range service.Env {

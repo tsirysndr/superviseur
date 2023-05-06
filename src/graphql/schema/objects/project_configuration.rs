@@ -96,6 +96,7 @@ impl ProjectConfiguration {
             autostart: service.auto_start.unwrap_or(false),
             env,
             depends_on: service.depends_on.unwrap_or(vec![]),
+            port: service.port,
             ..Default::default()
         };
         config.services.push(service);

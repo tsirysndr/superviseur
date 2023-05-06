@@ -17,6 +17,7 @@ type Service struct {
 	FloxEnvrionment *string
 	EnableDocker    *bool
 	EnableNix       *bool
+	Port            *int
 }
 
 func NewService() *Service {
@@ -95,5 +96,10 @@ func (s *Service) WithEnableDocker(enableDocker *bool) *Service {
 
 func (s *Service) WithEnableNix(enableNix *bool) *Service {
 	s.EnableNix = enableNix
+	return s
+}
+
+func (s *Service) WithPort(port int) *Service {
+	s.Port = &port
 	return s
 }

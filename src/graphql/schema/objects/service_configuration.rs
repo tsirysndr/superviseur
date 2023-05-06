@@ -17,4 +17,5 @@ pub struct ServiceConfiguration {
     pub enable_flox: Option<bool>,
     pub enable_nix: Option<bool>,
     pub flox_enviroment: Option<String>,
+    pub port: Option<u32>,
 }

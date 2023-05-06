@@ -13,6 +13,7 @@ services = [
     "namespace" = "demo_namespace"
     "stdout" = "/tmp/angular-stdout.log"
     "stderr" = "/tmp/angular-stderr.log"
+    "port" = 4200
     flox = {
       "environment" = ".#angular"
     }

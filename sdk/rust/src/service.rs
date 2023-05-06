@@ -18,6 +18,7 @@ pub struct Service {
     pub flox_enviroment: Option<String>,
     pub enable_docker: Option<bool>,
     pub enable_nix: Option<bool>,
+    pub port: Option<u32>,
 }
 
 impl Service {

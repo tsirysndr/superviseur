@@ -12,7 +12,7 @@ pub type Service {
     auto_restart: Bool,
     auto_start: Bool,
     namespace: String,
-    port: Int,
+    port: Option(Int),
     stdout: String,
     stderr: String,
     flox: Option(Flox),
@@ -33,7 +33,7 @@ pub fn new_service() -> Service {
     False,
     False,
     "default",
-    0,
+    None,
     "",
     "",
     None,
@@ -80,7 +80,7 @@ pub fn with_namespace(service: Service, namespace: String) -> Service {
 }
 
 pub fn with_port(service: Service, port: Int) -> Service {
-  Service(..service, port: port)
+  Service(..service, port: Some(port))
 }
 
 pub fn with_stdout(service: Service, stdout: String) -> Service {

@@ -210,6 +210,7 @@ impl SuperviseurInternal {
             process.auto_restart = service.autorestart;
             process.stdout = service.stdout;
             process.stderr = service.stderr;
+            process.port = service.port;
             return Ok(());
         }
 

@@ -12,4 +12,5 @@ message Service {
   string status = 7;
   repeated string depends_on = 8;
   bool auto_restart = 9;
+  int32 port = 10;
 }

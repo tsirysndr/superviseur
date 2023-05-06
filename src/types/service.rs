@@ -16,6 +16,8 @@ pub struct Service {
     pub description: String,
     #[tabled(skip)]
     pub depends_on: Vec<String>,
+    #[tabled(rename = "PORT", display_with = "display_port")]
+    pub port: Option<u32>,
 }
 
 fn display_command(command: &str) -> String {
@@ -23,5 +25,12 @@ fn display_command(command: &str) -> String {
         format!("\"{}...\"", &command[..20])
     } else {
         format!("\"{}\"", command.to_string())
+    }
+}
+
+fn display_port(port: &Option<u32>) -> String {
+    match port {
+        Some(port) => port.clone().to_string(),
+        None => "-".to_string(),
     }
 }

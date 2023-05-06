@@ -396,6 +396,7 @@ impl ControlService for Control {
                 auto_restart: service.autorestart,
                 stdout: service.stdout.clone(),
                 stderr: service.stderr.clone(),
+                port: service.port,
                 ..Default::default()
             });
         Ok(Response::new(StatusResponse {

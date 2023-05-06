@@ -27,6 +27,10 @@ fn build_params(service: Service) -> String {
         params = format!(r#"{} command: "{}", "#, params, service.command);
     }
 
+    if service.port.is_some() {
+        params = format!(r#"{} port: {}, "#, params, service.port.unwrap());
+    }
+
     if !service.r#type.is_empty() {
         params = format!(r#"{} type: "{}", "#, params, service.r#type);
     }

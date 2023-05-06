@@ -20,6 +20,8 @@ pub struct Service {
     pub depends_on: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
     #[prost(bool, tag = "9")]
     pub auto_restart: bool,
+    #[prost(int32, tag = "10")]
+    pub port: i32,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -54,6 +56,8 @@ pub struct Process {
     pub env: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
     #[prost(string, tag = "15")]
     pub service_id: ::prost::alloc::string::String,
+    #[prost(int32, tag = "16")]
+    pub port: i32,
 }
 #[derive(serde::Serialize)]
 #[allow(clippy::derive_partial_eq_without_eq)]

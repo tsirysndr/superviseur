@@ -18,4 +18,5 @@ message Process {
   bool auto_restart = 13;
   repeated string env = 14;
   string service_id = 15;
+  int32 port = 16;
 }

@@ -13,6 +13,7 @@ func TestCreateProject(t *testing.T) {
 	deno := sdk.NewService().
 		WithName("deno-fresh").
 		WithCommand("./dev.ts").
+		WithPort(8000).
 		WithEnv(map[string]string{
 			"PORT": "8000",
 		})

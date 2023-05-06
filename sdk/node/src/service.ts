@@ -15,6 +15,7 @@ class Service {
   floxEnvironment?: string;
   enableDocker?: boolean;
   enableNix?: boolean;
+  port?: number;
 
   constructor() {
     this.name = "";
@@ -63,6 +64,11 @@ class Service {
 
   withEnableNix(enableNix: boolean) {
     this.enableNix = enableNix;
+    return this;
+  }
+
+  withPort(port: number) {
+    this.port = port;
     return this;
   }
 }
