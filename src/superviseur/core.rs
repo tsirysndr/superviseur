@@ -151,10 +151,11 @@ impl SuperviseurInternal {
 
         let mut services = HashMap::new();
         let mut graph = DependencyGraph::new(project.clone());
-        for service in cfg.services.iter() {
+        for (key, mut service) in cfg.services.clone().into_iter() {
+            service.name = key.clone();
             services.insert(
                 graph.add_vertex(
-                    service,
+                    &service,
                     self.processes.clone(),
                     self.childs.clone(),
                     self.event_tx.clone(),
@@ -164,11 +165,11 @@ impl SuperviseurInternal {
         }
 
         // Add edges to the graph
-        for service in cfg.services.iter() {
+        for (service_name, service) in cfg.services.iter() {
             for dep in service.depends_on.iter() {
                 let from = services
                     .iter()
-                    .find(|(_, s)| s.name == service.name)
+                    .find(|(_, s)| s.name == *service_name)
                     .map(|(from, _)| *from)
                     .ok_or(anyhow!("service not found"))?;
                 services
@@ -543,10 +544,10 @@ impl SuperviseurInternal {
             .find(|(_, k)| k == &project)
             .map(|(c, _)| c)
             .ok_or(anyhow::anyhow!("Config not found"))?;
-        let service = config
+        let (_, service) = config
             .services
             .iter()
-            .find(|s| s.name == service_name)
+            .find(|(_, s)| s.name == service_name)
             .ok_or(anyhow::anyhow!("Service not found"))?;
         Ok(service.clone())
     }
@@ -564,7 +565,7 @@ impl SuperviseurInternal {
         let services = config
             .services
             .iter()
-            .map(|s| schema::objects::service::Service::from(s))
+            .map(|(_, s)| schema::objects::service::Service::from(s))
             .collect();
         Ok(services)
     }

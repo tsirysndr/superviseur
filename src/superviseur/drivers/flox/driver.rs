@@ -8,6 +8,7 @@ use std::{
 
 use anyhow::Error;
 use owo_colors::OwoColorize;
+use spinners::{Spinner, Spinners};
 use tokio::sync::mpsc;
 
 use crate::{
@@ -75,13 +76,14 @@ impl Driver {
             "flox print-dev-env -A {}",
             cfg.environment.replace(".#", "")
         );
-        let mut child = std::process::Command::new("sh")
+        let child = std::process::Command::new("sh")
             .arg("-c")
             .arg(command)
             .stdout(std::process::Stdio::piped())
             .stderr(std::process::Stdio::piped())
             .spawn()?;
-        child.wait()?;
+
+        child.wait_with_output()?;
         Ok(())
     }
 
@@ -125,7 +127,14 @@ impl Driver {
 impl DriverPlugin for Driver {
     fn start(&self, project: String) -> Result<(), Error> {
         let cfg = self.service.flox.as_ref().unwrap();
-        self.setup_flox_env(cfg)?;
+        let message = format!("Setup flox environment {} ...", cfg.environment);
+        let mut sp = Spinner::new(Spinners::Line, message.into());
+        if self.setup_flox_env(cfg).is_err() {
+            println!("There is an error with flox env");
+            return Ok(());
+        }
+        sp.stop();
+        println!("\nSetup flox env done !");
 
         let command = format!(
             "flox activate -e {} -- {}",

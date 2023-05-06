@@ -46,10 +46,10 @@ impl LoggingQuery {
 
         let config = config_map.get(&project_id).unwrap();
 
-        let service = config
+        let (_, service) = config
             .services
             .iter()
-            .find(|s| s.id == Some(id.to_string()))
+            .find(|(_, s)| s.id == Some(id.to_string()))
             .ok_or_else(|| Error::new("Service not found"))?;
 
         let log_file = File::open(&service.stdout).map_err(|e| Error::new(e.to_string()))?;
@@ -82,10 +82,10 @@ impl LoggingQuery {
 
         let config = config_map.get(&project_id).unwrap();
 
-        let service = config
+        let (_, service) = config
             .services
             .iter()
-            .find(|s| s.id == Some(id.to_string()))
+            .find(|(_, s)| s.id == Some(id.to_string()))
             .ok_or_else(|| Error::new("Service not found"))?;
 
         let lines = read_lines(&service.stdout)?;
@@ -118,10 +118,10 @@ impl LoggingSubscription {
 
         let config = config_map.get(&project_id).unwrap();
 
-        let service = config
+        let (_, service) = config
             .services
             .iter()
-            .find(|s| s.id == Some(id.to_string()))
+            .find(|(_, s)| s.id == Some(id.to_string()))
             .ok_or_else(|| Error::new("Service not found"))?;
 
         let log_file = File::open(&service.stdout).map_err(|e| Error::new(e.to_string()))?;
@@ -177,10 +177,10 @@ impl LoggingSubscription {
 
         let config = config_map.get(&project_id).unwrap();
 
-        let service = config
+        let (_, service) = config
             .services
             .iter()
-            .find(|s| s.id == Some(id.to_string()))
+            .find(|(_, s)| s.id == Some(id.to_string()))
             .ok_or_else(|| Error::new("Service not found"))?;
 
         let log_file = File::open(&service.stdout).map_err(|e| Error::new(e.to_string()))?;

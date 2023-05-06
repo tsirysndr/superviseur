@@ -6,6 +6,7 @@ use std::{
 };
 
 use anyhow::Error;
+use indexmap::IndexMap;
 use names::Generator;
 use tokio::sync::mpsc;
 use tonic::{Request, Response};
@@ -22,7 +23,7 @@ use crate::{
     },
     superviseur::core::{ProcessEvent, Superviseur, SuperviseurCommand},
     types::{
-        self,
+        self, configuration,
         configuration::ConfigurationData,
         process::{Process, State},
     },
@@ -99,6 +100,17 @@ impl ControlService for Control {
         let mut config: ConfigurationData =
             hcl::from_str(&config).map_err(|e| tonic::Status::internal(e.to_string()))?;
 
+        // set the name of the services
+        config.services = config
+            .services
+            .iter()
+            .map(|(name, service)| {
+                let mut service = service.clone();
+                service.name = name.clone();
+                (name.clone(), service)
+            })
+            .collect();
+
         // get directory of the config file
         config.context = Some(path.clone());
 
@@ -111,9 +123,13 @@ impl ControlService for Control {
         if !is_new_config {
             let old_config = config_map.get_mut(&project_id).unwrap();
             // reuse the id of the services
-            for service in &mut config.services {
-                match old_config.services.iter().find(|s| s.name == service.name) {
-                    Some(old_service) => {
+            for (service_name, service) in &mut config.services {
+                match old_config
+                    .services
+                    .iter()
+                    .find(|(_, s)| s.name == *service_name)
+                {
+                    Some((_, old_service)) => {
                         service.id = old_service.id.clone();
                         service.working_dir = convert_dir_path_to_absolute_path(
                             service.working_dir.as_str(),
@@ -154,16 +170,16 @@ impl ControlService for Control {
             config.services = config
                 .services
                 .into_iter()
-                .map(|mut service| {
+                .map(|(key, mut service)| {
                     service.id = Some(generator.next().unwrap());
                     service.working_dir = convert_dir_path_to_absolute_path(
                         service.working_dir.as_str(),
                         path.as_str(),
                     )
                     .map(|x| x.to_string())?;
-                    Ok(service)
+                    Ok((key, service))
                 })
-                .collect::<Result<Vec<_>, Error>>()
+                .collect::<Result<IndexMap<String, configuration::Service>, Error>>()
                 .map_err(|e| tonic::Status::internal(e.to_string()))?;
 
             // update the config
@@ -172,7 +188,7 @@ impl ControlService for Control {
             let services = config.services.clone();
             let project = config.project.clone();
 
-            for service in services.into_iter() {
+            for (_, service) in services.into_iter() {
                 match &service.watch_dir {
                     Some(watch_dir) => {
                         self.cmd_tx
@@ -201,11 +217,11 @@ impl ControlService for Control {
         let mut services = services.into_iter();
 
         // convert services dependencies to ids
-        for service in &mut config.services {
+        for (_, service) in &mut config.services {
             let mut dependencies = vec![];
             for dependency in &service.depends_on {
-                match services.find(|s| s.name == *dependency) {
-                    Some(service) => {
+                match services.find(|(name, _)| *name == *dependency) {
+                    Some((_, service)) => {
                         dependencies.push(service.id.clone().unwrap());
                     }
                     None => {
@@ -221,7 +237,7 @@ impl ControlService for Control {
 
         let services = config.services.clone();
 
-        for service in services.into_iter() {
+        for (_, service) in services.into_iter() {
             self.cmd_tx
                 .send(SuperviseurCommand::Load(service, config.project.clone()))
                 .map_err(|e| tonic::Status::internal(e.to_string()))?;
@@ -251,10 +267,10 @@ impl ControlService for Control {
         let config = config_map.get(&project_id).unwrap();
 
         if name.len() > 0 {
-            let service = config
+            let (_, service) = config
                 .services
                 .iter()
-                .find(|s| s.name == name)
+                .find(|(_, s)| s.name == name)
                 .ok_or_else(|| tonic::Status::not_found("Service not found"))?;
 
             self.cmd_tx
@@ -292,10 +308,10 @@ impl ControlService for Control {
         let config = config_map.get(&project_id).unwrap();
 
         if name.len() > 0 {
-            let service = config
+            let (_, service) = config
                 .services
                 .iter()
-                .find(|s| s.name == name)
+                .find(|(_, s)| s.name == name)
                 .ok_or_else(|| tonic::Status::not_found("Service not found"))?;
 
             self.cmd_tx
@@ -333,10 +349,10 @@ impl ControlService for Control {
         let config = config_map.get(&project_id).unwrap();
 
         if name.len() > 0 {
-            let service = config
+            let (_, service) = config
                 .services
                 .iter()
-                .find(|s| s.name == name)
+                .find(|(_, s)| s.name == name)
                 .ok_or_else(|| tonic::Status::not_found("Service not found"))?;
 
             self.cmd_tx
@@ -373,10 +389,10 @@ impl ControlService for Control {
 
         let config = config_map.get(&project_id).unwrap();
 
-        let service = config
+        let (_, service) = config
             .services
             .iter()
-            .find(|s| s.name == name)
+            .find(|(_, s)| s.name == name)
             .ok_or_else(|| tonic::Status::not_found("Service not found"))?;
 
         let processes = self.processes.lock().unwrap();
@@ -422,7 +438,10 @@ impl ControlService for Control {
         let config = config_map.get(&project_id).unwrap();
         let services = config.services.clone();
         let mut list_response = ListResponse {
-            services: services.into_iter().map(Service::from).collect(),
+            services: services
+                .into_iter()
+                .map(|(_, x)| Service::from(x))
+                .collect(),
         };
 
         let processes = self.processes.lock().unwrap();
@@ -475,10 +494,10 @@ impl ControlService for Control {
         let config = config_map.get(&project_id).unwrap();
 
         if name.len() > 0 {
-            let service = config
+            let (_, service) = config
                 .services
                 .iter()
-                .find(|s| s.name == name)
+                .find(|(_, s)| s.name == name)
                 .ok_or_else(|| tonic::Status::not_found("Service not found"))?;
 
             service

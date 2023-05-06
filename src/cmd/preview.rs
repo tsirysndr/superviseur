@@ -42,6 +42,10 @@ pub async fn execute_preview(name: &str) -> Result<(), Error> {
     Some(process) => {
       match process.state.as_str() {
           "Running" => {
+              if process.port == 0 {
+                  println!("{} does not have any port assigned", process.name.bright_green());
+                  return Ok(());
+              }
               open::that(format!("http://localhost:{}", process.port))?;
               println!("Previewing {} at http://localhost:{}", process.name.bright_green(), process.port);
           }

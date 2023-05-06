@@ -85,7 +85,7 @@ impl ProjectService for Project {
             services: x
                 .services
                 .iter()
-                .map(|service| ServiceProto::from(service.clone()))
+                .map(|(_, service)| ServiceProto::from(service.clone()))
                 .collect(),
             ..Default::default()
         });

@@ -7,6 +7,7 @@ use std::{
 
 use async_graphql::{Context, Error, Object, Subscription, ID};
 use futures_util::Stream;
+use indexmap::IndexMap;
 use names::Generator;
 use tokio::sync::mpsc;
 
@@ -98,7 +99,10 @@ impl ControlQuery {
         let config = config_map.get(&project_id).unwrap();
 
         let services = config.services.clone();
-        let mut services = services.iter().map(Service::from).collect::<Vec<Service>>();
+        let mut services = services
+            .iter()
+            .map(|(_, x)| Service::from(x))
+            .collect::<Vec<Service>>();
 
         for service in services.iter_mut() {
             let process = processes
@@ -184,10 +188,10 @@ impl ControlQuery {
             .find(|(p, _)| p.service_id.clone() == id.to_string())
         {
             Some((process, _)) => {
-                let service = config
+                let (_, service) = config
                     .services
                     .iter()
-                    .find(|s| s.id == Some(id.to_string()))
+                    .find(|(_, s)| s.id == Some(id.to_string()))
                     .ok_or(Error::new("Service not found"))?;
 
                 Ok(Service {
@@ -196,10 +200,10 @@ impl ControlQuery {
                 })
             }
             None => {
-                let service = config
+                let (_, service) = config
                     .services
                     .iter()
-                    .find(|s| s.id == Some(id.to_string()))
+                    .find(|(_, s)| s.id == Some(id.to_string()))
                     .ok_or(Error::new("Service not found"))?;
 
                 Ok(Service {
@@ -230,7 +234,7 @@ impl ControlMutation {
         let id = generator.next().unwrap();
         let config = ConfigurationData {
             project: name.clone(),
-            services: vec![],
+            services: IndexMap::new(),
             context: Some(context.clone()),
         };
 
@@ -280,7 +284,7 @@ impl ControlMutation {
         let config = config_map.get(&project_id).unwrap();
 
         if id.is_none() {
-            for service in &config.services {
+            for (_, service) in &config.services {
                 cmd_tx
                     .send(SuperviseurCommand::Start(
                         service.clone(),
@@ -290,7 +294,10 @@ impl ControlMutation {
             }
 
             let services = config.services.clone();
-            let services = services.iter().map(Service::from).collect::<Vec<Service>>();
+            let services = services
+                .iter()
+                .map(|(_, x)| Service::from(x))
+                .collect::<Vec<Service>>();
             SimpleBroker::publish(AllServicesStarted { payload: services });
 
             return Ok(Process {
@@ -298,10 +305,10 @@ impl ControlMutation {
             });
         }
 
-        let service = config
+        let (_, service) = config
             .services
             .iter()
-            .find(|s| s.id == id.as_ref().map(|x| x.to_string()))
+            .find(|(_, s)| s.id == id.as_ref().map(|x| x.to_string()))
             .ok_or(Error::new("Service not found"))?;
 
         cmd_tx.send(SuperviseurCommand::Start(
@@ -345,7 +352,7 @@ impl ControlMutation {
         let config = config_map.get(&project_id).unwrap();
 
         if id.is_none() {
-            for service in &config.services {
+            for (_, service) in &config.services {
                 cmd_tx
                     .send(SuperviseurCommand::Stop(
                         service.clone(),
@@ -354,17 +361,20 @@ impl ControlMutation {
                     .unwrap();
             }
             let services = config.services.clone();
-            let services = services.iter().map(Service::from).collect::<Vec<Service>>();
+            let services = services
+                .iter()
+                .map(|(_, x)| Service::from(x))
+                .collect::<Vec<Service>>();
             SimpleBroker::publish(AllServicesStopped { payload: services });
             return Ok(Process {
                 ..Default::default()
             });
         }
 
-        let service = config
+        let (_, service) = config
             .services
             .iter()
-            .find(|s| s.id == id.as_ref().map(|x| x.to_string()))
+            .find(|(_, s)| s.id == id.as_ref().map(|x| x.to_string()))
             .ok_or(Error::new("Service not found"))?;
 
         cmd_tx.send(SuperviseurCommand::Stop(
@@ -409,7 +419,7 @@ impl ControlMutation {
         let config = config_map.get(&project_id).unwrap();
 
         if id.is_none() {
-            for service in &config.services {
+            for (_, service) in &config.services {
                 cmd_tx
                     .send(SuperviseurCommand::Restart(
                         service.clone(),
@@ -419,7 +429,10 @@ impl ControlMutation {
             }
 
             let services = config.services.clone();
-            let services = services.iter().map(Service::from).collect::<Vec<Service>>();
+            let services = services
+                .iter()
+                .map(|(_, x)| Service::from(x))
+                .collect::<Vec<Service>>();
             SimpleBroker::publish(AllServicesStarted { payload: services });
 
             return Ok(Process {
@@ -427,10 +440,10 @@ impl ControlMutation {
             });
         }
 
-        let service = config
+        let (_, service) = config
             .services
             .iter()
-            .find(|s| s.id == id.as_ref().map(|x| x.to_string()))
+            .find(|(_, s)| s.id == id.as_ref().map(|x| x.to_string()))
             .ok_or(Error::new("Service not found"))?;
 
         cmd_tx.send(SuperviseurCommand::Restart(
@@ -473,10 +486,10 @@ impl ControlMutation {
 
         let config = config_map.get_mut(&project_id).unwrap();
 
-        let service = config
+        let (_, service) = config
             .services
             .iter_mut()
-            .find(|s| s.id == Some(id.to_string()))
+            .find(|(_, s)| s.id == Some(id.to_string()))
             .ok_or(Error::new("Service not found"))?;
 
         service.env.insert(name, value);
@@ -515,10 +528,10 @@ impl ControlMutation {
 
         let config = config_map.get_mut(&project_id).unwrap();
 
-        let service = config
+        let (_, service) = config
             .services
             .iter_mut()
-            .find(|s| s.id == Some(id.to_string()))
+            .find(|(_, s)| s.id == Some(id.to_string()))
             .ok_or(Error::new("Service not found"))?;
 
         service.env.remove(&name);
@@ -559,10 +572,10 @@ impl ControlMutation {
 
         let config = config_map.get_mut(&project_id).unwrap();
 
-        let service = config
+        let (_, service) = config
             .services
             .iter_mut()
-            .find(|s| s.id == Some(id.to_string()))
+            .find(|(_, s)| s.id == Some(id.to_string()))
             .ok_or(Error::new("Service not found"))?;
 
         service.env.remove(&name);
