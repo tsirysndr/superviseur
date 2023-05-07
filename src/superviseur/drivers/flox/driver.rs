@@ -18,7 +18,7 @@ use crate::{
     },
     superviseur::{core::ProcessEvent, drivers::DriverPlugin},
     types::{
-        configuration::{Flox, Service},
+        configuration::{DriverConfig, Service},
         process::Process,
     },
 };
@@ -63,7 +63,7 @@ impl Driver {
         }
     }
 
-    pub fn setup_flox_env(&self, cfg: &Flox) -> Result<(), Error> {
+    pub fn setup_flox_env(&self, cfg: &DriverConfig) -> Result<(), Error> {
         std::process::Command::new("sh")
             .arg("-c")
             .arg("flox --version")
@@ -74,7 +74,7 @@ impl Driver {
 
         let command = format!(
             "flox print-dev-env -A {}",
-            cfg.environment.replace(".#", "")
+            cfg.environment.clone().unwrap().replace(".#", "")
         );
         let child = std::process::Command::new("sh")
             .arg("-c")
@@ -126,10 +126,21 @@ impl Driver {
 
 impl DriverPlugin for Driver {
     fn start(&self, project: String) -> Result<(), Error> {
-        let cfg = self.service.flox.as_ref().unwrap();
-        let message = format!("Setup flox environment {} ...", cfg.environment);
+        let cfg = self
+            .service
+            .r#use
+            .as_ref()
+            .unwrap()
+            .into_iter()
+            .find(|(driver, _)| *driver == "flox")
+            .map(|(_, x)| x)
+            .unwrap();
+        let message = format!(
+            "Setup flox environment {} ...",
+            cfg.environment.clone().unwrap()
+        );
         let mut sp = Spinner::new(Spinners::Line, message.into());
-        if self.setup_flox_env(cfg).is_err() {
+        if self.setup_flox_env(&cfg).is_err() {
             println!("There is an error with flox env");
             return Ok(());
         }
@@ -138,7 +149,8 @@ impl DriverPlugin for Driver {
 
         let command = format!(
             "flox activate -e {} -- {}",
-            cfg.environment, &self.service.command
+            cfg.environment.clone().unwrap(),
+            &self.service.command
         );
         println!("command: {}", command);
 
@@ -183,9 +195,21 @@ impl DriverPlugin for Driver {
         if let Some(stop_command) = self.service.stop_command.clone() {
             let envs = self.service.env.clone();
             let working_dir = self.service.working_dir.clone();
-            let cfg = self.service.flox.as_ref().unwrap();
+            let cfg = self
+                .service
+                .r#use
+                .as_ref()
+                .unwrap()
+                .into_iter()
+                .find(|(driver, _)| *driver == "flox")
+                .map(|(_, x)| x)
+                .unwrap();
 
-            let stop_command = format!("flox activate -e {} -- {}", cfg.environment, stop_command);
+            let stop_command = format!(
+                "flox activate -e {} -- {}",
+                cfg.environment.clone().unwrap(),
+                stop_command
+            );
             let mut child = std::process::Command::new("sh")
                 .arg("-c")
                 .arg(stop_command)
@@ -263,11 +287,22 @@ impl DriverPlugin for Driver {
         if let Some(build) = self.service.build.clone() {
             let envs = self.service.env.clone();
             let working_dir = self.service.working_dir.clone();
-            let cfg = self.service.flox.as_ref().unwrap();
-            self.setup_flox_env(cfg)?;
+            let cfg = self
+                .service
+                .r#use
+                .as_ref()
+                .unwrap()
+                .into_iter()
+                .find(|(driver, _)| *driver == "flox")
+                .map(|(_, x)| x)
+                .unwrap();
+            self.setup_flox_env(&cfg)?;
 
-            let build_command =
-                format!("flox activate -e {} -- {}", cfg.environment, build.command);
+            let build_command = format!(
+                "flox activate -e {} -- {}",
+                cfg.environment.clone().unwrap(),
+                build.command
+            );
             println!("build_command: {}", build_command);
             let mut child = std::process::Command::new("sh")
                 .arg("-c")

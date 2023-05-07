@@ -12,7 +12,8 @@ service "go" {
   namespace = "demo_namespace"
   stdout = "/tmp/go-stdout.log"
   stderr = "/tmp/go-stderr.log"
-  flox = {
+
+  use "flox" {
     environment = ".#nginx-golang-mysql"
   }
 }
@@ -36,6 +37,10 @@ service "mysql" {
   stdout = "/tmp/mysql-stdout.log"
   stderr = "/tmp/mysql-stderr.log"
   flox = {
+    environment = ".#nginx-golang-mysql"
+  }
+
+  use "flox" {
     environment = ".#nginx-golang-mysql"
   }
 }

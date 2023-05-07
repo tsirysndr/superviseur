@@ -54,6 +54,7 @@ dyn-clone = "1.0.11"
 serde_json = "1.0.96"
 colored_json = "3.1.0"
 spinners = "4.1.0"
+shiplift = "0.7.0"
 
 [build-dependencies]
 tonic-build = "0.8"

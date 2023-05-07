@@ -121,14 +121,18 @@ impl DependencyGraph {
         event_tx: mpsc::UnboundedSender<ProcessEvent>,
     ) -> usize {
         let mut vertex = Vertex::from(service);
-        vertex.driver = match service.flox.as_ref() {
-            Some(_) => Box::new(flox::driver::Driver::new(
-                service, processes, event_tx, childs,
-            )),
-            None => Box::new(exec::driver::Driver::new(
-                service, processes, event_tx, childs,
-            )),
-        };
+
+        if let Some(r#use) = service.r#use.clone() {
+            if r#use.into_iter().any(|(driver, _)| driver == "flox") {
+                vertex.driver = Box::new(flox::driver::Driver::new(
+                    service, processes, event_tx, childs,
+                ));
+            } else {
+                vertex.driver = Box::new(exec::driver::Driver::new(
+                    service, processes, event_tx, childs,
+                ));
+            }
+        }
         self.vertices.push(vertex);
         self.vertices.len() - 1
     }
