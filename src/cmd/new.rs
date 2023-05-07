@@ -31,8 +31,10 @@ pub fn execute_new(cfg_format: ConfigFormat) {
             stdout: "/tmp/demo-stdout.log".to_string(),
             stderr: "/tmp/demo-stderr.log".to_string(),
             wait_for: None,
-            flox: None,
             build: None,
+            r#use: None,
+            deploy: None,
+            test: None,
         },
     );
 

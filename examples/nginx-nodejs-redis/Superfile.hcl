@@ -22,6 +22,10 @@ service "nodejs" {
   build = {
     command = "npm install"
   }
+
+  use "flox" {
+    environment = ".#nginx-nodejs-redis"
+  }
 }
 
 service "redis" {
@@ -38,7 +42,8 @@ service "redis" {
   stdout = "/tmp/redis-stdout.log"
   stderr = "/tmp/redis-stderr.log"
   port = 6379
-  flox = {
+  
+  use "flox" {
     environment = ".#nginx-nodejs-redis"
   }
 }

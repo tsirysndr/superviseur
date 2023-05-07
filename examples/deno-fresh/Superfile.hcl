@@ -13,7 +13,8 @@ service "deno" {
   stdout = "/tmp/deno-stdout.log"
   stderr = "/tmp/deno-stderr.log"
   port = 8000
-  flox = {
+
+  use "flox" {
     environment = ".#deno-fresh"
   }
 }

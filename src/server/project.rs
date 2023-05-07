@@ -13,10 +13,7 @@ use crate::{
         ListProjectsRequest, ListProjectsResponse,
     },
     superviseur::core::SuperviseurCommand,
-    types::{
-        configuration::{ConfigurationData, Service},
-        process::Process,
-    },
+    types::{configuration::ConfigurationData, process::Process},
 };
 
 pub struct Project {

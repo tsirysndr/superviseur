@@ -15,4 +15,8 @@ service "react" {
   flox = { 
     environment = ".#react-nginx"
   }
+
+  use "flox" {
+    environment = ".#react-nginx"
+  }
 }
