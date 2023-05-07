@@ -16,7 +16,11 @@ use crate::{
         schema::objects::subscriptions::{LogStream, TailLogStream},
         simple_broker::SimpleBroker,
     },
-    superviseur::{core::ProcessEvent, drivers::DriverPlugin, logs::LogEngine},
+    superviseur::{
+        core::ProcessEvent,
+        drivers::DriverPlugin,
+        logs::{Log, LogEngine},
+    },
     types::{
         configuration::{DriverConfig, Service},
         process::Process,
@@ -30,6 +34,7 @@ use nix::{
 
 #[derive(Clone)]
 pub struct Driver {
+    project: String,
     service: Service,
     processes: Arc<Mutex<Vec<(Process, String)>>>,
     childs: Arc<Mutex<HashMap<String, i32>>>,
@@ -41,6 +46,7 @@ impl Default for Driver {
     fn default() -> Self {
         let (event_tx, _) = mpsc::unbounded_channel();
         Self {
+            project: "".to_string(),
             service: Service::default(),
             processes: Arc::new(Mutex::new(Vec::new())),
             childs: Arc::new(Mutex::new(HashMap::new())),
@@ -52,6 +58,7 @@ impl Default for Driver {
 
 impl Driver {
     pub fn new(
+        project: String,
         service: &Service,
         processes: Arc<Mutex<Vec<(Process, String)>>>,
         event_tx: mpsc::UnboundedSender<ProcessEvent>,
@@ -59,6 +66,7 @@ impl Driver {
         log_engine: LogEngine,
     ) -> Self {
         Self {
+            project,
             service: service.clone(),
             processes,
             childs,
@@ -93,6 +101,8 @@ impl Driver {
 
     pub fn write_logs(&self, stdout: ChildStdout, stderr: ChildStderr) {
         let cloned_service = self.service.clone();
+        let log_engine = self.log_engine.clone();
+        let project = self.project.clone();
 
         thread::spawn(move || {
             let service = cloned_service;
@@ -104,6 +114,21 @@ impl Driver {
             for line in stdout.lines() {
                 let line = line.unwrap();
                 let line = format!("{}\n", line);
+
+                let log = Log {
+                    project: project.clone(),
+                    service: service.name.clone(),
+                    line: line.clone(),
+                    output: String::from("stdout"),
+                    date: tantivy::DateTime::from_timestamp_secs(chrono::Local::now().timestamp()),
+                };
+                match log_engine.insert(&log) {
+                    Ok(_) => {}
+                    Err(e) => {
+                        println!("Error while inserting log: {}", e);
+                    }
+                }
+
                 SimpleBroker::publish(TailLogStream {
                     id: id.clone(),
                     line: line.clone(),
@@ -122,6 +147,21 @@ impl Driver {
             let stderr = std::io::BufReader::new(stderr);
             for line in stderr.lines() {
                 let line = line.unwrap();
+
+                let log = Log {
+                    project: project.clone(),
+                    service: service.name.clone(),
+                    line: line.clone(),
+                    output: String::from("stderr"),
+                    date: tantivy::DateTime::from_timestamp_secs(chrono::Local::now().timestamp()),
+                };
+                match log_engine.insert(&log) {
+                    Ok(_) => {}
+                    Err(e) => {
+                        println!("Error while inserting log: {}", e);
+                    }
+                }
+
                 err_file.write_all(line.as_bytes()).unwrap();
             }
         });

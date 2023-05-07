@@ -23,7 +23,26 @@ message TailResponse {
   string line = 1;
 }
 
+message SearchRequest {
+ string service = 1;
+ string term = 2;
+ string config_file_path = 3;
+}
+
+message SearchResponse {
+  repeated LogDetails log_details = 1;
+}
+
+message LogDetails {
+  string project = 1;
+  string service = 2;
+  string line = 3;
+  string date = 4;
+  string output = 5;
+}
+
 service LoggingService {
   rpc Log (LogRequest) returns (stream LogResponse) {}
   rpc Tail (TailRequest) returns (stream TailResponse) {}
+  rpc Search (SearchRequest) returns (SearchResponse) {}
 }

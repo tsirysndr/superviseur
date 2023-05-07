@@ -56,7 +56,7 @@ pub async fn exec(port: u16, serve: bool) -> Result<(), Error> {
         config_map.clone(),
         service_graph.clone(),
         service_map.clone(),
-        log_engine,
+        log_engine.clone(),
     );
 
     let cloned_cmd_tx = cmd_tx.clone();
@@ -65,6 +65,7 @@ pub async fn exec(port: u16, serve: bool) -> Result<(), Error> {
     let cloned_processes = processes.clone();
     let cloned_config_map = config_map.clone();
     let cloned_project_map = project_map.clone();
+    let cloned_log_engine = log_engine.clone();
 
     // create a one-shot channel to wait for the server to start
     let (tx, rx) = tokio::sync::oneshot::channel::<bool>();
@@ -85,6 +86,7 @@ pub async fn exec(port: u16, serve: bool) -> Result<(), Error> {
                 cloned_processes.clone(),
                 cloned_config_map.clone(),
                 cloned_project_map.clone(),
+                cloned_log_engine.clone(),
             ))))
             .add_service(tonic_web::enable(ControlServiceServer::new(Control::new(
                 cloned_cmd_tx.clone(),
@@ -122,6 +124,7 @@ pub async fn exec(port: u16, serve: bool) -> Result<(), Error> {
                 processes.clone(),
                 config_map.clone(),
                 project_map.clone(),
+                log_engine.clone(),
             ))))
             .add_service(tonic_web::enable(ControlServiceServer::new(Control::new(
                 cmd_tx.clone(),

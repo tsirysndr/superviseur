@@ -125,6 +125,7 @@ impl DependencyGraph {
         let mut vertex = Vertex::from(service);
 
         vertex.driver = Box::new(exec::driver::Driver::new(
+            self.project.clone(),
             service,
             processes.clone(),
             event_tx.clone(),
@@ -135,7 +136,12 @@ impl DependencyGraph {
         if let Some(r#use) = service.r#use.clone() {
             if r#use.into_iter().any(|(driver, _)| driver == "flox") {
                 vertex.driver = Box::new(flox::driver::Driver::new(
-                    service, processes, event_tx, childs, log_engine,
+                    self.project.clone(),
+                    service,
+                    processes,
+                    event_tx,
+                    childs,
+                    log_engine,
                 ));
             }
         }

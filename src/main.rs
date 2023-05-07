@@ -6,7 +6,7 @@ use superviseur::{
         config::execute_config,
         init::execute_init,
         list::execute_list,
-        log::execute_log,
+        log::{execute_log, execute_search_log},
         new::execute_new,
         preview::execute_preview,
         project::{execute_get_project, execute_list_projects},
@@ -123,6 +123,12 @@ A simple process supervisor"#,
                 .arg(arg!(<name> "The name of the service to preview"))
                 .about("Open URL of a service in the browser"),   
         )
+        .subcommand(
+            Command::new("search-log")
+                .arg(arg!(<name> "The name of the service to search the log of"))
+                .arg(arg!(<query> "The query to search"))
+                .about("Search the log of a service"),
+        )
 }
 
 #[tokio::main]
@@ -196,6 +202,11 @@ async fn main() -> Result<(), Error> {
         Some(("preview", args)) => {
             let name = args.value_of("name");
             execute_preview(name.unwrap()).await?;
+        }
+        Some(("search-log", args)) => {
+            let name = args.value_of("name");
+            let query = args.value_of("query");
+            execute_search_log(name.unwrap(), query.unwrap()).await?;
         }
         _ => cli().print_help()?,
     }
