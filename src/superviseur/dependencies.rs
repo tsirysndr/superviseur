@@ -11,6 +11,7 @@ use crate::types::{configuration::Service, process::Process};
 use super::{
     core::ProcessEvent,
     drivers::{exec, flox, DriverPlugin},
+    logs::LogEngine,
 };
 
 clone_trait_object!(DriverPlugin);
@@ -119,6 +120,7 @@ impl DependencyGraph {
         processes: Arc<Mutex<Vec<(Process, String)>>>,
         childs: Arc<Mutex<HashMap<String, i32>>>,
         event_tx: mpsc::UnboundedSender<ProcessEvent>,
+        log_engine: LogEngine,
     ) -> usize {
         let mut vertex = Vertex::from(service);
 
@@ -127,12 +129,13 @@ impl DependencyGraph {
             processes.clone(),
             event_tx.clone(),
             childs.clone(),
+            log_engine.clone(),
         ));
 
         if let Some(r#use) = service.r#use.clone() {
             if r#use.into_iter().any(|(driver, _)| driver == "flox") {
                 vertex.driver = Box::new(flox::driver::Driver::new(
-                    service, processes, event_tx, childs,
+                    service, processes, event_tx, childs, log_engine,
                 ));
             }
         }

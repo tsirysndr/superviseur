@@ -16,7 +16,7 @@ use crate::{
         schema::objects::subscriptions::{LogStream, TailLogStream},
         simple_broker::SimpleBroker,
     },
-    superviseur::{core::ProcessEvent, drivers::DriverPlugin},
+    superviseur::{core::ProcessEvent, drivers::DriverPlugin, logs::LogEngine},
     types::{
         configuration::{DriverConfig, Service},
         process::Process,
@@ -34,6 +34,7 @@ pub struct Driver {
     processes: Arc<Mutex<Vec<(Process, String)>>>,
     childs: Arc<Mutex<HashMap<String, i32>>>,
     event_tx: mpsc::UnboundedSender<ProcessEvent>,
+    log_engine: LogEngine,
 }
 
 impl Default for Driver {
@@ -44,6 +45,7 @@ impl Default for Driver {
             processes: Arc::new(Mutex::new(Vec::new())),
             childs: Arc::new(Mutex::new(HashMap::new())),
             event_tx,
+            log_engine: LogEngine::new(),
         }
     }
 }
@@ -54,12 +56,14 @@ impl Driver {
         processes: Arc<Mutex<Vec<(Process, String)>>>,
         event_tx: mpsc::UnboundedSender<ProcessEvent>,
         childs: Arc<Mutex<HashMap<String, i32>>>,
+        log_engine: LogEngine,
     ) -> Self {
         Self {
             service: service.clone(),
             processes,
             childs,
             event_tx,
+            log_engine,
         }
     }
 

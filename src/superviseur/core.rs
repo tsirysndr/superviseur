@@ -29,7 +29,7 @@ use crate::{
     },
 };
 
-use super::{dependencies::DependencyGraph, watch::WatchForChanges};
+use super::{dependencies::DependencyGraph, logs::LogEngine, watch::WatchForChanges};
 
 #[derive(Clone)]
 pub struct Superviseur {}
@@ -44,6 +44,7 @@ impl Superviseur {
         config_map: Arc<Mutex<HashMap<String, ConfigurationData>>>,
         service_graph: Arc<Mutex<Vec<(DependencyGraph, String)>>>,
         service_map: Arc<Mutex<Vec<(HashMap<usize, Service>, String)>>>,
+        log_engine: LogEngine,
     ) -> Self {
         let childs = Arc::new(Mutex::new(HashMap::new()));
         thread::spawn(move || {
@@ -57,6 +58,7 @@ impl Superviseur {
                 config_map,
                 service_graph,
                 service_map,
+                log_engine,
             );
             futures::executor::block_on(internal);
         });
@@ -105,6 +107,7 @@ struct SuperviseurInternal {
     config_map: Arc<Mutex<Vec<(ConfigurationData, String)>>>,
     service_graph: Arc<Mutex<Vec<(DependencyGraph, String)>>>,
     service_map: Arc<Mutex<Vec<(HashMap<usize, Service>, String)>>>,
+    log_engine: LogEngine,
 }
 
 impl SuperviseurInternal {
@@ -118,6 +121,7 @@ impl SuperviseurInternal {
         config_map: Arc<Mutex<HashMap<String, ConfigurationData>>>,
         service_graph: Arc<Mutex<Vec<(DependencyGraph, String)>>>,
         service_map: Arc<Mutex<Vec<(HashMap<usize, Service>, String)>>>,
+        log_engine: LogEngine,
     ) -> Self {
         let config_map = Arc::new(Mutex::new(
             config_map
@@ -137,6 +141,7 @@ impl SuperviseurInternal {
             config_map,
             service_graph,
             service_map,
+            log_engine,
         }
     }
 
@@ -159,6 +164,7 @@ impl SuperviseurInternal {
                     self.processes.clone(),
                     self.childs.clone(),
                     self.event_tx.clone(),
+                    self.log_engine.clone(),
                 ),
                 service.clone(),
             );

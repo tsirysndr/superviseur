@@ -11,7 +11,7 @@ use crate::{
         logging_service_server::LoggingServiceServer, project_service_server::ProjectServiceServer,
     },
     server::{control::Control, logging::Logging, project::Project},
-    superviseur::{core::Superviseur, dependencies::DependencyGraph},
+    superviseur::{core::Superviseur, dependencies::DependencyGraph, logs::LogEngine},
     types::{configuration::Service, process::Process, BANNER, UNIX_SOCKET_PATH},
 };
 use anyhow::Error;
@@ -45,6 +45,7 @@ pub async fn exec(port: u16, serve: bool) -> Result<(), Error> {
     let cmd_rx = Arc::new(Mutex::new(cmd_rx));
     let service_graph = Arc::new(Mutex::new(vec![] as Vec<(DependencyGraph, String)>));
     let service_map = Arc::new(Mutex::new(vec![] as Vec<(HashMap<usize, Service>, String)>));
+    let log_engine = LogEngine::new();
 
     let superviseur = Superviseur::new(
         cmd_rx,
@@ -55,6 +56,7 @@ pub async fn exec(port: u16, serve: bool) -> Result<(), Error> {
         config_map.clone(),
         service_graph.clone(),
         service_map.clone(),
+        log_engine,
     );
 
     let cloned_cmd_tx = cmd_tx.clone();
