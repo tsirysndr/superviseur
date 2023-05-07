@@ -1128,6 +1128,36 @@ pub struct TailResponse {
     #[prost(string, tag = "1")]
     pub line: ::prost::alloc::string::String,
 }
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SearchRequest {
+    #[prost(string, tag = "1")]
+    pub service: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub term: ::prost::alloc::string::String,
+    #[prost(string, tag = "3")]
+    pub config_file_path: ::prost::alloc::string::String,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SearchResponse {
+    #[prost(message, repeated, tag = "1")]
+    pub log_details: ::prost::alloc::vec::Vec<LogDetails>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct LogDetails {
+    #[prost(string, tag = "1")]
+    pub project: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub service: ::prost::alloc::string::String,
+    #[prost(string, tag = "3")]
+    pub line: ::prost::alloc::string::String,
+    #[prost(string, tag = "4")]
+    pub date: ::prost::alloc::string::String,
+    #[prost(string, tag = "5")]
+    pub output: ::prost::alloc::string::String,
+}
 /// Generated client implementations.
 pub mod logging_service_client {
     #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
@@ -1241,6 +1271,25 @@ pub mod logging_service_client {
             );
             self.inner.server_streaming(request.into_request(), path, codec).await
         }
+        pub async fn search(
+            &mut self,
+            request: impl tonic::IntoRequest<super::SearchRequest>,
+        ) -> Result<tonic::Response<super::SearchResponse>, tonic::Status> {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::new(
+                        tonic::Code::Unknown,
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/superviseur.v1alpha1.LoggingService/Search",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
     }
 }
 /// Generated server implementations.
@@ -1270,6 +1319,10 @@ pub mod logging_service_server {
             &self,
             request: tonic::Request<super::TailRequest>,
         ) -> Result<tonic::Response<Self::TailStream>, tonic::Status>;
+        async fn search(
+            &self,
+            request: tonic::Request<super::SearchRequest>,
+        ) -> Result<tonic::Response<super::SearchResponse>, tonic::Status>;
     }
     #[derive(Debug)]
     pub struct LoggingServiceServer<T: LoggingService> {
@@ -1404,6 +1457,44 @@ pub mod logging_service_server {
                                 send_compression_encodings,
                             );
                         let res = grpc.server_streaming(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/superviseur.v1alpha1.LoggingService/Search" => {
+                    #[allow(non_camel_case_types)]
+                    struct SearchSvc<T: LoggingService>(pub Arc<T>);
+                    impl<
+                        T: LoggingService,
+                    > tonic::server::UnaryService<super::SearchRequest>
+                    for SearchSvc<T> {
+                        type Response = super::SearchResponse;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::SearchRequest>,
+                        ) -> Self::Future {
+                            let inner = self.0.clone();
+                            let fut = async move { (*inner).search(request).await };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let inner = inner.0;
+                        let method = SearchSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            );
+                        let res = grpc.unary(method, req).await;
                         Ok(res)
                     };
                     Box::pin(fut)

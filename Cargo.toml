@@ -55,6 +55,7 @@ serde_json = "1.0.96"
 colored_json = "3.1.0"
 spinners = "4.1.0"
 shiplift = "0.7.0"
+tantivy = "0.19.2"
 
 [build-dependencies]
 tonic-build = "0.8"
