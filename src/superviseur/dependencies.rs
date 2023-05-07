@@ -122,13 +122,16 @@ impl DependencyGraph {
     ) -> usize {
         let mut vertex = Vertex::from(service);
 
+        vertex.driver = Box::new(exec::driver::Driver::new(
+            service,
+            processes.clone(),
+            event_tx.clone(),
+            childs.clone(),
+        ));
+
         if let Some(r#use) = service.r#use.clone() {
             if r#use.into_iter().any(|(driver, _)| driver == "flox") {
                 vertex.driver = Box::new(flox::driver::Driver::new(
-                    service, processes, event_tx, childs,
-                ));
-            } else {
-                vertex.driver = Box::new(exec::driver::Driver::new(
                     service, processes, event_tx, childs,
                 ));
             }
