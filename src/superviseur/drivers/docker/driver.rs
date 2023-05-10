@@ -1,6 +1,6 @@
 use std::{
     collections::HashMap,
-    io::{self, BufRead},
+    io::{self, BufRead, Write},
     process::Command,
     sync::{Arc, Mutex},
     thread,
@@ -8,7 +8,6 @@ use std::{
 
 use async_trait::async_trait;
 use futures_util::Stream;
-use hcl::format;
 use owo_colors::OwoColorize;
 use shiplift::{
     tty::{self, TtyChunk},
@@ -18,10 +17,14 @@ use tokio::sync::mpsc;
 use tokio_stream::StreamExt;
 
 use crate::{
+    graphql::{
+        schema::objects::subscriptions::{LogStream, TailLogStream},
+        simple_broker::SimpleBroker,
+    },
     superviseur::{
         core::ProcessEvent,
         drivers::DriverPlugin,
-        logs::{self, LogEngine},
+        logs::{self, Log, LogEngine},
     },
     types::{
         configuration::{DriverConfig, Service},
@@ -141,28 +144,71 @@ impl DriverPlugin for Driver {
         }
         let container = self.docker.containers().get(&container_name);
         container.start().await?;
+
+        self.event_tx
+            .send(ProcessEvent::Started(
+                self.service.name.clone(),
+                project.clone(),
+            ))
+            .unwrap();
+
         let id = container.inspect().await?.id;
 
         let docker = self.docker.clone();
-        let prefix = format!("{} |", self.service.name);
-        let prefix = format!("{}", prefix.cyan());
+        let service = self.service.clone();
+        let log_engine = self.log_engine.clone();
+        let project = self.project.clone();
         thread::spawn(move || {
             let logs_stream = docker
                 .containers()
                 .get(&id)
                 .logs(&LogsOptions::builder().stdout(true).stderr(true).build());
             let rt = tokio::runtime::Runtime::new().unwrap();
-            rt.block_on(stream_result(logs_stream, &prefix));
+            rt.block_on(write_logs(service, log_engine, project, logs_stream));
         });
         Ok(())
     }
 
     async fn stop(&self, project: String) -> Result<(), anyhow::Error> {
-        todo!()
+        let container_name = format!("{}_{}", project, self.service.name);
+        let container = self.docker.containers().get(&container_name);
+        match container.inspect().await {
+            Ok(_) => {
+                println!("Stopping container {}", &container_name.bright_green());
+                container.stop(None).await?;
+                self.event_tx
+                    .send(ProcessEvent::Stopped(
+                        self.service.name.clone(),
+                        project.clone(),
+                    ))
+                    .unwrap();
+            }
+            Err(_) => {
+                println!(
+                    "Container {} does not exists",
+                    &container_name.bright_green()
+                );
+            }
+        }
+        Ok(())
     }
 
     async fn restart(&self, project: String) -> Result<(), anyhow::Error> {
-        todo!()
+        let container_name = format!("{}_{}", project, self.service.name);
+        let container = self.docker.containers().get(&container_name);
+        match container.inspect().await {
+            Ok(_) => {
+                println!("Restarting container {}", &container_name.bright_green());
+                container.restart(None).await?;
+            }
+            Err(_) => {
+                println!(
+                    "Container {} does not exists",
+                    &container_name.bright_green()
+                );
+            }
+        }
+        Ok(())
     }
 
     async fn status(&self) -> Result<(), anyhow::Error> {
@@ -229,6 +275,82 @@ impl DriverPlugin for Driver {
         );
 
         Ok(())
+    }
+}
+
+pub async fn write_logs(
+    service: Service,
+    log_engine: LogEngine,
+    project: String,
+    mut stream: impl Stream<Item = Result<tty::TtyChunk, shiplift::Error>> + Unpin,
+) {
+    let cloned_service = service.clone();
+
+    let service = cloned_service;
+    let id = service.id.unwrap_or("-".to_string());
+    let mut log_file = std::fs::File::create(&service.stdout).unwrap();
+    let mut err_file = std::fs::File::create(&service.stderr).unwrap();
+
+    while let Some(result) = stream.next().await {
+        match result {
+            Ok(chunk) => match chunk {
+                TtyChunk::StdOut(bytes) => {
+                    let line = String::from_utf8(bytes).unwrap();
+
+                    let log = Log {
+                        project: project.clone(),
+                        service: service.name.clone(),
+                        line: line.clone(),
+                        output: String::from("stdout"),
+                        date: tantivy::DateTime::from_timestamp_secs(
+                            chrono::Local::now().timestamp(),
+                        ),
+                    };
+                    match log_engine.insert(&log) {
+                        Ok(_) => {}
+                        Err(e) => {
+                            println!("Error while inserting log: {}", e);
+                        }
+                    }
+
+                    SimpleBroker::publish(TailLogStream {
+                        id: id.clone(),
+                        line: line.clone(),
+                    });
+                    SimpleBroker::publish(LogStream {
+                        id: id.clone(),
+                        line: line.clone(),
+                    });
+                    let service_name = format!("{} | ", service.name);
+                    print!("{} {}", service_name.cyan(), line);
+                    log_file.write_all(line.as_bytes()).unwrap();
+                }
+                TtyChunk::StdErr(bytes) => {
+                    let line = String::from_utf8(bytes).unwrap();
+
+                    let log = Log {
+                        project: project.clone(),
+                        service: service.name.clone(),
+                        line: line.clone(),
+                        output: String::from("stderr"),
+                        date: tantivy::DateTime::from_timestamp_secs(
+                            chrono::Local::now().timestamp(),
+                        ),
+                    };
+                    match log_engine.insert(&log) {
+                        Ok(_) => {}
+                        Err(e) => {
+                            println!("Error while inserting log: {}", e);
+                        }
+                    }
+                    err_file.write_all(line.as_bytes()).unwrap();
+                }
+                TtyChunk::StdIn(_) => unreachable!(),
+            },
+            Err(e) => {
+                println!("Error: {}", e);
+            }
+        }
     }
 }
 
