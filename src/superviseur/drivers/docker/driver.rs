@@ -28,7 +28,7 @@ use crate::{
     },
     types::{
         configuration::{DriverConfig, Service},
-        process::Process,
+        process::{Process, State},
     },
 };
 
@@ -145,6 +145,18 @@ impl DriverPlugin for Driver {
         let container = self.docker.containers().get(&container_name);
         container.start().await?;
 
+        let mut processes = self.processes.lock().unwrap();
+        let mut process = &mut processes
+            .iter_mut()
+            .find(|(p, key)| p.name == self.service.name && key == &project)
+            .unwrap()
+            .0;
+        process.up_time = Some(chrono::Utc::now());
+        process.state = State::Running;
+        drop(process);
+        drop(processes);
+        drop(container);
+
         self.event_tx
             .send(ProcessEvent::Started(
                 self.service.name.clone(),
@@ -152,13 +164,14 @@ impl DriverPlugin for Driver {
             ))
             .unwrap();
 
-        let id = container.inspect().await?.id;
-
         let docker = self.docker.clone();
         let service = self.service.clone();
         let log_engine = self.log_engine.clone();
         let project = self.project.clone();
         thread::spawn(move || {
+            let rt = tokio::runtime::Runtime::new().unwrap();
+            let container = docker.containers().get(&container_name);
+            let id = rt.block_on(container.inspect()).unwrap().id;
             let logs_stream = docker.containers().get(&id).logs(
                 &LogsOptions::builder()
                     .stdout(true)
@@ -166,7 +179,6 @@ impl DriverPlugin for Driver {
                     .follow(true)
                     .build(),
             );
-            let rt = tokio::runtime::Runtime::new().unwrap();
             rt.block_on(write_logs(service, log_engine, project, logs_stream));
         });
         Ok(())
