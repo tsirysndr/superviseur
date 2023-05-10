@@ -115,10 +115,24 @@ impl DriverPlugin for Driver {
                 let options = match self.service.port {
                     Some(port) => ContainerOptions::builder(builder)
                         .name(&container_name)
+                        .env(
+                            self.service
+                                .env
+                                .iter()
+                                .map(|(key, value)| format!("{}={}", key, value))
+                                .collect::<Vec<String>>(),
+                        )
                         .expose(port, "tcp", port)
                         .build(),
                     None => ContainerOptions::builder(builder)
                         .name(&container_name)
+                        .env(
+                            self.service
+                                .env
+                                .iter()
+                                .map(|(key, value)| format!("{}={}", key, value))
+                                .collect::<Vec<String>>(),
+                        )
                         .build(),
                 };
                 self.docker.containers().create(&options).await.unwrap();
