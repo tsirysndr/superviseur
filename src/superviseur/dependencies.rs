@@ -1,8 +1,10 @@
 use std::{
     collections::HashMap,
     sync::{Arc, Mutex},
+    thread,
 };
 
+use async_recursion::async_recursion;
 use dyn_clone::clone_trait_object;
 use tokio::sync::mpsc;
 
@@ -10,7 +12,7 @@ use crate::types::{configuration::Service, process::Process};
 
 use super::{
     core::ProcessEvent,
-    drivers::{exec, flox, DriverPlugin},
+    drivers::{docker, exec, flox, DriverPlugin},
     logs::LogEngine,
 };
 
@@ -94,20 +96,88 @@ struct Edge {
     to: usize,
 }
 
+#[derive(Debug)]
+pub enum GraphCommand {
+    AddVertex(
+        Service,
+        Arc<Mutex<Vec<(Process, String)>>>,
+        Arc<Mutex<HashMap<String, i32>>>,
+        mpsc::UnboundedSender<ProcessEvent>,
+        LogEngine,
+    ),
+    AddEdge(usize, usize),
+    StartService(Service),
+    StopService(Service),
+    BuildService(Service),
+    StopServices,
+    BuildServices,
+    StartServices,
+}
+
 #[derive(Clone)]
 pub struct DependencyGraph {
     vertices: Vec<Vertex>,
     edges: Vec<Edge>,
     project: String,
+    pub cmd_tx: mpsc::UnboundedSender<GraphCommand>,
 }
 
 impl DependencyGraph {
-    pub fn new(project: String) -> Self {
-        Self {
+    pub fn new(
+        project: String,
+        cmd_tx: mpsc::UnboundedSender<GraphCommand>,
+        cmd_rx: Arc<Mutex<mpsc::UnboundedReceiver<GraphCommand>>>,
+    ) -> Self {
+        let graph = Self {
             vertices: Vec::new(),
             edges: Vec::new(),
             project,
-        }
+            cmd_tx,
+        };
+        let mut cloned_graph = graph.clone();
+        thread::spawn(move || {
+            let rt = tokio::runtime::Runtime::new().unwrap();
+            rt.block_on(async {
+                // wait for the first command
+                while let Some(cmd) = cmd_rx.lock().unwrap().recv().await {
+                    let mut visited = vec![false; cloned_graph.size()];
+                    match cmd {
+                        GraphCommand::AddVertex(
+                            service,
+                            processes,
+                            childs,
+                            event_tx,
+                            log_engine,
+                        ) => {
+                            cloned_graph
+                                .add_vertex(&service, processes, childs, event_tx, log_engine);
+                        }
+                        GraphCommand::AddEdge(from, to) => {
+                            cloned_graph.add_edge(from, to);
+                        }
+                        GraphCommand::StartService(service) => {
+                            cloned_graph.start_service(&service, &mut visited).await;
+                        }
+                        GraphCommand::StopService(service) => {
+                            cloned_graph.stop_service(&service, &mut visited).await;
+                        }
+                        GraphCommand::BuildService(service) => {
+                            cloned_graph.build_service(&service, &mut visited).await;
+                        }
+                        GraphCommand::StopServices => {
+                            cloned_graph.stop_services().await;
+                        }
+                        GraphCommand::BuildServices => {
+                            cloned_graph.build_services().await;
+                        }
+                        GraphCommand::StartServices => {
+                            cloned_graph.start_services().await;
+                        }
+                    }
+                }
+            });
+        });
+        graph
     }
 
     pub fn size(&self) -> usize {
@@ -134,8 +204,22 @@ impl DependencyGraph {
         ));
 
         if let Some(r#use) = service.r#use.clone() {
-            if r#use.into_iter().any(|(driver, _)| driver == "flox") {
+            if r#use
+                .clone()
+                .into_iter()
+                .any(|(driver, _)| driver == "flox")
+            {
                 vertex.driver = Box::new(flox::driver::Driver::new(
+                    self.project.clone(),
+                    service,
+                    processes.clone(),
+                    event_tx.clone(),
+                    childs.clone(),
+                    log_engine.clone(),
+                ));
+            }
+            if r#use.into_iter().any(|(driver, _)| driver == "docker") {
+                vertex.driver = Box::new(docker::driver::Driver::new(
                     self.project.clone(),
                     service,
                     processes,
@@ -153,14 +237,15 @@ impl DependencyGraph {
         self.edges.push(Edge { from, to });
     }
 
-    pub fn start_services(&self) {
+    pub async fn start_services(&self) {
         let mut visited = vec![false; self.vertices.len()];
         for vertex in self.vertices.clone().into_iter() {
-            self.start_service(&vertex.into(), &mut visited);
+            self.start_service(&vertex.into(), &mut visited).await;
         }
     }
 
-    pub fn start_service(&self, service: &Service, visited: &mut Vec<bool>) {
+    #[async_recursion(?Send)]
+    pub async fn start_service(&self, service: &Service, visited: &mut Vec<bool>) {
         let index = self
             .vertices
             .iter()
@@ -178,24 +263,27 @@ impl DependencyGraph {
                     ..Default::default()
                 },
                 visited,
-            );
+            )
+            .await;
         }
 
         println!("Starting service {}", self.vertices[index].name);
         self.vertices[index]
             .driver
             .start(self.project.clone())
+            .await
             .unwrap();
     }
 
-    pub fn stop_services(&self) {
+    pub async fn stop_services(&self) {
         let mut visited = vec![false; self.vertices.len()];
         for vertex in self.vertices.clone().into_iter() {
-            self.stop_service(&vertex.into(), &mut visited);
+            self.stop_service(&vertex.into(), &mut visited).await;
         }
     }
 
-    pub fn stop_service(&self, service: &Service, visited: &mut Vec<bool>) {
+    #[async_recursion(?Send)]
+    pub async fn stop_service(&self, service: &Service, visited: &mut Vec<bool>) {
         let index = self
             .vertices
             .iter()
@@ -207,24 +295,26 @@ impl DependencyGraph {
         visited[index] = true;
         for edge in self.edges.iter().filter(|e| e.to == index) {
             let service = self.vertices[edge.from].clone().into();
-            self.stop_service(&service, visited);
+            self.stop_service(&service, visited).await;
         }
 
         println!("Stopping service {}", self.vertices[index].name);
         self.vertices[index]
             .driver
             .stop(self.project.clone())
+            .await
             .unwrap();
     }
 
-    pub fn build_services(&self) {
+    pub async fn build_services(&self) {
         let mut visited = vec![false; self.vertices.len()];
         for vertex in self.vertices.clone().into_iter() {
-            self.build_service(&vertex.into(), &mut visited);
+            self.build_service(&vertex.into(), &mut visited).await;
         }
     }
 
-    pub fn build_service(&self, service: &Service, visited: &mut Vec<bool>) {
+    #[async_recursion(?Send)]
+    pub async fn build_service(&self, service: &Service, visited: &mut Vec<bool>) {
         let index = self
             .vertices
             .iter()
@@ -236,13 +326,14 @@ impl DependencyGraph {
         visited[index] = true;
         for edge in self.edges.iter().filter(|e| e.from == index) {
             let service = self.vertices[edge.to].clone().into();
-            self.build_service(&service, visited);
+            self.build_service(&service, visited).await;
         }
 
         println!("Building service {}", self.vertices[index].name);
         self.vertices[index]
             .driver
             .build(self.project.clone())
+            .await
             .unwrap();
     }
 }

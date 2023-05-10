@@ -22,6 +22,15 @@ pub struct LogEngine {
     reader: IndexReader,
 }
 
+impl core::fmt::Debug for LogEngine {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("LogEngine")
+            .field("schema", &self.schema)
+            .field("index", &self.index)
+            .finish()
+    }
+}
+
 impl LogEngine {
     pub fn new() -> Self {
         let index_path = format!("{}/.superviseur/logs", env!("HOME"));

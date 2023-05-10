@@ -29,7 +29,11 @@ use crate::{
     },
 };
 
-use super::{dependencies::DependencyGraph, logs::LogEngine, watch::WatchForChanges};
+use super::{
+    dependencies::{DependencyGraph, GraphCommand},
+    logs::LogEngine,
+    watch::WatchForChanges,
+};
 
 #[derive(Clone)]
 pub struct Superviseur {}
@@ -155,7 +159,8 @@ impl SuperviseurInternal {
         config_map.push((cfg.clone(), project.clone()));
 
         let mut services = HashMap::new();
-        let mut graph = DependencyGraph::new(project.clone());
+        let (cmd_tx, cmd_rx) = mpsc::unbounded_channel();
+        let mut graph = DependencyGraph::new(project.clone(), cmd_tx, Arc::new(Mutex::new(cmd_rx)));
         for (key, mut service) in cfg.services.clone().into_iter() {
             service.name = key.clone();
             services.insert(
@@ -168,6 +173,16 @@ impl SuperviseurInternal {
                 ),
                 service.clone(),
             );
+            graph
+                .cmd_tx
+                .send(GraphCommand::AddVertex(
+                    service,
+                    self.processes.clone(),
+                    self.childs.clone(),
+                    self.event_tx.clone(),
+                    self.log_engine.clone(),
+                ))
+                .unwrap();
         }
 
         // Add edges to the graph
@@ -182,7 +197,10 @@ impl SuperviseurInternal {
                     .iter()
                     .find(|(_, s)| s.name == *dep)
                     .map(|(id, _)| *id)
-                    .map(|to| graph.add_edge(from, to));
+                    .map(|to| {
+                        graph.add_edge(from, to);
+                        graph.cmd_tx.send(GraphCommand::AddEdge(from, to)).unwrap();
+                    });
             }
         }
 
@@ -264,8 +282,12 @@ impl SuperviseurInternal {
             .map(|(s, _)| s)
             .next()
             .ok_or(anyhow::anyhow!("Project {} not found", project))?;
-        let mut visited = vec![false; graph.size()];
-        graph.start_service(&service, &mut visited);
+        // let mut visited = vec![false; graph.size()];
+        // graph.start_service(&service, &mut visited);
+        graph
+            .cmd_tx
+            .send(GraphCommand::StartService(service))
+            .unwrap();
         Ok(())
     }
 
@@ -285,8 +307,12 @@ impl SuperviseurInternal {
             .map(|(s, _)| s)
             .next()
             .ok_or(anyhow::anyhow!("Project {} not found", project))?;
-        let mut visited = vec![false; graph.size()];
-        graph.stop_service(&service, &mut visited);
+        // let mut visited = vec![false; graph.size()];
+        // graph.stop_service(&service, &mut visited);
+        graph
+            .cmd_tx
+            .send(GraphCommand::StopService(service))
+            .unwrap();
         Ok(())
     }
 
@@ -312,8 +338,10 @@ impl SuperviseurInternal {
             .map(|(s, _)| s)
             .next()
             .ok_or(anyhow::anyhow!("Project {} not found", project))?;
-        let mut visited = vec![false; graph.size()];
-        graph.build_service(&service, &mut visited);
+        graph
+            .cmd_tx
+            .send(GraphCommand::BuildService(service))
+            .unwrap();
         Ok(())
     }
 
@@ -342,7 +370,7 @@ impl SuperviseurInternal {
             .map(|(s, _)| s)
             .next()
             .ok_or(anyhow::anyhow!("Project {} not found", project))?;
-        graph.start_services();
+        graph.cmd_tx.send(GraphCommand::StartServices).unwrap();
         let services = self.get_project_services(&project)?;
         SimpleBroker::publish(AllServicesStarted { payload: services });
         Ok(())
@@ -357,7 +385,7 @@ impl SuperviseurInternal {
             .map(|(s, _)| s)
             .next()
             .ok_or(anyhow::anyhow!("Project {} not found", project))?;
-        graph.stop_services();
+        graph.cmd_tx.send(GraphCommand::StopServices).unwrap();
         Ok(())
     }
 
@@ -376,7 +404,7 @@ impl SuperviseurInternal {
             .map(|(s, _)| s)
             .next()
             .ok_or(anyhow::anyhow!("Project {} not found", project))?;
-        graph.build_services();
+        graph.cmd_tx.send(GraphCommand::BuildServices).unwrap();
         Ok(())
     }
 

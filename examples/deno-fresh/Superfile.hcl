@@ -1,7 +1,7 @@
 project = "deno-fresh"
 
 service "deno" {
-  type = "exec"
+  type = "docker"
   command = "./dev.ts"
   working_dir = "."
   description = "Deno example app"
@@ -14,7 +14,9 @@ service "deno" {
   stderr = "/tmp/deno-stderr.log"
   port = 8000
 
-  use "flox" {
-    environment = ".#deno-fresh"
-  }
+  #use "flox" {
+  #  environment = ".#deno-fresh"
+  #}
+
+  use "docker" {}
 }
