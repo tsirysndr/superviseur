@@ -159,10 +159,13 @@ impl DriverPlugin for Driver {
         let log_engine = self.log_engine.clone();
         let project = self.project.clone();
         thread::spawn(move || {
-            let logs_stream = docker
-                .containers()
-                .get(&id)
-                .logs(&LogsOptions::builder().stdout(true).stderr(true).build());
+            let logs_stream = docker.containers().get(&id).logs(
+                &LogsOptions::builder()
+                    .stdout(true)
+                    .stderr(true)
+                    .follow(true)
+                    .build(),
+            );
             let rt = tokio::runtime::Runtime::new().unwrap();
             rt.block_on(write_logs(service, log_engine, project, logs_stream));
         });
