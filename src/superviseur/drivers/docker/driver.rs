@@ -177,6 +177,7 @@ impl DriverPlugin for Driver {
                     .stdout(true)
                     .stderr(true)
                     .follow(true)
+                    .timestamps(true)
                     .build(),
             );
             rt.block_on(write_logs(service, log_engine, project, logs_stream));
@@ -312,13 +313,21 @@ pub async fn write_logs(
                 TtyChunk::StdOut(bytes) => {
                     let line = String::from_utf8(bytes).unwrap();
 
+                    let date = line.split(" ").take(1).collect::<String>();
+                    let mut line = line.split_whitespace();
+                    line.next();
+                    let line = line.collect::<Vec<&str>>().join(" ");
+                    let line = format!("{}\n", line);
+
                     let log = Log {
                         project: project.clone(),
                         service: service.name.clone(),
                         line: line.clone(),
                         output: String::from("stdout"),
                         date: tantivy::DateTime::from_timestamp_secs(
-                            chrono::Local::now().timestamp(),
+                            chrono::DateTime::parse_from_rfc3339(&date)
+                                .unwrap()
+                                .timestamp(),
                         ),
                     };
                     match log_engine.insert(&log) {
@@ -337,11 +346,17 @@ pub async fn write_logs(
                         line: line.clone(),
                     });
                     let service_name = format!("{} | ", service.name);
-                    print!("{} {}", service_name.cyan(), line);
+                    print!("{} {}", service_name.cyan(), line.clone());
                     log_file.write_all(line.as_bytes()).unwrap();
                 }
                 TtyChunk::StdErr(bytes) => {
                     let line = String::from_utf8(bytes).unwrap();
+
+                    let date = line.split(" ").take(1).collect::<String>();
+                    let mut line = line.split_whitespace();
+                    line.next();
+                    let line = line.collect::<Vec<&str>>().join(" ");
+                    let line = format!("{}\n", line);
 
                     let log = Log {
                         project: project.clone(),
@@ -349,7 +364,9 @@ pub async fn write_logs(
                         line: line.clone(),
                         output: String::from("stderr"),
                         date: tantivy::DateTime::from_timestamp_secs(
-                            chrono::Local::now().timestamp(),
+                            chrono::DateTime::parse_from_rfc3339(&date)
+                                .unwrap()
+                                .timestamp(),
                         ),
                     };
                     match log_engine.insert(&log) {
