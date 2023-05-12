@@ -1,6 +1,6 @@
 use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
-use std::{collections::HashMap, ops::Index};
+use std::{collections::HashMap};
 
 pub enum ConfigFormat {
     TOML,

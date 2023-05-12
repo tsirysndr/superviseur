@@ -137,15 +137,15 @@ impl Driver {
 
 #[async_trait]
 impl DriverPlugin for Driver {
-    async fn start(&self, project: String) -> Result<(), anyhow::Error> {
+    async fn start(&self, _project: String) -> Result<(), anyhow::Error> {
         todo!()
     }
 
-    async fn stop(&self, project: String) -> Result<(), anyhow::Error> {
+    async fn stop(&self, _project: String) -> Result<(), anyhow::Error> {
         todo!()
     }
 
-    async fn restart(&self, project: String) -> Result<(), anyhow::Error> {
+    async fn restart(&self, _project: String) -> Result<(), anyhow::Error> {
         todo!()
     }
 
@@ -161,7 +161,7 @@ impl DriverPlugin for Driver {
         todo!()
     }
 
-    async fn build(&self, project: String) -> Result<(), anyhow::Error> {
+    async fn build(&self, _project: String) -> Result<(), anyhow::Error> {
         todo!()
     }
 }

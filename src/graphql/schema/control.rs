@@ -410,7 +410,7 @@ impl ControlMutation {
         let config_map = ctx
             .data::<Arc<Mutex<HashMap<String, ConfigurationData>>>>()
             .unwrap();
-        let project_map = ctx.data::<Arc<Mutex<HashMap<String, String>>>>().unwrap();
+        let _project_map = ctx.data::<Arc<Mutex<HashMap<String, String>>>>().unwrap();
 
         let config_map = config_map.lock().unwrap();
 
@@ -478,7 +478,7 @@ impl ControlMutation {
         let config_map = ctx
             .data::<Arc<Mutex<HashMap<String, ConfigurationData>>>>()
             .unwrap();
-        let project_map = ctx.data::<Arc<Mutex<HashMap<String, String>>>>().unwrap();
+        let _project_map = ctx.data::<Arc<Mutex<HashMap<String, String>>>>().unwrap();
 
         let mut config_map = config_map.lock().unwrap();
 
