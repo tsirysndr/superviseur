@@ -154,6 +154,7 @@ impl DriverPlugin for Driver {
         }
         let container = self.docker.containers().get(&container_name);
         container.start().await?;
+        let pid = container.inspect().await?.state.pid as u32;
 
         let mut processes = self.processes.lock().unwrap();
         let mut process = &mut processes
@@ -163,6 +164,7 @@ impl DriverPlugin for Driver {
             .0;
         process.up_time = Some(chrono::Utc::now());
         process.state = State::Running;
+        process.pid = Some(pid);
         drop(process);
         drop(processes);
         drop(container);
