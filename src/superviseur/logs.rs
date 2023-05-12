@@ -3,8 +3,8 @@ use std::path::Path;
 use tantivy::{
     directory::MmapDirectory,
     doc,
-    schema::{self, Schema, SchemaBuilder},
-    DateTime, Document, Index, IndexReader, ReloadPolicy,
+    schema::{self, Cardinality, Schema, SchemaBuilder},
+    DateOptions, DateTime, Document, Index, IndexReader, ReloadPolicy,
 };
 
 pub struct Log {
@@ -22,6 +22,15 @@ pub struct LogEngine {
     reader: IndexReader,
 }
 
+impl core::fmt::Debug for LogEngine {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("LogEngine")
+            .field("schema", &self.schema)
+            .field("index", &self.index)
+            .finish()
+    }
+}
+
 impl LogEngine {
     pub fn new() -> Self {
         let index_path = format!("{}/.superviseur/logs", env!("HOME"));
@@ -32,10 +41,15 @@ impl LogEngine {
 
         let mut schema_builder = Schema::builder();
 
+        let date_opts = DateOptions::from(schema::INDEXED)
+            .set_stored()
+            .set_fast(Cardinality::SingleValue)
+            .set_precision(tantivy::DatePrecision::Seconds);
+
         schema_builder.add_text_field("project", schema::TEXT | schema::STORED);
         schema_builder.add_text_field("service", schema::TEXT | schema::STORED);
         schema_builder.add_text_field("line", schema::TEXT | schema::STORED);
-        schema_builder.add_date_field("date", schema::STORED);
+        schema_builder.add_date_field("date", date_opts);
         schema_builder.add_text_field("output", schema::TEXT | schema::STORED);
 
         let schema = schema_builder.build();
@@ -61,6 +75,23 @@ impl LogEngine {
         let line = self.schema.get_field("line").unwrap();
         let date = self.schema.get_field("date").unwrap();
         let output = self.schema.get_field("output").unwrap();
+
+        // check if log already exists with same date
+        let query_parser =
+            tantivy::query::QueryParser::for_index(&self.index, vec![project, service]);
+        let query = query_parser
+            .parse_query(&format!(
+                "project:{} AND service:{} AND date:\"{:?}\" AND output:{}",
+                log.project, log.service, log.date, log.output
+            ))
+            .unwrap();
+        let top_docs = self
+            .reader
+            .searcher()
+            .search(&query, &tantivy::collector::TopDocs::with_limit(1))?;
+        if top_docs.len() > 0 {
+            return Ok(());
+        }
 
         let doc: Document = doc!(
             project => log.project.clone(),

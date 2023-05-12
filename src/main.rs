@@ -98,7 +98,9 @@ A simple process supervisor"#,
                 .about("Start the superviseur server"),
         )
         .subcommand(Command::new("daemon").about("Start the superviseur daemon"))
-        .subcommand(Command::new("up").about("Start all services"))
+        .subcommand(Command::new("up")
+        .arg(arg!(--build "Build all services before starting"))
+        .about("Start all services"))
         .subcommand(Command::new("down").about("Stop all services"))
         .subcommand(Command::new("ui").about("Start the superviseur dashboard"))
         .subcommand(Command::new("build")
@@ -119,7 +121,7 @@ A simple process supervisor"#,
             .about("Manage projects")
         )
         .subcommand(
-            Command::new("preview")
+            Command::new("open")
                 .arg(arg!(<name> "The name of the service to preview"))
                 .about("Open URL of a service in the browser"),   
         )
@@ -138,7 +140,8 @@ async fn main() -> Result<(), Error> {
     match matches.subcommand() {
         Some(("start", args)) => {
             let name = args.value_of("name");
-            execute_start(name).await?;
+            let build = args.is_present("build");
+            execute_start(name, build).await?;
         }
         Some(("stop", args)) => {
             let name = args.value_of("name");
@@ -184,7 +187,10 @@ async fn main() -> Result<(), Error> {
             server::exec(port, true).await?;
         }
         Some(("daemon", _)) => server::exec(5476, false).await?,
-        Some(("up", _)) => execute_start(None).await?,
+        Some(("up", args)) => {
+            let build = args.is_present("build");
+            execute_start(None, build).await?
+        }
         Some(("down", _)) => execute_stop(None).await?,
         Some(("ui", _)) => execute_ui().await?,
         Some(("build", args)) => {

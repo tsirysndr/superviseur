@@ -8,6 +8,7 @@ import "objects/v1alpha1/process.proto";
 message LoadConfigRequest {
   string config = 1;
   string file_path = 2;
+  string config_format = 3;
 }
 
 message LoadConfigResponse {
@@ -17,6 +18,7 @@ message LoadConfigResponse {
 message StartRequest {
   string name = 1;
   string config_file_path = 2;
+  bool build = 3;
 }
 
 message StartResponse {

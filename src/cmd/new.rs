@@ -42,6 +42,8 @@ pub fn execute_new(cfg_format: ConfigFormat) {
         project: "demo".to_string(),
         context: None,
         services,
+        network_settings: None,
+        volume_settings: None,
     };
     let serialized = match cfg_format {
         ConfigFormat::HCL => hcl::to_string(&config).unwrap(),

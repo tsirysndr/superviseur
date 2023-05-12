@@ -6,6 +6,7 @@ pub mod status;
 pub const UNIX_SOCKET_PATH: &str = "//tmp/superviseur.sock";
 
 pub const SUPERFILE: &str = "Superfile.hcl";
+pub const SUPERFILE_TOML: &str = "Superfile.toml";
 
 pub const BANNER: &str = r#"
          _____                             _                     

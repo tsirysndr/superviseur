@@ -7,6 +7,7 @@ use std::{
 };
 
 use anyhow::Error;
+use async_trait::async_trait;
 use owo_colors::OwoColorize;
 use tokio::sync::mpsc;
 
@@ -140,8 +141,9 @@ impl Driver {
     }
 }
 
+#[async_trait]
 impl DriverPlugin for Driver {
-    fn start(&self, project: String) -> Result<(), Error> {
+    async fn start(&self, project: String) -> Result<(), Error> {
         let command = &self.service.command;
         let envs = self.service.env.clone();
         let working_dir = self.service.working_dir.clone();
@@ -184,7 +186,7 @@ impl DriverPlugin for Driver {
         Ok(())
     }
 
-    fn stop(&self, project: String) -> Result<(), Error> {
+    async fn stop(&self, project: String) -> Result<(), Error> {
         if let Some(stop_command) = self.service.stop_command.clone() {
             let envs = self.service.env.clone();
             let working_dir = self.service.working_dir.clone();
@@ -244,25 +246,25 @@ impl DriverPlugin for Driver {
         }
     }
 
-    fn restart(&self, project: String) -> Result<(), Error> {
-        self.stop(project.clone())?;
-        self.start(project.clone())?;
+    async fn restart(&self, project: String) -> Result<(), Error> {
+        self.stop(project.clone()).await?;
+        self.start(project.clone()).await?;
         Ok(())
     }
 
-    fn status(&self) -> Result<(), Error> {
+    async fn status(&self) -> Result<(), Error> {
         Ok(())
     }
 
-    fn logs(&self) -> Result<(), Error> {
+    async fn logs(&self) -> Result<(), Error> {
         Ok(())
     }
 
-    fn exec(&self) -> Result<(), Error> {
+    async fn exec(&self) -> Result<(), Error> {
         Ok(())
     }
 
-    fn build(&self, project: String) -> Result<(), Error> {
+    async fn build(&self, project: String) -> Result<(), Error> {
         if let Some(build) = self.service.build.clone() {
             let envs = self.service.env.clone();
             let working_dir = self.service.working_dir.clone();

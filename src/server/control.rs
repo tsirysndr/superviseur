@@ -21,7 +21,10 @@ use crate::{
             StartResponse, StatusRequest, StatusResponse, StopRequest, StopResponse,
         },
     },
-    superviseur::core::{ProcessEvent, Superviseur, SuperviseurCommand},
+    superviseur::{
+        core::{ProcessEvent, Superviseur, SuperviseurCommand},
+        drivers::setup_drivers,
+    },
     types::{
         self, configuration,
         configuration::ConfigurationData,
@@ -62,7 +65,7 @@ impl Control {
         &self,
         path: String,
         config: ConfigurationData,
-    ) -> (String, bool) {
+    ) -> Result<(String, bool), Error> {
         let mut generator = Generator::default();
         let mut project_map = self.project_map.lock().unwrap();
         let mut config_map = self.config_map.lock().unwrap();
@@ -73,10 +76,11 @@ impl Control {
             // generate a new id for the project
             let id = generator.next().unwrap();
             project_map.insert(path.clone(), id.clone());
-            config_map.insert(id.clone(), config);
+            config_map.insert(id.clone(), config.clone());
             is_new = true;
+            setup_drivers(config);
         }
-        (project_map.get(&path).map(|x| x.clone()).unwrap(), is_new)
+        Ok((project_map.get(&path).map(|x| x.clone()).unwrap(), is_new))
     }
 
     pub fn get_project_id(&self, path: String) -> Result<String, Error> {
@@ -97,8 +101,19 @@ impl ControlService for Control {
         let request = request.into_inner();
         let config = request.config;
         let path = request.file_path;
-        let mut config: ConfigurationData =
-            hcl::from_str(&config).map_err(|e| tonic::Status::internal(e.to_string()))?;
+        let cfg_format = request.config_format;
+        let mut config: ConfigurationData = match cfg_format.as_str() {
+            "hcl" => hcl::from_str(&config).map_err(|e| tonic::Status::internal(e.to_string()))?,
+            "toml" => {
+                toml::from_str(&config).map_err(|e| tonic::Status::internal(e.to_string()))?
+            }
+            &_ => {
+                return Err(tonic::Status::internal(format!(
+                    "The config format {} is not supported",
+                    cfg_format
+                )))
+            }
+        };
 
         // set the name of the services
         config.services = config
@@ -114,8 +129,11 @@ impl ControlService for Control {
         // get directory of the config file
         config.context = Some(path.clone());
 
-        let (project_id, is_new_config) =
-            self.insert_config_and_get_project_id(path.clone(), config.clone());
+        let (project_id, is_new_config) = self
+            .insert_config_and_get_project_id(path.clone(), config.clone())
+            .map_err(|e| {
+                tonic::Status::internal(format!("Error while loading config: {}", e.to_string()))
+            })?;
         let mut generator = Generator::default();
         let mut config_map = self.config_map.lock().unwrap();
 
@@ -255,6 +273,7 @@ impl ControlService for Control {
         let request = request.into_inner();
         let path = request.config_file_path;
         let name = request.name;
+        let build = request.build;
         let project_id = self
             .get_project_id(path.clone())
             .map_err(|e| tonic::Status::not_found(e.to_string()))?;
@@ -277,13 +296,14 @@ impl ControlService for Control {
                 .send(SuperviseurCommand::Start(
                     service.clone(),
                     config.project.clone(),
+                    build,
                 ))
                 .map_err(|e| tonic::Status::internal(e.to_string()))?;
             return Ok(Response::new(StartResponse { success: true }));
         }
 
         self.cmd_tx
-            .send(SuperviseurCommand::StartAll(config.project.clone()))
+            .send(SuperviseurCommand::StartAll(config.project.clone(), build))
             .map_err(|e| tonic::Status::internal(e.to_string()))?;
 
         Ok(Response::new(StartResponse { success: true }))
