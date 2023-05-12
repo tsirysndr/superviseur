@@ -88,6 +88,16 @@ impl Driver {
             config: Some(config.clone()),
         }
     }
+
+    fn setup_container(&self) {
+        match &self.config {
+            Some(cfg) => {
+                let volumes = cfg.volumes.clone().unwrap_or(Vec::new());
+                let networks = cfg.networks.clone().unwrap_or(Vec::new());
+            }
+            None => {}
+        }
+    }
 }
 
 #[async_trait]

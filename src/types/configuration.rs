@@ -1,6 +1,6 @@
 use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::{collections::HashMap, ops::Index};
 
 pub enum ConfigFormat {
     TOML,
@@ -66,6 +66,18 @@ pub struct ConfigurationData {
     pub context: Option<String>,
     #[serde(rename = "service", serialize_with = "hcl::ser::labeled_block")]
     pub services: IndexMap<String, Service>,
+    #[serde(
+        rename = "network",
+        skip_serializing_if = "Option::is_none",
+        serialize_with = "hcl::ser::labeled_block"
+    )]
+    pub network_settings: Option<IndexMap<String, DockerNetworkConfig>>,
+    #[serde(
+        rename = "volume",
+        skip_serializing_if = "Option::is_none",
+        serialize_with = "hcl::ser::labeled_block"
+    )]
+    pub volume_settings: Option<IndexMap<String, DockerVolumeConfig>>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -75,11 +87,19 @@ pub struct Build {
 
 #[derive(Serialize, Deserialize, Debug, Default, Clone)]
 pub struct DriverConfig {
-    pub environment: Option<String>,  // flox, nix
-    pub image: Option<String>,        // docker, podman
-    pub volumes: Option<Vec<String>>, // docker, podman
-    pub ports: Option<Vec<String>>,   // docker, podman
-    pub network: Option<String>,      // docker, podman
+    pub environment: Option<String>,   // flox, nix
+    pub image: Option<String>,         // docker, podman
+    pub volumes: Option<Vec<String>>,  // docker, podman
+    pub ports: Option<Vec<String>>,    // docker, podman
+    pub networks: Option<Vec<String>>, // docker, podman
+}
+
+#[derive(Serialize, Deserialize, Debug, Default, Clone)]
+pub struct DockerVolumeConfig {}
+
+#[derive(Serialize, Deserialize, Debug, Default, Clone)]
+pub struct DockerNetworkConfig {
+    pub driver: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Default, Clone)]

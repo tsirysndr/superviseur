@@ -236,6 +236,8 @@ impl ControlMutation {
             project: name.clone(),
             services: IndexMap::new(),
             context: Some(context.clone()),
+            network_settings: None,
+            volume_settings: None,
         };
 
         let mut config_map = config_map.lock().unwrap();

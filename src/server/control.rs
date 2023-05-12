@@ -6,6 +6,7 @@ use std::{
 };
 
 use anyhow::Error;
+use futures_util::TryFutureExt;
 use indexmap::IndexMap;
 use names::Generator;
 use tokio::sync::mpsc;
@@ -21,7 +22,10 @@ use crate::{
             StartResponse, StatusRequest, StatusResponse, StopRequest, StopResponse,
         },
     },
-    superviseur::core::{ProcessEvent, Superviseur, SuperviseurCommand},
+    superviseur::{
+        core::{ProcessEvent, Superviseur, SuperviseurCommand},
+        drivers::setup_drivers,
+    },
     types::{
         self, configuration,
         configuration::ConfigurationData,
@@ -62,7 +66,7 @@ impl Control {
         &self,
         path: String,
         config: ConfigurationData,
-    ) -> (String, bool) {
+    ) -> Result<(String, bool), Error> {
         let mut generator = Generator::default();
         let mut project_map = self.project_map.lock().unwrap();
         let mut config_map = self.config_map.lock().unwrap();
@@ -73,10 +77,11 @@ impl Control {
             // generate a new id for the project
             let id = generator.next().unwrap();
             project_map.insert(path.clone(), id.clone());
-            config_map.insert(id.clone(), config);
+            config_map.insert(id.clone(), config.clone());
             is_new = true;
+            setup_drivers(config);
         }
-        (project_map.get(&path).map(|x| x.clone()).unwrap(), is_new)
+        Ok((project_map.get(&path).map(|x| x.clone()).unwrap(), is_new))
     }
 
     pub fn get_project_id(&self, path: String) -> Result<String, Error> {
@@ -114,8 +119,11 @@ impl ControlService for Control {
         // get directory of the config file
         config.context = Some(path.clone());
 
-        let (project_id, is_new_config) =
-            self.insert_config_and_get_project_id(path.clone(), config.clone());
+        let (project_id, is_new_config) = self
+            .insert_config_and_get_project_id(path.clone(), config.clone())
+            .map_err(|e| {
+                tonic::Status::internal(format!("Error while loading config: {}", e.to_string()))
+            })?;
         let mut generator = Generator::default();
         let mut config_map = self.config_map.lock().unwrap();
 

@@ -282,8 +282,6 @@ impl SuperviseurInternal {
             .map(|(s, _)| s)
             .next()
             .ok_or(anyhow::anyhow!("Project {} not found", project))?;
-        // let mut visited = vec![false; graph.size()];
-        // graph.start_service(&service, &mut visited);
         graph
             .cmd_tx
             .send(GraphCommand::StartService(service))
