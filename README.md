@@ -25,7 +25,7 @@
 
 <img src="./astronauts.png" width="100%" style="margin-top: 20px; margin-bottom: 20px;" />
 
-Superviseur is a tool for running multi-services applications on isolated environments (Nix or Docker) using HCL/TOML or any language with an [SDK](/sdk). It is designed to be used both from a CLI and a web interface.
+Superviseur is a tool for running multi-service applications on isolated environments (Nix or Docker) using HCL/TOML or any language with an [SDK](/sdk). It is designed to be used both from a CLI and a web interface.
 Once you have a [Superfile.hcl](#initialize-a-new-project), you can create and start your application with a single command: `superviseur up`.
 
 
