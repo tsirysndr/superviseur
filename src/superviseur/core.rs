@@ -73,14 +73,14 @@ impl Superviseur {
 #[derive(Debug)]
 pub enum SuperviseurCommand {
     Load(Service, String),
-    Start(Service, String),
+    Start(Service, String, bool),
     Stop(Service, String),
     Restart(Service, String),
     Build(Service, String),
     LoadConfig(ConfigurationData, String),
     WatchForChanges(String, Service, String),
     StartDependency(Service, String),
-    StartAll(String),
+    StartAll(String, bool),
     StopAll(String),
     RestartAll(String),
     BuildAll(String),
@@ -271,7 +271,12 @@ impl SuperviseurInternal {
         Ok(())
     }
 
-    fn handle_start(&mut self, service: Service, project: String) -> Result<(), Error> {
+    fn handle_start(
+        &mut self,
+        service: Service,
+        project: String,
+        build: bool,
+    ) -> Result<(), Error> {
         self.event_tx
             .send(ProcessEvent::Starting(
                 service.name.clone(),
@@ -289,7 +294,7 @@ impl SuperviseurInternal {
             .ok_or(anyhow::anyhow!("Project {} not found", project))?;
         graph
             .cmd_tx
-            .send(GraphCommand::StartService(service))
+            .send(GraphCommand::StartService(service, build))
             .unwrap();
         Ok(())
     }
@@ -321,7 +326,7 @@ impl SuperviseurInternal {
 
     fn handle_restart(&mut self, service: Service, project: String) -> Result<(), Error> {
         self.handle_stop(service.clone(), project.clone())?;
-        self.handle_start(service.clone(), project.clone())?;
+        self.handle_start(service.clone(), project.clone(), false)?;
         Ok(())
     }
 
@@ -364,7 +369,7 @@ impl SuperviseurInternal {
         Ok(())
     }
 
-    fn handle_start_all(&mut self, project: String) -> Result<(), Error> {
+    fn handle_start_all(&mut self, project: String, build: bool) -> Result<(), Error> {
         let service_graph = self.service_graph.lock().unwrap();
         let graph = service_graph
             .clone()
@@ -373,7 +378,10 @@ impl SuperviseurInternal {
             .map(|(s, _)| s)
             .next()
             .ok_or(anyhow::anyhow!("Project {} not found", project))?;
-        graph.cmd_tx.send(GraphCommand::StartServices).unwrap();
+        graph
+            .cmd_tx
+            .send(GraphCommand::StartServices(build))
+            .unwrap();
         let services = self.get_project_services(&project)?;
         SimpleBroker::publish(AllServicesStarted { payload: services });
         Ok(())
@@ -394,7 +402,7 @@ impl SuperviseurInternal {
 
     fn handle_restart_all(&mut self, project: String) -> Result<(), Error> {
         self.handle_stop_all(project.clone())?;
-        self.handle_start_all(project)?;
+        self.handle_start_all(project, false)?;
         Ok(())
     }
 
@@ -414,7 +422,9 @@ impl SuperviseurInternal {
     fn handle_command(&mut self, cmd: SuperviseurCommand) -> Result<(), Error> {
         match cmd {
             SuperviseurCommand::Load(service, project) => self.handle_load(service, project),
-            SuperviseurCommand::Start(service, project) => self.handle_start(service, project),
+            SuperviseurCommand::Start(service, project, build) => {
+                self.handle_start(service, project, build)
+            }
             SuperviseurCommand::Stop(service, project) => self.handle_stop(service, project),
             SuperviseurCommand::Restart(service, project) => self.handle_restart(service, project),
             SuperviseurCommand::LoadConfig(config, project) => {
@@ -424,7 +434,7 @@ impl SuperviseurInternal {
                 self.handle_watch_for_changes(dir, service, project)
             }
             SuperviseurCommand::StartDependency(_, _) => Ok(()),
-            SuperviseurCommand::StartAll(project) => self.handle_start_all(project),
+            SuperviseurCommand::StartAll(project, build) => self.handle_start_all(project, build),
             SuperviseurCommand::StopAll(project) => self.handle_stop_all(project),
             SuperviseurCommand::RestartAll(project) => self.handle_restart_all(project),
             SuperviseurCommand::Build(service, project) => self.handle_build(service, project),

@@ -148,7 +148,7 @@ impl ProjectConfiguration {
             cmd_tx.send(SuperviseurCommand::Load(service, config.project.clone()))?;
         }
 
-        cmd_tx.send(SuperviseurCommand::StartAll(config.project.clone()))?;
+        cmd_tx.send(SuperviseurCommand::StartAll(config.project.clone(), true))?;
 
         futures::executor::block_on_stream(SimpleBroker::<AllServicesStarted>::subscribe()).next();
 

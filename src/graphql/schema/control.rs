@@ -291,6 +291,7 @@ impl ControlMutation {
                     .send(SuperviseurCommand::Start(
                         service.clone(),
                         config.project.clone(),
+                        true,
                     ))
                     .unwrap();
             }
@@ -316,6 +317,7 @@ impl ControlMutation {
         cmd_tx.send(SuperviseurCommand::Start(
             service.clone(),
             config.project.clone(),
+            true,
         ))?;
 
         thread::sleep(Duration::from_secs(1));

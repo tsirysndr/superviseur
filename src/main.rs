@@ -140,7 +140,8 @@ async fn main() -> Result<(), Error> {
     match matches.subcommand() {
         Some(("start", args)) => {
             let name = args.value_of("name");
-            execute_start(name).await?;
+            let build = args.is_present("build");
+            execute_start(name, build).await?;
         }
         Some(("stop", args)) => {
             let name = args.value_of("name");
@@ -186,7 +187,10 @@ async fn main() -> Result<(), Error> {
             server::exec(port, true).await?;
         }
         Some(("daemon", _)) => server::exec(5476, false).await?,
-        Some(("up", _)) => execute_start(None).await?,
+        Some(("up", args)) => {
+            let build = args.is_present("build");
+            execute_start(None, build).await?
+        }
         Some(("down", _)) => execute_stop(None).await?,
         Some(("ui", _)) => execute_ui().await?,
         Some(("build", args)) => {

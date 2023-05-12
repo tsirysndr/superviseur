@@ -106,12 +106,12 @@ pub enum GraphCommand {
         LogEngine,
     ),
     AddEdge(usize, usize),
-    StartService(Service),
+    StartService(Service, bool),
     StopService(Service),
     BuildService(Service),
     StopServices,
     BuildServices,
-    StartServices,
+    StartServices(bool),
 }
 
 #[derive(Clone)]
@@ -158,7 +158,11 @@ impl DependencyGraph {
                         GraphCommand::AddEdge(from, to) => {
                             cloned_graph.add_edge(from, to);
                         }
-                        GraphCommand::StartService(service) => {
+                        GraphCommand::StartService(service, build) => {
+                            if build {
+                                let mut visited = vec![false; cloned_graph.size()];
+                                cloned_graph.build_service(&service, &mut visited);
+                            }
                             cloned_graph.start_service(&service, &mut visited).await;
                         }
                         GraphCommand::StopService(service) => {
@@ -173,7 +177,10 @@ impl DependencyGraph {
                         GraphCommand::BuildServices => {
                             cloned_graph.build_services().await;
                         }
-                        GraphCommand::StartServices => {
+                        GraphCommand::StartServices(build) => {
+                            if build {
+                                cloned_graph.build_services().await;
+                            }
                             cloned_graph.start_services().await;
                         }
                     }

@@ -18,6 +18,7 @@ message LoadConfigResponse {
 message StartRequest {
   string name = 1;
   string config_file_path = 2;
+  bool build = 3;
 }
 
 message StartResponse {

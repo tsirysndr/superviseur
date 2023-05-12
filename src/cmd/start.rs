@@ -9,7 +9,7 @@ use tokio::net::UnixStream;
 use tonic::transport::{ Endpoint, Uri};
 use tower::service_fn;
 
-pub async fn execute_start(name: Option<&str>) -> Result<(), Error> {
+pub async fn execute_start(name: Option<&str>, build: bool) -> Result<(), Error> {
     let (config, config_format) = verify_if_config_file_is_present()?;
     let current_dir = std::env::current_dir()?;
     let channel = Endpoint::try_from("http://[::]:50051")?
@@ -34,6 +34,7 @@ pub async fn execute_start(name: Option<&str>) -> Result<(), Error> {
     let request = tonic::Request::new(StartRequest {
         name,
         config_file_path: current_dir.to_str().unwrap().to_string(),
+        build
     });
 
     client.start(request).await?;

@@ -273,6 +273,7 @@ impl ControlService for Control {
         let request = request.into_inner();
         let path = request.config_file_path;
         let name = request.name;
+        let build = request.build;
         let project_id = self
             .get_project_id(path.clone())
             .map_err(|e| tonic::Status::not_found(e.to_string()))?;
@@ -295,13 +296,14 @@ impl ControlService for Control {
                 .send(SuperviseurCommand::Start(
                     service.clone(),
                     config.project.clone(),
+                    build,
                 ))
                 .map_err(|e| tonic::Status::internal(e.to_string()))?;
             return Ok(Response::new(StartResponse { success: true }));
         }
 
         self.cmd_tx
-            .send(SuperviseurCommand::StartAll(config.project.clone()))
+            .send(SuperviseurCommand::StartAll(config.project.clone(), build))
             .map_err(|e| tonic::Status::internal(e.to_string()))?;
 
         Ok(Response::new(StartResponse { success: true }))
