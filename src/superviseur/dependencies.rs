@@ -161,7 +161,7 @@ impl DependencyGraph {
                         GraphCommand::StartService(service, build) => {
                             if build {
                                 let mut visited = vec![false; cloned_graph.size()];
-                                cloned_graph.build_service(&service, &mut visited);
+                                cloned_graph.build_service(&service, &mut visited).await;
                             }
                             cloned_graph.start_service(&service, &mut visited).await;
                         }
