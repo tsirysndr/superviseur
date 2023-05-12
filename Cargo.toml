@@ -1,63 +1,63 @@
 [package]
-name = "superviseur"
-version = "0.1.0-alpha.5"
-edition = "2021"
-repository = "https://github.com/tsirysndr/superviseur"
-license = "MPL-2.0"
-readme = "README.md"
 authors = ["Tsiry Sandratraina <tsiry.sndr@aol.com>"]
 categories = ["command-line-utilities"]
-keywords = ["process", "supervisor", "cli"]
 description = "A simple process supervisor (a single binary with zero dependencies) written in Rust."
+edition = "2021"
+keywords = ["process", "supervisor", "cli"]
+license = "MPL-2.0"
+name = "superviseur"
+readme = "README.md"
+repository = "https://github.com/tsirysndr/superviseur"
+version = "0.1.0-alpha.6"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-anyhow = "1.0.69"
-clap = "3.2.20"
-owo-colors = "3.5.0"
-tokio = { version = "1.24.2", features = ["tokio-macros", "macros", "rt", "rt-multi-thread"] }
-tonic = "0.8.3"
-prost = "0.11.8"
-tonic-web = "0.4.0"
-futures = "0.3.26"
-uuid = { version = "1.3.0", features = ["v4"] }
-serde = "1.0.152"
-dirs = "4.0.0"
-hcl-rs = "0.12.3"
-toml = "0.7.2"
-bat = "0.22.1"
-futures-util = "0.3.26"
-sysinfo = "0.28.1"
-tokio-stream = { version = "0.1.12", features = ["net"] }
-tabled = "0.10.0"
-nix = "0.26.2"
-chrono = "0.4.23"
-tower = "0.4.13"
+actix-cors = "0.6.4"
 actix-web = "4.3.1"
-rust-embed = { version = "6.6.0", features = ["debug-embed", "actix"] }
-mime_guess = "2.0.4"
-open = "3.2.0"
+anyhow = "1.0.69"
 async-graphql = "5.0.6"
 async-graphql-actix-web = "5.0.6"
-local-ip-addr = "0.1.1"
-slab = "0.4.8"
-futures-channel = "0.3.26"
-once_cell = "1.17.1"
-actix-cors = "0.6.4"
-sha256 = "1.1.2"
-names = "0.14.0"
-notify = "5.1.0"
-indexmap = { version = "1.9.2", features = ["serde"] }
-async-trait = "0.1.68"
-dyn-clone = "1.0.11"
-serde_json = "1.0.96"
-colored_json = "3.1.0"
-spinners = "4.1.0"
-shiplift = "0.7.0"
-tantivy = "0.19.2"
 async-recursion = "1.0.4"
+async-trait = "0.1.68"
+bat = "0.22.1"
+chrono = "0.4.23"
+clap = "3.2.20"
+colored_json = "3.1.0"
+dirs = "4.0.0"
+dyn-clone = "1.0.11"
+futures = "0.3.26"
+futures-channel = "0.3.26"
+futures-util = "0.3.26"
+hcl-rs = "0.12.3"
+indexmap = {version = "1.9.2", features = ["serde"]}
 inquire = "0.6.2"
+local-ip-addr = "0.1.1"
+mime_guess = "2.0.4"
+names = "0.14.0"
+nix = "0.26.2"
+notify = "5.1.0"
+once_cell = "1.17.1"
+open = "3.2.0"
+owo-colors = "3.5.0"
+prost = "0.11.8"
+rust-embed = {version = "6.6.0", features = ["debug-embed", "actix"]}
+serde = "1.0.152"
+serde_json = "1.0.96"
+sha256 = "1.1.2"
+shiplift = "0.7.0"
+slab = "0.4.8"
+spinners = "4.1.0"
+sysinfo = "0.28.1"
+tabled = "0.10.0"
+tantivy = "0.19.2"
+tokio = {version = "1.24.2", features = ["tokio-macros", "macros", "rt", "rt-multi-thread"]}
+tokio-stream = {version = "0.1.12", features = ["net"]}
+toml = "0.7.2"
+tonic = "0.8.3"
+tonic-web = "0.4.0"
+tower = "0.4.13"
+uuid = {version = "1.3.0", features = ["v4"]}
 
 [build-dependencies]
 tonic-build = "0.8"
