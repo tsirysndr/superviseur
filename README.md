@@ -25,7 +25,9 @@
 
 <img src="./astronauts.png" width="100%" style="margin-top: 20px; margin-bottom: 20px;" />
 
-A simple process supervisor for UNIX-like systems. Currently only supports running executables, but I plan to add support for managing wasm and docker containers in the future.
+Superviseur is a tool for running multi-services applications on isolated environments (Nix or Docker) using HCL/TOML or any language with an SDK. It is designed to be used both from a CLI and a web interface.
+Once you have a `Superfile.hcl`, you can create and start your application with a single command: `superviseur up`.
+
 
 Project Status: 🐲 Unstable, alpha-ish quality.
 
