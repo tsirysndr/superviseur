@@ -5,6 +5,8 @@ pub struct LoadConfigRequest {
     pub config: ::prost::alloc::string::String,
     #[prost(string, tag = "2")]
     pub file_path: ::prost::alloc::string::String,
+    #[prost(string, tag = "3")]
+    pub config_format: ::prost::alloc::string::String,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]

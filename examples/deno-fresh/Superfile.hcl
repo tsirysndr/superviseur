@@ -18,5 +18,7 @@ service "deno" {
   #  environment = ".#deno-fresh"
   #}
 
-  use "docker" {}
+  use "docker" {
+  # volumes = ["./data:/data"]
+  }
 }

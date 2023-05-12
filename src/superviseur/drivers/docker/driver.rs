@@ -10,8 +10,9 @@ use async_trait::async_trait;
 use futures_util::Stream;
 use owo_colors::OwoColorize;
 use shiplift::{
+    rep::ContainerDetails,
     tty::{self, TtyChunk},
-    ContainerOptions, Docker, LogsOptions,
+    ContainerConnectionOptions, ContainerOptions, Docker, LogsOptions,
 };
 use tokio::sync::mpsc;
 use tokio_stream::StreamExt;
@@ -30,12 +31,14 @@ use crate::{
         configuration::{DriverConfig, Service},
         process::{Process, State},
     },
+    util::convert_dir_path_to_absolute_path,
 };
 
 #[derive(Clone)]
 pub struct Driver {
     docker: Docker,
     project: String,
+    context: String,
     service: Service,
     processes: Arc<Mutex<Vec<(Process, String)>>>,
     childs: Arc<Mutex<HashMap<String, i32>>>,
@@ -50,6 +53,7 @@ impl Default for Driver {
         Self {
             docker: Docker::new(),
             project: "".to_string(),
+            context: "".to_string(),
             service: Service::default(),
             processes: Arc::new(Mutex::new(Vec::new())),
             childs: Arc::new(Mutex::new(HashMap::new())),
@@ -63,6 +67,7 @@ impl Default for Driver {
 impl Driver {
     pub fn new(
         project: String,
+        context: String,
         service: &Service,
         processes: Arc<Mutex<Vec<(Process, String)>>>,
         event_tx: mpsc::UnboundedSender<ProcessEvent>,
@@ -80,6 +85,7 @@ impl Driver {
         Self {
             docker: Docker::new(),
             project,
+            context,
             service: service.clone(),
             processes,
             childs,
@@ -89,14 +95,160 @@ impl Driver {
         }
     }
 
-    fn setup_container(&self) {
+    async fn setup_container_network(&self, container_name: &str) -> anyhow::Result<()> {
         match &self.config {
             Some(cfg) => {
-                let _volumes = cfg.volumes.clone().unwrap_or(Vec::new());
-                let _networks = cfg.networks.clone().unwrap_or(Vec::new());
+                let container = self.docker.containers().get(container_name);
+                let networks = self.docker.networks().list(&Default::default()).await?;
+                for network_name in cfg.networks.clone().unwrap_or(Vec::new()) {
+                    if let Some(network) = networks.iter().find(|x| x.name == network_name) {
+                        self.docker
+                            .networks()
+                            .get(&network.id)
+                            .connect(&ContainerConnectionOptions::builder(container.id()).build())
+                            .await?;
+                    }
+                }
             }
             None => {}
+        };
+        Ok(())
+    }
+
+    fn remove_container(&self, container_details: ContainerDetails) -> anyhow::Result<()> {
+        let id = container_details.id;
+        Command::new("docker")
+            .arg("container")
+            .arg("stop")
+            .arg(&id)
+            .stdout(std::process::Stdio::piped())
+            .stderr(std::process::Stdio::piped())
+            .spawn()?
+            .wait()?;
+
+        Command::new("docker")
+            .arg("container")
+            .arg("rm")
+            .arg(&id)
+            .stdout(std::process::Stdio::piped())
+            .stderr(std::process::Stdio::piped())
+            .spawn()?
+            .wait()?;
+        Ok(())
+    }
+
+    async fn build_image(&self, project: String) -> anyhow::Result<()> {
+        if self.config.as_ref().unwrap().image.is_some() {
+            println!(
+                "-> Skipping {} build, using image from config",
+                self.service.name.bright_green()
+            );
+            return Ok(());
         }
+        println!(
+            "-> Building {}",
+            self.service.name.bright_green().bold().underline()
+        );
+
+        let image_name = format!("{}_{}", project, self.service.name);
+        let mut child = Command::new("docker")
+            .arg("build")
+            .arg("-t")
+            .arg(&image_name)
+            .arg(&self.service.working_dir)
+            .env("DOCKER_BUILDKIT", "1")
+            .stdout(std::process::Stdio::piped())
+            .stderr(std::process::Stdio::piped())
+            .spawn()?;
+        if let Some(stdout) = child.stdout.take() {
+            let reader = io::BufReader::new(stdout);
+
+            for line in reader.lines() {
+                println!("{:?}", line?);
+            }
+        }
+        if let Some(stderr) = child.stderr.take() {
+            let reader = io::BufReader::new(stderr);
+
+            for line in reader.lines() {
+                println!("{:?}", line?);
+            }
+        }
+
+        let status = child.wait()?;
+        if !status.success() {
+            println!(
+                "Error while building {}",
+                self.service.name.bright_red().bold().underline()
+            );
+            return Err(anyhow::anyhow!("Error while building"));
+        }
+        println!(
+            "Successfully built {}",
+            self.service.name.bright_green().bold().underline()
+        );
+        Ok(())
+    }
+
+    fn format_volumes(&self, volumes: Vec<String>) -> anyhow::Result<Vec<String>> {
+        let mut result = vec![];
+        for volume in volumes.clone() {
+            if !volume.starts_with(".") && !volume.starts_with("/") {
+                result.push(volume);
+                continue;
+            }
+            if let Some(host_dir) = volume.split(":").next() {
+                let host_dir = convert_dir_path_to_absolute_path(host_dir, &self.context)?;
+                let container_dir = volume.split(":").last().unwrap();
+                result.push(format!("{}:{}", host_dir, container_dir))
+            }
+        }
+        Ok(result)
+    }
+
+    async fn build_container(&self, project: String, container_name: String) -> anyhow::Result<()> {
+        let builder = &self
+            .config
+            .as_ref()
+            .unwrap()
+            .image
+            .as_ref()
+            .unwrap_or(&container_name);
+
+        let volumes = self.format_volumes(match &self.config {
+            Some(cfg) => cfg.volumes.clone().unwrap_or(Vec::new()),
+            None => Vec::new(),
+        })?;
+
+        let options = match self.service.port {
+            Some(port) => ContainerOptions::builder(builder)
+                .name(&container_name)
+                .env(
+                    self.service
+                        .env
+                        .iter()
+                        .map(|(key, value)| format!("{}={}", key, value))
+                        .collect::<Vec<String>>(),
+                )
+                .expose(port, "tcp", port)
+                .volumes(volumes.iter().map(|x| x.as_str()).collect())
+                .build(),
+            None => ContainerOptions::builder(builder)
+                .name(&container_name)
+                .env(
+                    self.service
+                        .env
+                        .iter()
+                        .map(|(key, value)| format!("{}={}", key, value))
+                        .collect::<Vec<String>>(),
+                )
+                .volumes(volumes.iter().map(|x| x.as_str()).collect())
+                .build(),
+        };
+        self.docker.containers().create(&options).await?;
+        self.setup_container_network(&container_name).await?;
+        println!("Container {} built", container_name.bright_green());
+        Ok(())
     }
 }
 
@@ -118,40 +270,9 @@ impl DriverPlugin for Driver {
                     &container_name.bright_green()
                 );
                 self.build(project.clone()).await?;
-                let builder = &self
-                    .config
-                    .as_ref()
-                    .unwrap()
-                    .image
-                    .as_ref()
-                    .unwrap_or(&container_name);
-                let options = match self.service.port {
-                    Some(port) => ContainerOptions::builder(builder)
-                        .name(&container_name)
-                        .env(
-                            self.service
-                                .env
-                                .iter()
-                                .map(|(key, value)| format!("{}={}", key, value))
-                                .collect::<Vec<String>>(),
-                        )
-                        .expose(port, "tcp", port)
-                        .build(),
-                    None => ContainerOptions::builder(builder)
-                        .name(&container_name)
-                        .env(
-                            self.service
-                                .env
-                                .iter()
-                                .map(|(key, value)| format!("{}={}", key, value))
-                                .collect::<Vec<String>>(),
-                        )
-                        .build(),
-                };
-                self.docker.containers().create(&options).await.unwrap();
-                println!("Container {} built", &container_name.bright_green());
             }
         }
+
         let container = self.docker.containers().get(&container_name);
         container.start().await?;
         let pid = container.inspect().await?.state.pid as u32;
@@ -252,56 +373,15 @@ impl DriverPlugin for Driver {
     }
 
     async fn build(&self, project: String) -> Result<(), anyhow::Error> {
-        if self.config.as_ref().unwrap().image.is_some() {
-            println!(
-                "Skipping {} build, using image from config",
-                self.service.name.bright_green()
-            );
-            return Ok(());
+        self.build_image(project.clone()).await?;
+
+        let container_name = format!("{}_{}", project, self.service.name);
+        let container = self.docker.containers().get(&container_name);
+        if let Ok(container_details) = container.inspect().await {
+            self.remove_container(container_details)?;
         }
-        println!(
-            "Building {}",
-            self.service.name.bright_green().bold().underline()
-        );
-
-        let image_name = format!("{}_{}", project, self.service.name);
-        let mut child = Command::new("docker")
-            .arg("build")
-            .arg("-t")
-            .arg(&image_name)
-            .arg(&self.service.working_dir)
-            .env("DOCKER_BUILDKIT", "1")
-            .stdout(std::process::Stdio::piped())
-            .stderr(std::process::Stdio::piped())
-            .spawn()?;
-        if let Some(stdout) = child.stdout.take() {
-            let reader = io::BufReader::new(stdout);
-
-            for line in reader.lines() {
-                println!("{:?}", line?);
-            }
-        }
-        if let Some(stderr) = child.stderr.take() {
-            let reader = io::BufReader::new(stderr);
-
-            for line in reader.lines() {
-                println!("{:?}", line?);
-            }
-        }
-
-        let status = child.wait()?;
-        if !status.success() {
-            println!(
-                "Error while building {}",
-                self.service.name.bright_red().bold().underline()
-            );
-            return Err(anyhow::anyhow!("Error while building"));
-        }
-        println!(
-            "Successfully built {}",
-            self.service.name.bright_green().bold().underline()
-        );
-
+        self.build_container(project.clone(), container_name)
+            .await?;
         Ok(())
     }
 }

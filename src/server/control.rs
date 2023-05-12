@@ -6,7 +6,6 @@ use std::{
 };
 
 use anyhow::Error;
-use futures_util::TryFutureExt;
 use indexmap::IndexMap;
 use names::Generator;
 use tokio::sync::mpsc;
@@ -102,8 +101,19 @@ impl ControlService for Control {
         let request = request.into_inner();
         let config = request.config;
         let path = request.file_path;
-        let mut config: ConfigurationData =
-            hcl::from_str(&config).map_err(|e| tonic::Status::internal(e.to_string()))?;
+        let cfg_format = request.config_format;
+        let mut config: ConfigurationData = match cfg_format.as_str() {
+            "hcl" => hcl::from_str(&config).map_err(|e| tonic::Status::internal(e.to_string()))?,
+            "toml" => {
+                toml::from_str(&config).map_err(|e| tonic::Status::internal(e.to_string()))?
+            }
+            &_ => {
+                return Err(tonic::Status::internal(format!(
+                    "The config format {} is not supported",
+                    cfg_format
+                )))
+            }
+        };
 
         // set the name of the services
         config.services = config

@@ -160,7 +160,12 @@ impl SuperviseurInternal {
 
         let mut services = HashMap::new();
         let (cmd_tx, cmd_rx) = mpsc::unbounded_channel();
-        let mut graph = DependencyGraph::new(project.clone(), cmd_tx, Arc::new(Mutex::new(cmd_rx)));
+        let mut graph = DependencyGraph::new(
+            project.clone(),
+            cfg.context.unwrap(),
+            cmd_tx,
+            Arc::new(Mutex::new(cmd_rx)),
+        );
         for (key, mut service) in cfg.services.clone().into_iter() {
             service.name = key.clone();
             services.insert(

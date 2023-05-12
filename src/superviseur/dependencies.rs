@@ -119,12 +119,14 @@ pub struct DependencyGraph {
     vertices: Vec<Vertex>,
     edges: Vec<Edge>,
     project: String,
+    context: String,
     pub cmd_tx: mpsc::UnboundedSender<GraphCommand>,
 }
 
 impl DependencyGraph {
     pub fn new(
         project: String,
+        context: String,
         cmd_tx: mpsc::UnboundedSender<GraphCommand>,
         cmd_rx: Arc<Mutex<mpsc::UnboundedReceiver<GraphCommand>>>,
     ) -> Self {
@@ -132,6 +134,7 @@ impl DependencyGraph {
             vertices: Vec::new(),
             edges: Vec::new(),
             project,
+            context,
             cmd_tx,
         };
         let mut cloned_graph = graph.clone();
@@ -221,6 +224,7 @@ impl DependencyGraph {
             if r#use.into_iter().any(|(driver, _)| driver == "docker") {
                 vertex.driver = Box::new(docker::driver::Driver::new(
                     self.project.clone(),
+                    self.context.clone(),
                     service,
                     processes,
                     event_tx,

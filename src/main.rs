@@ -98,7 +98,9 @@ A simple process supervisor"#,
                 .about("Start the superviseur server"),
         )
         .subcommand(Command::new("daemon").about("Start the superviseur daemon"))
-        .subcommand(Command::new("up").about("Start all services"))
+        .subcommand(Command::new("up")
+        .arg(arg!(--build "Build all services before starting"))
+        .about("Start all services"))
         .subcommand(Command::new("down").about("Stop all services"))
         .subcommand(Command::new("ui").about("Start the superviseur dashboard"))
         .subcommand(Command::new("build")
@@ -119,7 +121,7 @@ A simple process supervisor"#,
             .about("Manage projects")
         )
         .subcommand(
-            Command::new("preview")
+            Command::new("open")
                 .arg(arg!(<name> "The name of the service to preview"))
                 .about("Open URL of a service in the browser"),   
         )
