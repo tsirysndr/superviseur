@@ -4,7 +4,6 @@ use superviseur::{
     cmd::{
         build::execute_build,
         config::execute_config,
-        init::execute_init,
         list::execute_list,
         log::{execute_log, execute_search_log},
         new::execute_new,
@@ -84,13 +83,13 @@ A simple process supervisor"#,
         )
         .subcommand(
             Command::new("init")
-                .arg(arg!(--toml "Initialize the superviseur config in toml format"))
-                .about("Initialize the superviseur config"),
+                .arg(arg!(--toml "Create a new superviseur config in toml format"))
+                .about("Create a new superviseur config (Superviseur.hcl)"),
         )
         .subcommand(
             Command::new("new")
                 .arg(arg!(--toml "Create a new service config in toml format"))
-                .about("Create a new service config"),
+                .about("Create a new superviseur config (Superviseur.hcl)"),
         )
         .subcommand(
             Command::new("serve")
@@ -174,8 +173,8 @@ async fn main() -> Result<(), Error> {
             execute_config(name.unwrap());
         }
         Some(("init", args)) => match args.is_present("toml") {
-            true => execute_init(ConfigFormat::TOML),
-            false => execute_init(ConfigFormat::HCL),
+            true => execute_new(ConfigFormat::TOML),
+            false => execute_new(ConfigFormat::HCL),
         },
         Some(("new", args)) => match args.is_present("toml") {
             true => execute_new(ConfigFormat::TOML),

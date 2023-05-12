@@ -57,6 +57,7 @@ spinners = "4.1.0"
 shiplift = "0.7.0"
 tantivy = "0.19.2"
 async-recursion = "1.0.4"
+inquire = "0.6.2"
 
 [build-dependencies]
 tonic-build = "0.8"

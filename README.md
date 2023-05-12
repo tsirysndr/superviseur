@@ -66,23 +66,27 @@ OPTIONS:
     -V, --version    Print version information
 
 SUBCOMMANDS:
-    build      Build all services or a specific one
-    config     Get the config of a service
-    down       Stop all services
-    help       Print this message or the help of the given subcommand(s)
-    init       Initialize the superviseur config
-    list       List all services [aliases: ls]
-    log        Get the log of a process
-    new        Create a new service config
-    ps         List all running processes
-    restart    Restart all services or a specific one
-    serve      Start the superviseur server
-    start      Start all services or a specific one
-    status     Get the status of a service
-    stop       Stop all services or a specific one
-    tail       Tail the log of a process
-    ui         Start the superviseur dashboard
-    up         Start all services
+    build         Build all services or a specific one
+    config        Get the config of a service
+    daemon        Start the superviseur daemon
+    down          Stop all services
+    help          Print this message or the help of the given subcommand(s)
+    init          Create a new superviseur config (Superviseur.hcl)
+    list          List all services [aliases: ls]
+    log           Get the log of a process
+    new           Create a new superviseur config (Superviseur.hcl)
+    open          Open URL of a service in the browser
+    project       Manage projects
+    ps            List all running processes
+    restart       Restart all services or a specific one
+    search-log    Search the log of a service
+    serve         Start the superviseur server
+    start         Start all services or a specific one
+    status        Get the status of a service
+    stop          Stop all services or a specific one
+    tail          Tail the log of a process
+    ui            Start the superviseur dashboard
+    up            Start all services
 ```
 
 ## 📚 Getting Started
