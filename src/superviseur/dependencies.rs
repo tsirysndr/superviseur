@@ -103,7 +103,7 @@ pub enum GraphCommand {
         Arc<Mutex<Vec<(Process, String)>>>,
         Arc<Mutex<HashMap<String, i32>>>,
         mpsc::UnboundedSender<ProcessEvent>,
-        LogEngine,
+        Arc<Mutex<LogEngine>>,
     ),
     AddEdge(usize, usize),
     StartService(Service, bool),
@@ -200,7 +200,7 @@ impl DependencyGraph {
         processes: Arc<Mutex<Vec<(Process, String)>>>,
         childs: Arc<Mutex<HashMap<String, i32>>>,
         event_tx: mpsc::UnboundedSender<ProcessEvent>,
-        log_engine: LogEngine,
+        log_engine: Arc<Mutex<LogEngine>>,
     ) -> usize {
         let mut vertex = Vertex::from(service);
 

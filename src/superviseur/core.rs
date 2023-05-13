@@ -48,7 +48,7 @@ impl Superviseur {
         config_map: Arc<Mutex<HashMap<String, ConfigurationData>>>,
         service_graph: Arc<Mutex<Vec<(DependencyGraph, String)>>>,
         service_map: Arc<Mutex<Vec<(HashMap<usize, Service>, String)>>>,
-        log_engine: LogEngine,
+        log_engine: Arc<Mutex<LogEngine>>,
     ) -> Self {
         let childs = Arc::new(Mutex::new(HashMap::new()));
         thread::spawn(move || {
@@ -111,7 +111,7 @@ struct SuperviseurInternal {
     config_map: Arc<Mutex<Vec<(ConfigurationData, String)>>>,
     service_graph: Arc<Mutex<Vec<(DependencyGraph, String)>>>,
     service_map: Arc<Mutex<Vec<(HashMap<usize, Service>, String)>>>,
-    log_engine: LogEngine,
+    log_engine: Arc<Mutex<LogEngine>>,
 }
 
 impl SuperviseurInternal {
@@ -125,7 +125,7 @@ impl SuperviseurInternal {
         config_map: Arc<Mutex<HashMap<String, ConfigurationData>>>,
         service_graph: Arc<Mutex<Vec<(DependencyGraph, String)>>>,
         service_map: Arc<Mutex<Vec<(HashMap<usize, Service>, String)>>>,
-        log_engine: LogEngine,
+        log_engine: Arc<Mutex<LogEngine>>,
     ) -> Self {
         let config_map = Arc::new(Mutex::new(
             config_map

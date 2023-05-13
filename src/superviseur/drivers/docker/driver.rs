@@ -44,7 +44,7 @@ pub struct Driver {
     processes: Arc<Mutex<Vec<(Process, String)>>>,
     childs: Arc<Mutex<HashMap<String, i32>>>,
     event_tx: mpsc::UnboundedSender<ProcessEvent>,
-    log_engine: logs::LogEngine,
+    log_engine: Arc<Mutex<logs::LogEngine>>,
     config: Option<DriverConfig>,
 }
 
@@ -59,7 +59,7 @@ impl Default for Driver {
             processes: Arc::new(Mutex::new(Vec::new())),
             childs: Arc::new(Mutex::new(HashMap::new())),
             event_tx,
-            log_engine: logs::LogEngine::new(),
+            log_engine: Arc::new(Mutex::new(logs::LogEngine::new())),
             config: None,
         }
     }
@@ -73,7 +73,7 @@ impl Driver {
         processes: Arc<Mutex<Vec<(Process, String)>>>,
         event_tx: mpsc::UnboundedSender<ProcessEvent>,
         childs: Arc<Mutex<HashMap<String, i32>>>,
-        log_engine: LogEngine,
+        log_engine: Arc<Mutex<LogEngine>>,
     ) -> Self {
         let config = service
             .r#use
@@ -465,7 +465,7 @@ impl DriverPlugin for Driver {
 
 pub async fn write_logs(
     service: Service,
-    log_engine: LogEngine,
+    log_engine: Arc<Mutex<LogEngine>>,
     project: String,
     mut stream: impl Stream<Item = Result<tty::TtyChunk, shiplift::Error>> + Unpin,
 ) {
@@ -499,6 +499,7 @@ pub async fn write_logs(
                                 .timestamp(),
                         ),
                     };
+                    let log_engine = log_engine.lock().unwrap();
                     match log_engine.insert(&log) {
                         Ok(_) => {}
                         Err(e) => {
@@ -538,6 +539,7 @@ pub async fn write_logs(
                                 .timestamp(),
                         ),
                     };
+                    let log_engine = log_engine.lock().unwrap();
                     match log_engine.insert(&log) {
                         Ok(_) => {}
                         Err(e) => {

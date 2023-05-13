@@ -23,7 +23,7 @@ pub struct Logging {
     processes: Arc<Mutex<Vec<(Process, String)>>>,
     config_map: Arc<Mutex<HashMap<String, ConfigurationData>>>,
     project_map: Arc<Mutex<HashMap<String, String>>>,
-    log_engine: LogEngine,
+    log_engine: Arc<Mutex<LogEngine>>,
 }
 
 impl Logging {
@@ -32,7 +32,7 @@ impl Logging {
         processes: Arc<Mutex<Vec<(Process, String)>>>,
         config_map: Arc<Mutex<HashMap<String, ConfigurationData>>>,
         project_map: Arc<Mutex<HashMap<String, String>>>,
-        log_engine: LogEngine,
+        log_engine: Arc<Mutex<LogEngine>>,
     ) -> Self {
         Self {
             superviseur,
@@ -221,7 +221,8 @@ impl LoggingService for Logging {
         let config = config_map.get(&project_id).unwrap();
 
         let query = format!("{} AND {} AND {}", config.project, service, term);
-        let result = self.log_engine.search_in_service(&query).map_err(|e| {
+        let log_engine = self.log_engine.lock().unwrap();
+        let result = log_engine.search_in_service(&query).map_err(|e| {
             tonic::Status::internal(format!("Error searching in service: {}", e.to_string()))
         })?;
         let response = SearchResponse {
