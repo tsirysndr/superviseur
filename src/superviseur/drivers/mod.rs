@@ -3,6 +3,7 @@ pub mod devenv;
 pub mod docker;
 pub mod exec;
 pub mod flox;
+pub mod nix;
 
 use std::thread;
 
