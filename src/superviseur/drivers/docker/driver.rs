@@ -112,7 +112,22 @@ impl Driver {
                                     .build(),
                             )
                             .await?;
+                        continue;
                     }
+                    let network = self
+                        .docker
+                        .networks()
+                        .create(&NetworkCreateOptions::builder(&network_name).build())
+                        .await?;
+                    self.docker
+                        .networks()
+                        .get(&network.id)
+                        .connect(
+                            &ContainerConnectionOptions::builder(container.id())
+                                .aliases(vec![&self.service.name])
+                                .build(),
+                        )
+                        .await?;
                 }
                 if cfg.networks.clone().unwrap_or(Vec::new()).len() == 0 {
                     // create a network
