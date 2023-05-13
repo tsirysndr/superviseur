@@ -35,7 +35,7 @@ fn cli() -> Command<'static> {
       /____/\__,_/ .___/\___/_/    |___/_/____/\___/\__,_/_/     
                 /_/                                              
       
-A simple process supervisor"#,
+ Define and run multi-service applications on isolated environments with Nix or Docker"#,
         )
         .subcommand(
             Command::new("start")
