@@ -12,7 +12,8 @@ use owo_colors::OwoColorize;
 use shiplift::{
     rep::ContainerDetails,
     tty::{self, TtyChunk},
-    ContainerConnectionOptions, ContainerOptions, Docker, LogsOptions,
+    ContainerConnectionOptions, ContainerOptions, Docker, LogsOptions, NetworkCreateOptions,
+    PullOptions,
 };
 use tokio::sync::mpsc;
 use tokio_stream::StreamExt;
@@ -105,8 +106,49 @@ impl Driver {
                         self.docker
                             .networks()
                             .get(&network.id)
-                            .connect(&ContainerConnectionOptions::builder(container.id()).build())
+                            .connect(
+                                &ContainerConnectionOptions::builder(container.id())
+                                    .aliases(vec![&self.service.name])
+                                    .build(),
+                            )
                             .await?;
+                    }
+                }
+                if cfg.networks.clone().unwrap_or(Vec::new()).len() == 0 {
+                    // create a network
+                    let project_hash = format!("{:x}", md5::compute(&self.context));
+                    let network_name = format!("{}_{}", self.project, project_hash);
+                    // verify if network exists
+                    match self.docker.networks().get(&network_name).inspect().await {
+                        Ok(network) => {
+                            // network exists
+                            self.docker
+                                .networks()
+                                .get(&network.id)
+                                .connect(
+                                    &ContainerConnectionOptions::builder(container.id())
+                                        .aliases(vec![&self.service.name])
+                                        .build(),
+                                )
+                                .await?;
+                        }
+                        Err(_) => {
+                            // network does not exist
+                            let network = self
+                                .docker
+                                .networks()
+                                .create(&NetworkCreateOptions::builder(&network_name).build())
+                                .await?;
+                            self.docker
+                                .networks()
+                                .get(&network.id)
+                                .connect(
+                                    &ContainerConnectionOptions::builder(container.id())
+                                        .aliases(vec![&self.service.name])
+                                        .build(),
+                                )
+                                .await?;
+                        }
                     }
                 }
             }
@@ -138,11 +180,31 @@ impl Driver {
     }
 
     async fn build_image(&self, project: String) -> anyhow::Result<()> {
-        if self.config.as_ref().unwrap().image.is_some() {
+        if let Some(img) = &self.config.as_ref().unwrap().image {
             println!(
                 "-> Skipping {} build, using image from config",
                 self.service.name.bright_green()
             );
+            let mut stream = self
+                .docker
+                .images()
+                .pull(&PullOptions::builder().image(img).build());
+
+            while let Some(pull_result) = stream.next().await {
+                match pull_result {
+                    Ok(output) => {
+                        print!("\r");
+                        print!(
+                            "{} {} {}",
+                            output["id"], output["status"], output["progress"]
+                        )
+                    }
+                    Err(e) => eprintln!("Error: {}", e),
+                }
+            }
+
+            println!("");
+
             return Ok(());
         }
         println!(

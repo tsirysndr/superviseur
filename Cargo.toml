@@ -33,6 +33,7 @@ hcl-rs = "0.12.3"
 indexmap = {version = "1.9.2", features = ["serde"]}
 inquire = "0.6.2"
 local-ip-addr = "0.1.1"
+md5 = "0.7.0"
 mime_guess = "2.0.4"
 names = "0.14.0"
 nix = "0.26.2"
