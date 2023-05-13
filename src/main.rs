@@ -204,7 +204,7 @@ async fn main() -> Result<(), Error> {
             Some(("list", _)) => execute_list_projects().await?,
             _ => SubCommand::with_name("project").print_help()?,
         },
-        Some(("preview", args)) => {
+        Some(("open", args)) => {
             let name = args.value_of("name");
             execute_preview(name.unwrap()).await?;
         }

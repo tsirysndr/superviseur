@@ -16,9 +16,6 @@ service "nodejs" {
   stdout = "/tmp/nodejs-stdout.log"
   stderr = "/tmp/nodejs-stderr.log"
   port = 5005
-  flox = {
-    environment = ".#nginx-nodejs-redis"
-  }
   build = {
     command = "npm install"
   }
