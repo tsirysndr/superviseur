@@ -12,7 +12,7 @@ use crate::types::{configuration::Service, process::Process};
 
 use super::{
     core::ProcessEvent,
-    drivers::{docker, exec, flox, DriverPlugin},
+    drivers::{docker, exec, flox, nix, DriverPlugin},
     logs::LogEngine,
 };
 
@@ -228,10 +228,26 @@ impl DependencyGraph {
                     log_engine.clone(),
                 ));
             }
-            if r#use.into_iter().any(|(driver, _)| driver == "docker") {
+
+            if r#use
+                .clone()
+                .into_iter()
+                .any(|(driver, _)| driver == "docker")
+            {
                 vertex.driver = Box::new(docker::driver::Driver::new(
                     self.project.clone(),
                     self.context.clone(),
+                    service,
+                    processes.clone(),
+                    event_tx.clone(),
+                    childs.clone(),
+                    log_engine.clone(),
+                ));
+            }
+
+            if r#use.into_iter().any(|(driver, _)| driver == "nix") {
+                vertex.driver = Box::new(nix::driver::Driver::new(
+                    self.project.clone(),
                     service,
                     processes,
                     event_tx,
