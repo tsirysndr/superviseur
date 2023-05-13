@@ -40,7 +40,7 @@ pub struct Driver {
     processes: Arc<Mutex<Vec<(Process, String)>>>,
     childs: Arc<Mutex<HashMap<String, i32>>>,
     event_tx: mpsc::UnboundedSender<ProcessEvent>,
-    log_engine: LogEngine,
+    log_engine: Arc<Mutex<LogEngine>>,
 }
 
 impl Default for Driver {
@@ -52,7 +52,7 @@ impl Default for Driver {
             processes: Arc::new(Mutex::new(Vec::new())),
             childs: Arc::new(Mutex::new(HashMap::new())),
             event_tx,
-            log_engine: LogEngine::new(),
+            log_engine: Arc::new(Mutex::new(LogEngine::new())),
         }
     }
 }
@@ -64,7 +64,7 @@ impl Driver {
         processes: Arc<Mutex<Vec<(Process, String)>>>,
         event_tx: mpsc::UnboundedSender<ProcessEvent>,
         childs: Arc<Mutex<HashMap<String, i32>>>,
-        log_engine: LogEngine,
+        log_engine: Arc<Mutex<LogEngine>>,
     ) -> Self {
         Self {
             project,
@@ -123,6 +123,8 @@ impl Driver {
                     output: String::from("stdout"),
                     date: tantivy::DateTime::from_timestamp_secs(chrono::Local::now().timestamp()),
                 };
+
+                let log_engine = log_engine.lock().unwrap();
                 match log_engine.insert(&log) {
                     Ok(_) => {}
                     Err(e) => {
@@ -156,6 +158,7 @@ impl Driver {
                     output: String::from("stderr"),
                     date: tantivy::DateTime::from_timestamp_secs(chrono::Local::now().timestamp()),
                 };
+                let log_engine = log_engine.lock().unwrap();
                 match log_engine.insert(&log) {
                     Ok(_) => {}
                     Err(e) => {

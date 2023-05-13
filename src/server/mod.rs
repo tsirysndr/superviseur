@@ -45,7 +45,7 @@ pub async fn exec(port: u16, serve: bool) -> Result<(), Error> {
     let cmd_rx = Arc::new(Mutex::new(cmd_rx));
     let service_graph = Arc::new(Mutex::new(vec![] as Vec<(DependencyGraph, String)>));
     let service_map = Arc::new(Mutex::new(vec![] as Vec<(HashMap<usize, Service>, String)>));
-    let log_engine = LogEngine::new();
+    let log_engine = Arc::new(Mutex::new(LogEngine::new()));
 
     let superviseur = Superviseur::new(
         cmd_rx,
