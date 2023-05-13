@@ -1,14 +1,14 @@
 project = "nginx-nodejs-redis"
 
 service "nodejs" {
-  type = "exec"
+  type = "docker"
   command = "npm start"
   working_dir = "./web"
   description = "Ping Service Example"
   depends_on = ["redis"]
   wait_for = ["redis"]
   env = {
-    REDIS_HOST = "localhost"
+    REDIS_HOST = "redis"
   }
   autostart = true
   autorestart = false
@@ -20,13 +20,15 @@ service "nodejs" {
     command = "npm install"
   }
 
-  use "flox" {
-    environment = ".#nginx-nodejs-redis"
-  }
+  #use "flox" {
+  #  environment = ".#nginx-nodejs-redis"
+  #}
+
+  use "docker" { }
 }
 
 service "redis" {
-  type = "exec"
+  type = "docker"
   command = "redis-server"
   stop_command = "redis-cli shutdown"
   working_dir = "."
@@ -40,7 +42,12 @@ service "redis" {
   stderr = "/tmp/redis-stderr.log"
   port = 6379
   
-  use "flox" {
-    environment = ".#nginx-nodejs-redis"
+  #use "flox" {
+  #  environment = ".#nginx-nodejs-redis"
+  #}
+
+  use "docker" {
+    image = "redislabs/redismod:edge"
+    ports = ["6379:6379"]
   }
 }
