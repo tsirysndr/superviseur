@@ -1,9 +1,9 @@
 [package]
 authors = ["Tsiry Sandratraina <tsiry.sndr@aol.com>"]
 categories = ["command-line-utilities"]
-description = "A simple process supervisor (a single binary with zero dependencies) written in Rust."
+description = "Define and run multi-service applications on isolated environments with Nix or Docker"
 edition = "2021"
-keywords = ["process", "supervisor", "cli"]
+keywords = ["compose", "supervisor", "cli", "docker", "nix"]
 license = "MPL-2.0"
 name = "superviseur"
 readme = "README.md"
