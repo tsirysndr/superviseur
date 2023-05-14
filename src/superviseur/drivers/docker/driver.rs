@@ -96,6 +96,16 @@ impl Driver {
         }
     }
 
+    pub fn verify_docker(&self) -> Result<(), anyhow::Error> {
+        let mut cmd = Command::new("docker");
+        cmd.arg("--version");
+        let output = cmd.output()?;
+        if !output.status.success() {
+            return Err(anyhow::anyhow!("Docker is not installed on your system"));
+        }
+        Ok(())
+    }
+
     async fn setup_container_network(&self, container_name: &str) -> anyhow::Result<()> {
         match &self.config {
             Some(cfg) => {
@@ -332,6 +342,7 @@ impl Driver {
 #[async_trait]
 impl DriverPlugin for Driver {
     async fn start(&self, project: String) -> Result<(), anyhow::Error> {
+        self.verify_docker()?;
         let container_name = format!("{}_{}", project, self.service.name);
         let container = self.docker.containers().get(&container_name);
         match container.inspect().await {

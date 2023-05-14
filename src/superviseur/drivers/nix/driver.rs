@@ -72,6 +72,19 @@ impl Driver {
         }
     }
 
+    pub fn verify_nix(&self) -> Result<(), Error> {
+        std::process::Command::new("sh")
+            .arg("-c")
+            .arg("nix --version")
+            .stdout(std::process::Stdio::piped())
+            .stderr(std::process::Stdio::piped())
+            .spawn()
+            .expect(
+                "nix is not installed, see https://github.com/DeterminateSystems/nix-installer",
+            );
+        Ok(())
+    }
+
     pub fn write_logs(&self, stdout: ChildStdout, stderr: ChildStderr) {
         let cloned_service = self.service.clone();
         let log_engine = self.log_engine.clone();
@@ -146,6 +159,8 @@ impl Driver {
 #[async_trait]
 impl DriverPlugin for Driver {
     async fn start(&self, project: String) -> Result<(), Error> {
+        self.verify_nix()?;
+
         let command = format!("nix develop --command -- {}", &self.service.command);
         println!("command: {}", command);
 

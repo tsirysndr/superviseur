@@ -72,6 +72,17 @@ impl Driver {
         }
     }
 
+    pub fn verify_devenv(&self) -> Result<(), Error> {
+        std::process::Command::new("sh")
+            .arg("-c")
+            .arg("devenv --version")
+            .stdout(std::process::Stdio::piped())
+            .stderr(std::process::Stdio::piped())
+            .spawn()
+            .expect("devenv is not installed, see https://devenv.sh/getting-started/");
+        Ok(())
+    }
+
     pub fn write_logs(&self, stdout: ChildStdout, stderr: ChildStderr) {
         let cloned_service = self.service.clone();
         let log_engine = self.log_engine.clone();
@@ -167,6 +178,7 @@ impl Driver {
 #[async_trait]
 impl DriverPlugin for Driver {
     async fn start(&self, project: String) -> Result<(), Error> {
+        self.verify_devenv()?;
         let mut sp = Spinner::new(Spinners::Line, "Setup devenv ...".into());
         let envs = self.service.env.clone();
         let mut envs = envs
