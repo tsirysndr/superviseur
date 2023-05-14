@@ -6,8 +6,14 @@ use std::{
     thread,
 };
 
+use anyhow::Error;
 use async_trait::async_trait;
+use nix::{
+    sys::signal::{self, Signal},
+    unistd::Pid,
+};
 use owo_colors::OwoColorize;
+use spinners::{Spinner, Spinners};
 use tokio::sync::mpsc;
 
 use crate::{
@@ -64,6 +70,27 @@ impl Driver {
             event_tx,
             log_engine,
         }
+    }
+
+    pub fn setup_devbox(&self) -> Result<(), Error> {
+        std::process::Command::new("sh")
+            .arg("-c")
+            .arg("devbox --version")
+            .stdout(std::process::Stdio::piped())
+            .stderr(std::process::Stdio::piped())
+            .spawn()
+            .expect("devbox is not installed, see https://www.jetpack.io/devbox/docs/installing_devbox/");
+
+        let child = std::process::Command::new("sh")
+            .arg("-c")
+            .arg("devbox shellenv")
+            .current_dir(&self.service.working_dir)
+            .stdout(std::process::Stdio::piped())
+            .stderr(std::process::Stdio::piped())
+            .spawn()?;
+
+        child.wait_with_output()?;
+        Ok(())
     }
 
     pub fn write_logs(&self, stdout: ChildStdout, stderr: ChildStderr) {
@@ -139,31 +166,158 @@ impl Driver {
 
 #[async_trait]
 impl DriverPlugin for Driver {
-    async fn start(&self, _project: String) -> Result<(), anyhow::Error> {
-        todo!()
+    async fn start(&self, project: String) -> Result<(), Error> {
+        let mut sp = Spinner::new(Spinners::Line, "Setup devbox environment...".into());
+        self.setup_devbox()?;
+        sp.stop();
+        println!("\nSetup devbox env done !");
+
+        let command = format!("devbox run {}", &self.service.command);
+        println!("command: {}", command);
+
+        let envs = self.service.env.clone();
+        let working_dir = self.service.working_dir.clone();
+        let mut child = std::process::Command::new("sh")
+            .arg("-c")
+            .arg(command)
+            .current_dir(working_dir)
+            .envs(envs)
+            .stdout(std::process::Stdio::piped())
+            .stderr(std::process::Stdio::piped())
+            .spawn()?;
+
+        let mut processes = self.processes.lock().unwrap();
+
+        let mut process = &mut processes
+            .iter_mut()
+            .find(|(p, key)| p.name == self.service.name && key == &project)
+            .unwrap()
+            .0;
+        process.pid = Some(child.id());
+        process.up_time = Some(chrono::Utc::now());
+        let service_key = format!("{}-{}", project, self.service.name);
+        self.childs
+            .lock()
+            .unwrap()
+            .insert(service_key, process.pid.unwrap() as i32);
+
+        self.event_tx.send(ProcessEvent::Started(
+            self.service.name.clone(),
+            project.clone(),
+        ))?;
+
+        let stdout = child.stdout.take().unwrap();
+        let stderr = child.stderr.take().unwrap();
+        self.write_logs(stdout, stderr);
+        Ok(())
     }
 
-    async fn stop(&self, _project: String) -> Result<(), anyhow::Error> {
-        todo!()
+    async fn stop(&self, project: String) -> Result<(), Error> {
+        if let Some(stop_command) = self.service.stop_command.clone() {
+            let envs = self.service.env.clone();
+            let working_dir = self.service.working_dir.clone();
+
+            let stop_command = format!("devbox run {}", stop_command);
+            let mut child = std::process::Command::new("sh")
+                .arg("-c")
+                .arg(stop_command)
+                .current_dir(working_dir)
+                .envs(envs)
+                .stdout(std::process::Stdio::piped())
+                .stderr(std::process::Stdio::piped())
+                .spawn()
+                .unwrap();
+            child.wait().unwrap();
+
+            let mut childs = self.childs.lock().unwrap();
+            let service_key = format!("{}-{}", project.clone(), self.service.name.clone());
+            childs.remove(&service_key);
+
+            self.event_tx
+                .send(ProcessEvent::Stopped(
+                    self.service.name.clone(),
+                    project.clone(),
+                ))
+                .unwrap();
+
+            return Ok(());
+        }
+
+        let mut childs = self.childs.lock().unwrap();
+        let service_key = format!("{}-{}", project.clone(), self.service.name.clone());
+
+        match childs.get(&service_key) {
+            Some(pid) => {
+                println!(
+                    "Stopping service {} (pid: {})",
+                    self.service.name.clone(),
+                    pid
+                );
+                signal::kill(Pid::from_raw(*pid), Signal::SIGTERM)?;
+                childs.remove(&service_key);
+
+                self.event_tx
+                    .send(ProcessEvent::Stopped(
+                        self.service.name.clone(),
+                        project.clone(),
+                    ))
+                    .unwrap();
+
+                println!("Service {} stopped", self.service.name);
+                Ok(())
+            }
+            None => {
+                println!("Service {} is not running", self.service.name);
+                Ok(())
+            }
+        }
     }
 
-    async fn restart(&self, _project: String) -> Result<(), anyhow::Error> {
-        todo!()
+    async fn restart(&self, project: String) -> Result<(), Error> {
+        self.stop(project.clone()).await?;
+        self.start(project).await?;
+        Ok(())
     }
 
-    async fn status(&self) -> Result<(), anyhow::Error> {
-        todo!()
+    async fn status(&self) -> Result<(), Error> {
+        Ok(())
     }
 
-    async fn logs(&self) -> Result<(), anyhow::Error> {
-        todo!()
+    async fn logs(&self) -> Result<(), Error> {
+        Ok(())
     }
 
-    async fn exec(&self) -> Result<(), anyhow::Error> {
-        todo!()
+    async fn exec(&self) -> Result<(), Error> {
+        Ok(())
     }
 
-    async fn build(&self, _project: String) -> Result<(), anyhow::Error> {
-        todo!()
+    async fn build(&self, project: String) -> Result<(), Error> {
+        if let Some(build) = self.service.build.clone() {
+            let envs = self.service.env.clone();
+            let working_dir = self.service.working_dir.clone();
+
+            let build_command = format!("devbox run {}", build.command);
+            println!("build_command: {}", build_command);
+            let mut child = std::process::Command::new("sh")
+                .arg("-c")
+                .arg(build_command)
+                .current_dir(working_dir)
+                .envs(envs)
+                .stdout(std::process::Stdio::piped())
+                .stderr(std::process::Stdio::piped())
+                .spawn()?;
+            let stdout = child.stdout.take().unwrap();
+            let stderr = child.stderr.take().unwrap();
+            self.write_logs(stdout, stderr);
+            child.wait()?;
+
+            self.event_tx
+                .send(ProcessEvent::Built(
+                    self.service.name.clone(),
+                    project.clone(),
+                ))
+                .unwrap();
+        }
+        Ok(())
     }
 }
