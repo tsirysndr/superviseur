@@ -13,6 +13,7 @@ use nix::{
     unistd::Pid,
 };
 use owo_colors::OwoColorize;
+use spinners::{Spinner, Spinners};
 use tokio::sync::mpsc;
 
 use crate::{
@@ -166,15 +167,19 @@ impl Driver {
 #[async_trait]
 impl DriverPlugin for Driver {
     async fn start(&self, project: String) -> Result<(), Error> {
-        let command = format!("{}", &self.service.command);
-        println!("command(devenv): {}", command);
-
+        let mut sp = Spinner::new(Spinners::Line, "Setup devenv ...".into());
         let envs = self.service.env.clone();
         let mut envs = envs
             .iter()
             .map(|(k, v)| (k.clone(), v.clone()))
             .collect::<Vec<_>>();
         envs.extend(self.environment_variables()?);
+
+        sp.stop();
+
+        let command = format!("{}", &self.service.command);
+        println!("\ncommand(devenv): {}", command);
+
         let working_dir = self.service.working_dir.clone();
         let mut child = std::process::Command::new("sh")
             .arg("-c")

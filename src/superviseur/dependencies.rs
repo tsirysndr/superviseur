@@ -8,13 +8,13 @@ use async_recursion::async_recursion;
 use dyn_clone::clone_trait_object;
 use tokio::sync::mpsc;
 
-use crate::types::{configuration::Service, process::Process};
-
 use super::{
     core::ProcessEvent,
     drivers::{devenv, docker, exec, flox, nix, DriverPlugin},
     logs::LogEngine,
+    macros::{check_driver, create_driver},
 };
+use crate::types::{configuration::Service, process::Process};
 
 clone_trait_object!(DriverPlugin);
 
@@ -203,37 +203,32 @@ impl DependencyGraph {
         log_engine: Arc<Mutex<LogEngine>>,
     ) -> usize {
         let mut vertex = Vertex::from(service);
+        let project = self.project.clone();
 
-        vertex.driver = Box::new(exec::driver::Driver::new(
-            self.project.clone(),
+        vertex.driver = create_driver!(
+            exec::driver::Driver::new,
+            project,
             service,
-            processes.clone(),
-            event_tx.clone(),
-            childs.clone(),
-            log_engine.clone(),
-        ));
+            processes,
+            event_tx,
+            childs,
+            log_engine
+        );
 
         if let Some(r#use) = service.r#use.clone() {
-            if r#use
-                .clone()
-                .into_iter()
-                .any(|(driver, _)| driver == "flox")
-            {
-                vertex.driver = Box::new(flox::driver::Driver::new(
-                    self.project.clone(),
+            if check_driver!(r#use, "flox") {
+                vertex.driver = create_driver!(
+                    flox::driver::Driver::new,
+                    project,
                     service,
-                    processes.clone(),
-                    event_tx.clone(),
-                    childs.clone(),
-                    log_engine.clone(),
-                ));
+                    processes,
+                    event_tx,
+                    childs,
+                    log_engine
+                );
             }
 
-            if r#use
-                .clone()
-                .into_iter()
-                .any(|(driver, _)| driver == "docker")
-            {
+            if check_driver!(r#use, "docker") {
                 vertex.driver = Box::new(docker::driver::Driver::new(
                     self.project.clone(),
                     self.context.clone(),
@@ -245,30 +240,28 @@ impl DependencyGraph {
                 ));
             }
 
-            if r#use.clone().into_iter().any(|(driver, _)| driver == "nix") {
-                vertex.driver = Box::new(nix::driver::Driver::new(
-                    self.project.clone(),
-                    service,
-                    processes.clone(),
-                    event_tx.clone(),
-                    childs.clone(),
-                    log_engine.clone(),
-                ));
-            }
-
-            if r#use
-                .clone()
-                .into_iter()
-                .any(|(driver, _)| driver == "devenv")
-            {
-                vertex.driver = Box::new(devenv::driver::Driver::new(
-                    self.project.clone(),
+            if check_driver!(r#use, "nix") {
+                vertex.driver = create_driver!(
+                    nix::driver::Driver::new,
+                    project,
                     service,
                     processes,
                     event_tx,
                     childs,
-                    log_engine,
-                ));
+                    log_engine
+                );
+            }
+
+            if check_driver!(r#use, "devenv") {
+                vertex.driver = create_driver!(
+                    devenv::driver::Driver::new,
+                    project,
+                    service,
+                    processes,
+                    event_tx,
+                    childs,
+                    log_engine
+                );
             }
         }
         self.vertices.push(vertex);
