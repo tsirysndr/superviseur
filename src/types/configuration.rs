@@ -1,6 +1,6 @@
 use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
-use std::{collections::HashMap};
+use std::collections::HashMap;
 
 pub enum ConfigFormat {
     TOML,
@@ -88,6 +88,7 @@ pub struct Build {
 #[derive(Serialize, Deserialize, Debug, Default, Clone)]
 pub struct DriverConfig {
     pub environment: Option<String>,   // flox, nix
+    pub packages: Option<Vec<String>>, // flox, nix
     pub image: Option<String>,         // docker, podman
     pub volumes: Option<Vec<String>>,  // docker, podman
     pub ports: Option<Vec<String>>,    // docker, podman

@@ -1,6 +1,7 @@
 use std::{
     collections::HashMap,
     io::{BufRead, Write},
+    path::Path,
     process::{ChildStderr, ChildStdout},
     sync::{Arc, Mutex},
     thread,
@@ -26,7 +27,10 @@ use crate::{
         drivers::DriverPlugin,
         logs::{self, Log, LogEngine},
     },
-    types::{configuration::Service, process::Process},
+    types::{
+        configuration::{DriverConfig, Service},
+        process::Process,
+    },
 };
 
 #[derive(Clone)]
@@ -72,7 +76,7 @@ impl Driver {
         }
     }
 
-    pub fn setup_devbox(&self) -> Result<(), Error> {
+    pub fn setup_devbox(&self, cfg: &DriverConfig) -> Result<(), Error> {
         std::process::Command::new("sh")
             .arg("-c")
             .arg("devbox --version")
@@ -81,6 +85,10 @@ impl Driver {
             .spawn()
             .expect("devbox is not installed, see https://www.jetpack.io/devbox/docs/installing_devbox/");
 
+        self.init_devbox()?;
+
+        self.install_packages(cfg)?;
+
         let child = std::process::Command::new("sh")
             .arg("-c")
             .arg("devbox shellenv")
@@ -88,6 +96,52 @@ impl Driver {
             .stdout(std::process::Stdio::piped())
             .stderr(std::process::Stdio::piped())
             .spawn()?;
+
+        child.wait_with_output()?;
+        Ok(())
+    }
+
+    pub fn install_packages(&self, cfg: &DriverConfig) -> Result<(), Error> {
+        let mut packages = vec![];
+        if let Some(p) = &cfg.packages {
+            packages = p.clone();
+        }
+
+        if packages.is_empty() {
+            return Ok(());
+        }
+
+        println!(
+            "\n-> Installing packages: {}",
+            packages.join(", ").bright_green()
+        );
+
+        let child = std::process::Command::new("sh")
+            .arg("-c")
+            .arg(format!("devbox add {}", packages.join(" ")))
+            .current_dir(&self.service.working_dir)
+            .stdout(std::process::Stdio::piped())
+            .stderr(std::process::Stdio::piped())
+            .spawn()?;
+
+        child.wait_with_output()?;
+        Ok(())
+    }
+
+    pub fn init_devbox(&self) -> Result<(), Error> {
+        // verify if devbox config is present
+        if Path::new(&format!("{}/devbox.json", &self.service.working_dir)).exists() {
+            return Ok(());
+        }
+
+        let child = std::process::Command::new("sh")
+            .arg("-c")
+            .arg("devbox init")
+            .current_dir(&self.service.working_dir)
+            .stdout(std::process::Stdio::piped())
+            .stderr(std::process::Stdio::piped())
+            .spawn()
+            .expect("devbox is not installed, see https://www.jetpack.io/devbox/docs/installing_devbox/");
 
         child.wait_with_output()?;
         Ok(())
@@ -168,7 +222,18 @@ impl Driver {
 impl DriverPlugin for Driver {
     async fn start(&self, project: String) -> Result<(), Error> {
         let mut sp = Spinner::new(Spinners::Line, "Setup devbox environment...".into());
-        self.setup_devbox()?;
+
+        let cfg = self
+            .service
+            .r#use
+            .as_ref()
+            .unwrap()
+            .into_iter()
+            .find(|(driver, _)| *driver == "devbox")
+            .map(|(_, x)| x)
+            .unwrap();
+
+        self.setup_devbox(&cfg)?;
         sp.stop();
         println!("\nSetup devbox env done !");
 

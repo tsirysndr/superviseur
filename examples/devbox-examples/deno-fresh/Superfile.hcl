@@ -14,7 +14,11 @@ service "deno" {
   stderr = "/tmp/deno-stderr.log"
   port = 8000
 
-  use "devbox" { }
+  use "devbox" {
+    packages = ["deno"]
+  }
+
+  #use "devenv" { }
 
   #use "nix" { }
 
