@@ -404,7 +404,35 @@ impl DriverPlugin for Driver {
                 self.service.name.clone(),
                 project.clone(),
             ))?;
+            return Ok(());
         }
+
+        if let Some(runtime) = &self.cfg.runtime {
+            if check_wasm_runtime!(runtime, "spin") {
+                let envs = self.service.env.clone();
+                let working_dir = self.service.working_dir.clone();
+
+                let mut child = std::process::Command::new("sh")
+                    .arg("-c")
+                    .arg("spin build")
+                    .current_dir(working_dir)
+                    .envs(envs)
+                    .stdout(std::process::Stdio::piped())
+                    .stderr(std::process::Stdio::piped())
+                    .spawn()?;
+                let stdout = child.stdout.take().unwrap();
+                let stderr = child.stderr.take().unwrap();
+                self.write_logs(stdout, stderr);
+
+                child.wait()?;
+
+                self.event_tx.send(ProcessEvent::Built(
+                    self.service.name.clone(),
+                    project.clone(),
+                ))?;
+            }
+        }
+
         Ok(())
     }
 }

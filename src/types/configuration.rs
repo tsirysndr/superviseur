@@ -102,7 +102,9 @@ pub struct DriverConfig {
 }
 
 #[derive(Serialize, Deserialize, Debug, Default, Clone)]
-pub struct RuntimeConfig {}
+pub struct RuntimeConfig {
+    pub from: Option<String>, // Spin
+}
 
 #[derive(Serialize, Deserialize, Debug, Default, Clone)]
 pub struct DockerVolumeConfig {}

@@ -1,6 +1,6 @@
-project = "demo"
+project = "spin-demo"
 
-service "demo" {
+service "http" {
   type = "wasm"
   command = "target/wasm32-wasi/release/http_server.wasm"
   working_dir = "."
@@ -15,10 +15,6 @@ service "demo" {
   stdout = "/tmp/http-stdout.log"
   stderr = "/tmp/http-stderr.log"
   port = 3000
-
-  build {
-    command = "spin build"
-  }
 
   use "wasm" {
     runtime "spin" { }
