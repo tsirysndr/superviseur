@@ -1,0 +1,15 @@
+spin_manifest_version = "1"
+authors = ["Tsiry Sandratraina <tsiry.sndr@gmail.com>"]
+description = ""
+name = "http-server"
+trigger = { type = "http", base = "/" }
+version = "0.1.0"
+
+[[component]]
+id = "http-server"
+source = "target/wasm32-wasi/release/http_server.wasm"
+allowed_http_hosts = []
+[component.trigger]
+route = "/..."
+[component.build]
+command = "cargo build --target wasm32-wasi --release"

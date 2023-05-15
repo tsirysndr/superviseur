@@ -93,7 +93,16 @@ pub struct DriverConfig {
     pub volumes: Option<Vec<String>>,  // docker, podman
     pub ports: Option<Vec<String>>,    // docker, podman
     pub networks: Option<Vec<String>>, // docker, podman
+    #[serde(
+        rename = "runtime",
+        skip_serializing_if = "Option::is_none",
+        serialize_with = "hcl::ser::labeled_block"
+    )]
+    pub runtime: Option<IndexMap<String, RuntimeConfig>>, // wasm
 }
+
+#[derive(Serialize, Deserialize, Debug, Default, Clone)]
+pub struct RuntimeConfig {}
 
 #[derive(Serialize, Deserialize, Debug, Default, Clone)]
 pub struct DockerVolumeConfig {}
