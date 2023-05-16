@@ -1162,6 +1162,28 @@ pub struct LogDetails {
     #[prost(string, tag = "5")]
     pub output: ::prost::alloc::string::String,
 }
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct EventsRequest {
+    #[prost(string, tag = "1")]
+    pub service: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub config_file_path: ::prost::alloc::string::String,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct EventsResponse {
+    #[prost(string, tag = "1")]
+    pub event: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub project: ::prost::alloc::string::String,
+    #[prost(string, tag = "3")]
+    pub service: ::prost::alloc::string::String,
+    #[prost(string, tag = "4")]
+    pub date: ::prost::alloc::string::String,
+    #[prost(string, tag = "5")]
+    pub output: ::prost::alloc::string::String,
+}
 /// Generated client implementations.
 pub mod logging_service_client {
     #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
@@ -1294,6 +1316,28 @@ pub mod logging_service_client {
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
+        pub async fn events(
+            &mut self,
+            request: impl tonic::IntoRequest<super::EventsRequest>,
+        ) -> Result<
+            tonic::Response<tonic::codec::Streaming<super::EventsResponse>>,
+            tonic::Status,
+        > {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::new(
+                        tonic::Code::Unknown,
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/superviseur.v1alpha1.LoggingService/Events",
+            );
+            self.inner.server_streaming(request.into_request(), path, codec).await
+        }
     }
 }
 /// Generated server implementations.
@@ -1327,6 +1371,16 @@ pub mod logging_service_server {
             &self,
             request: tonic::Request<super::SearchRequest>,
         ) -> Result<tonic::Response<super::SearchResponse>, tonic::Status>;
+        /// Server streaming response type for the Events method.
+        type EventsStream: futures_core::Stream<
+                Item = Result<super::EventsResponse, tonic::Status>,
+            >
+            + Send
+            + 'static;
+        async fn events(
+            &self,
+            request: tonic::Request<super::EventsRequest>,
+        ) -> Result<tonic::Response<Self::EventsStream>, tonic::Status>;
     }
     #[derive(Debug)]
     pub struct LoggingServiceServer<T: LoggingService> {
@@ -1499,6 +1553,45 @@ pub mod logging_service_server {
                                 send_compression_encodings,
                             );
                         let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/superviseur.v1alpha1.LoggingService/Events" => {
+                    #[allow(non_camel_case_types)]
+                    struct EventsSvc<T: LoggingService>(pub Arc<T>);
+                    impl<
+                        T: LoggingService,
+                    > tonic::server::ServerStreamingService<super::EventsRequest>
+                    for EventsSvc<T> {
+                        type Response = super::EventsResponse;
+                        type ResponseStream = T::EventsStream;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::ResponseStream>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::EventsRequest>,
+                        ) -> Self::Future {
+                            let inner = self.0.clone();
+                            let fut = async move { (*inner).events(request).await };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let inner = inner.0;
+                        let method = EventsSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            );
+                        let res = grpc.server_streaming(method, req).await;
                         Ok(res)
                     };
                     Box::pin(fut)

@@ -1,4 +1,5 @@
 pub mod configuration;
+pub mod events;
 pub mod process;
 pub mod service;
 pub mod status;

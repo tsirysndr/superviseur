@@ -20,8 +20,9 @@ use crate::{
         core::ProcessEvent,
         drivers::DriverPlugin,
         logs::{Log, LogEngine},
+        macros::wait_child_process_in_background,
     },
-    types::{configuration::Service, process::Process},
+    types::{configuration::Service, events::SuperviseurEvent, process::Process},
 };
 
 use nix::{
@@ -37,6 +38,7 @@ pub struct Driver {
     childs: Arc<Mutex<HashMap<String, i32>>>,
     event_tx: mpsc::UnboundedSender<ProcessEvent>,
     log_engine: Arc<Mutex<LogEngine>>,
+    superviseur_event: mpsc::UnboundedSender<SuperviseurEvent>,
 }
 
 impl Default for Driver {
@@ -49,6 +51,7 @@ impl Default for Driver {
             childs: Arc::new(Mutex::new(HashMap::new())),
             event_tx,
             log_engine: Arc::new(Mutex::new(LogEngine::new())),
+            superviseur_event: mpsc::unbounded_channel().0,
         }
     }
 }
@@ -61,6 +64,7 @@ impl Driver {
         event_tx: mpsc::UnboundedSender<ProcessEvent>,
         childs: Arc<Mutex<HashMap<String, i32>>>,
         log_engine: Arc<Mutex<LogEngine>>,
+        superviseur_event: mpsc::UnboundedSender<SuperviseurEvent>,
     ) -> Self {
         Self {
             project,
@@ -69,6 +73,7 @@ impl Driver {
             childs,
             event_tx,
             log_engine,
+            superviseur_event,
         }
     }
 
@@ -89,6 +94,7 @@ impl Driver {
         let cloned_service = self.service.clone();
         let log_engine = self.log_engine.clone();
         let project = self.project.clone();
+        let superviseur_event = self.superviseur_event.clone();
 
         thread::spawn(move || {
             let service = cloned_service;
@@ -108,6 +114,15 @@ impl Driver {
                     output: String::from("stdout"),
                     date: tantivy::DateTime::from_timestamp_secs(chrono::Local::now().timestamp()),
                 };
+
+                superviseur_event
+                    .send(SuperviseurEvent::Logs(
+                        project.clone(),
+                        service.name.clone(),
+                        line.clone(),
+                    ))
+                    .unwrap();
+
                 let log_engine = log_engine.lock().unwrap();
                 match log_engine.insert(&log) {
                     Ok(_) => {}
@@ -197,6 +212,19 @@ impl DriverPlugin for Driver {
 
         let stdout = child.stdout.take().unwrap();
         let stderr = child.stderr.take().unwrap();
+
+        let event_tx = self.event_tx.clone();
+        let superviseur_event_tx = self.superviseur_event.clone();
+        let service_name = self.service.name.clone();
+
+        wait_child_process_in_background!(
+            child,
+            event_tx,
+            service_name,
+            project,
+            superviseur_event_tx
+        );
+
         self.write_logs(stdout, stderr);
         Ok(())
     }
@@ -229,6 +257,13 @@ impl DriverPlugin for Driver {
                 ))
                 .unwrap();
 
+            self.superviseur_event
+                .send(SuperviseurEvent::Stopped(
+                    project.clone(),
+                    self.service.name.clone(),
+                ))
+                .unwrap();
+
             return Ok(());
         }
 
@@ -252,6 +287,13 @@ impl DriverPlugin for Driver {
                     ))
                     .unwrap();
 
+                self.superviseur_event
+                    .send(SuperviseurEvent::Stopped(
+                        project,
+                        self.service.name.clone(),
+                    ))
+                    .unwrap();
+
                 println!("Service {} stopped", self.service.name);
                 Ok(())
             }
@@ -264,7 +306,13 @@ impl DriverPlugin for Driver {
 
     async fn restart(&self, project: String) -> Result<(), Error> {
         self.stop(project.clone()).await?;
-        self.start(project).await?;
+        self.start(project.clone()).await?;
+
+        self.superviseur_event.send(SuperviseurEvent::Restarted(
+            project,
+            self.service.name.clone(),
+        ))?;
+
         Ok(())
     }
 
@@ -300,12 +348,13 @@ impl DriverPlugin for Driver {
             self.write_logs(stdout, stderr);
             child.wait()?;
 
-            self.event_tx
-                .send(ProcessEvent::Built(
-                    self.service.name.clone(),
-                    project.clone(),
-                ))
-                .unwrap();
+            self.event_tx.send(ProcessEvent::Built(
+                self.service.name.clone(),
+                project.clone(),
+            ))?;
+
+            self.superviseur_event
+                .send(SuperviseurEvent::Built(project, self.service.name.clone()))?;
         }
         Ok(())
     }

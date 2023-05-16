@@ -25,6 +25,7 @@ use crate::{
     },
     types::{
         configuration::{ConfigurationData, Service},
+        events::SuperviseurEvent,
         process::{Process, State},
     },
 };
@@ -49,6 +50,7 @@ impl Superviseur {
         service_graph: Arc<Mutex<Vec<(DependencyGraph, String)>>>,
         service_map: Arc<Mutex<Vec<(HashMap<usize, Service>, String)>>>,
         log_engine: Arc<Mutex<LogEngine>>,
+        superviseur_event: mpsc::UnboundedSender<SuperviseurEvent>,
     ) -> Self {
         let childs = Arc::new(Mutex::new(HashMap::new()));
         thread::spawn(move || {
@@ -63,6 +65,7 @@ impl Superviseur {
                 service_graph,
                 service_map,
                 log_engine,
+                superviseur_event,
             );
             futures::executor::block_on(internal);
         });
@@ -112,6 +115,7 @@ struct SuperviseurInternal {
     service_graph: Arc<Mutex<Vec<(DependencyGraph, String)>>>,
     service_map: Arc<Mutex<Vec<(HashMap<usize, Service>, String)>>>,
     log_engine: Arc<Mutex<LogEngine>>,
+    superviseur_event: mpsc::UnboundedSender<SuperviseurEvent>,
 }
 
 impl SuperviseurInternal {
@@ -126,6 +130,7 @@ impl SuperviseurInternal {
         service_graph: Arc<Mutex<Vec<(DependencyGraph, String)>>>,
         service_map: Arc<Mutex<Vec<(HashMap<usize, Service>, String)>>>,
         log_engine: Arc<Mutex<LogEngine>>,
+        superviseur_event: mpsc::UnboundedSender<SuperviseurEvent>,
     ) -> Self {
         let config_map = Arc::new(Mutex::new(
             config_map
@@ -146,6 +151,7 @@ impl SuperviseurInternal {
             service_graph,
             service_map,
             log_engine,
+            superviseur_event,
         }
     }
 
@@ -165,6 +171,7 @@ impl SuperviseurInternal {
             cfg.context.unwrap(),
             cmd_tx,
             Arc::new(Mutex::new(cmd_rx)),
+            self.superviseur_event.clone(),
         );
         for (key, mut service) in cfg.services.clone().into_iter() {
             service.name = key.clone();
@@ -175,6 +182,7 @@ impl SuperviseurInternal {
                     self.childs.clone(),
                     self.event_tx.clone(),
                     self.log_engine.clone(),
+                    self.superviseur_event.clone(),
                 ),
                 service.clone(),
             );
@@ -186,6 +194,7 @@ impl SuperviseurInternal {
                     self.childs.clone(),
                     self.event_tx.clone(),
                     self.log_engine.clone(),
+                    self.superviseur_event.clone(),
                 ))
                 .unwrap();
         }
@@ -325,6 +334,12 @@ impl SuperviseurInternal {
     }
 
     fn handle_restart(&mut self, service: Service, project: String) -> Result<(), Error> {
+        self.superviseur_event
+            .send(SuperviseurEvent::Restarting(
+                project.clone(),
+                service.name.clone(),
+            ))
+            .unwrap();
         self.handle_stop(service.clone(), project.clone())?;
         self.handle_start(service.clone(), project.clone(), false)?;
         Ok(())

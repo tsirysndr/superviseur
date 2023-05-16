@@ -41,8 +41,22 @@ message LogDetails {
   string output = 5;
 }
 
+message EventsRequest {
+  string service = 1;
+  string config_file_path = 2;
+}
+
+message EventsResponse {
+  string event = 1;
+  string project = 2;
+  string service = 3;
+  string date = 4;
+  string output = 5;
+}
+
 service LoggingService {
   rpc Log (LogRequest) returns (stream LogResponse) {}
   rpc Tail (TailRequest) returns (stream TailResponse) {}
   rpc Search (SearchRequest) returns (SearchResponse) {}
+  rpc Events (EventsRequest) returns (stream EventsResponse) {}
 }
