@@ -10,7 +10,7 @@ use tokio::sync::mpsc;
 
 use super::{
     core::ProcessEvent,
-    drivers::{devbox, devenv, docker, exec, flox, nix, DriverPlugin},
+    drivers::{devbox, devenv, docker, exec, flox, nix, wasm, DriverPlugin},
     logs::LogEngine,
     macros::{check_driver, create_driver},
 };
@@ -267,6 +267,18 @@ impl DependencyGraph {
             if check_driver!(r#use, "devbox") {
                 vertex.driver = create_driver!(
                     devbox::driver::Driver::new,
+                    project,
+                    service,
+                    processes,
+                    event_tx,
+                    childs,
+                    log_engine
+                );
+            }
+
+            if check_driver!(r#use, "wasm") {
+                vertex.driver = create_driver!(
+                    wasm::driver::Driver::new,
                     project,
                     service,
                     processes,

@@ -4,6 +4,7 @@ pub mod docker;
 pub mod exec;
 pub mod flox;
 pub mod nix;
+pub mod wasm;
 
 use std::thread;
 
