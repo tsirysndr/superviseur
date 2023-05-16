@@ -1,0 +1,11 @@
+[package]
+edition = "2021"
+name = "server-warp"
+version = "0.1.0"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+bytes = "1"
+tokio_wasi = {version = "1", features = ["rt", "macros", "net", "time", "io-util"]}
+warp_wasi = "0.3"
