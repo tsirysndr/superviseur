@@ -30,6 +30,7 @@ use crate::{
     },
     types::{
         configuration::{DriverConfig, Service},
+        events::SuperviseurEvent,
         process::{Process, State},
     },
     util::convert_dir_path_to_absolute_path,
@@ -46,11 +47,13 @@ pub struct Driver {
     event_tx: mpsc::UnboundedSender<ProcessEvent>,
     log_engine: Arc<Mutex<logs::LogEngine>>,
     config: Option<DriverConfig>,
+    superviseur_event: mpsc::UnboundedSender<SuperviseurEvent>,
 }
 
 impl Default for Driver {
     fn default() -> Self {
         let (event_tx, _) = mpsc::unbounded_channel();
+        let (superviseur_event, _) = mpsc::unbounded_channel();
         Self {
             docker: Docker::new(),
             project: "".to_string(),
@@ -61,6 +64,7 @@ impl Default for Driver {
             event_tx,
             log_engine: Arc::new(Mutex::new(logs::LogEngine::new())),
             config: None,
+            superviseur_event,
         }
     }
 }
@@ -74,6 +78,7 @@ impl Driver {
         event_tx: mpsc::UnboundedSender<ProcessEvent>,
         childs: Arc<Mutex<HashMap<String, i32>>>,
         log_engine: Arc<Mutex<LogEngine>>,
+        superviseur_event: mpsc::UnboundedSender<SuperviseurEvent>,
     ) -> Self {
         let config = service
             .r#use
@@ -93,6 +98,7 @@ impl Driver {
             event_tx,
             log_engine,
             config: Some(config.clone()),
+            superviseur_event,
         }
     }
 
@@ -384,11 +390,16 @@ impl DriverPlugin for Driver {
                 project.clone(),
             ))
             .unwrap();
+        self.superviseur_event.send(SuperviseurEvent::Started(
+            project.clone(),
+            self.service.name.clone(),
+        ))?;
 
         let docker = self.docker.clone();
         let service = self.service.clone();
         let log_engine = self.log_engine.clone();
         let project = self.project.clone();
+        let superviseur_event = self.superviseur_event.clone();
         thread::spawn(move || {
             let rt = tokio::runtime::Runtime::new().unwrap();
             let container = docker.containers().get(&container_name);
@@ -401,7 +412,13 @@ impl DriverPlugin for Driver {
                     .timestamps(true)
                     .build(),
             );
-            rt.block_on(write_logs(service, log_engine, project, logs_stream));
+            rt.block_on(write_logs(
+                service,
+                log_engine,
+                project,
+                superviseur_event,
+                logs_stream,
+            ));
         });
         Ok(())
     }
@@ -417,6 +434,12 @@ impl DriverPlugin for Driver {
                     .send(ProcessEvent::Stopped(
                         self.service.name.clone(),
                         project.clone(),
+                    ))
+                    .unwrap();
+                self.superviseur_event
+                    .send(SuperviseurEvent::Stopped(
+                        project.clone(),
+                        self.service.name.clone(),
                     ))
                     .unwrap();
             }
@@ -437,6 +460,10 @@ impl DriverPlugin for Driver {
             Ok(_) => {
                 println!("Restarting container {}", &container_name.bright_green());
                 container.restart(None).await?;
+                self.superviseur_event.send(SuperviseurEvent::Restarted(
+                    project,
+                    self.service.name.clone(),
+                ))?;
             }
             Err(_) => {
                 println!(
@@ -470,6 +497,8 @@ impl DriverPlugin for Driver {
         }
         self.build_container(project.clone(), container_name)
             .await?;
+        self.superviseur_event
+            .send(SuperviseurEvent::Built(project, self.service.name.clone()))?;
         Ok(())
     }
 }
@@ -478,6 +507,7 @@ pub async fn write_logs(
     service: Service,
     log_engine: Arc<Mutex<LogEngine>>,
     project: String,
+    superviseur_event: mpsc::UnboundedSender<SuperviseurEvent>,
     mut stream: impl Stream<Item = Result<tty::TtyChunk, shiplift::Error>> + Unpin,
 ) {
     let cloned_service = service.clone();
@@ -510,6 +540,15 @@ pub async fn write_logs(
                                 .timestamp(),
                         ),
                     };
+
+                    superviseur_event
+                        .send(SuperviseurEvent::Logs(
+                            project.clone(),
+                            service.name.clone(),
+                            line.clone(),
+                        ))
+                        .unwrap();
+
                     let log_engine = log_engine.lock().unwrap();
                     match log_engine.insert(&log) {
                         Ok(_) => {}

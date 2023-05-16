@@ -46,6 +46,8 @@ pub async fn exec(port: u16, serve: bool) -> Result<(), Error> {
     let service_graph = Arc::new(Mutex::new(vec![] as Vec<(DependencyGraph, String)>));
     let service_map = Arc::new(Mutex::new(vec![] as Vec<(HashMap<usize, Service>, String)>));
     let log_engine = Arc::new(Mutex::new(LogEngine::new()));
+    let (superviseur_events_tx, superviseur_events_rx) = tokio::sync::mpsc::unbounded_channel();
+    let superviseur_events_rx = Arc::new(tokio::sync::Mutex::new(superviseur_events_rx));
 
     let superviseur = Superviseur::new(
         cmd_rx,
@@ -57,6 +59,7 @@ pub async fn exec(port: u16, serve: bool) -> Result<(), Error> {
         service_graph.clone(),
         service_map.clone(),
         log_engine.clone(),
+        superviseur_events_tx.clone(),
     );
 
     let cloned_cmd_tx = cmd_tx.clone();
@@ -66,6 +69,7 @@ pub async fn exec(port: u16, serve: bool) -> Result<(), Error> {
     let cloned_config_map = config_map.clone();
     let cloned_project_map = project_map.clone();
     let cloned_log_engine = log_engine.clone();
+    let cloned_superviseur_events_rx = superviseur_events_rx.clone();
 
     // create a one-shot channel to wait for the server to start
     let (tx, rx) = tokio::sync::oneshot::channel::<bool>();
@@ -87,6 +91,7 @@ pub async fn exec(port: u16, serve: bool) -> Result<(), Error> {
                 cloned_config_map.clone(),
                 cloned_project_map.clone(),
                 cloned_log_engine.clone(),
+                cloned_superviseur_events_rx.clone(),
             ))))
             .add_service(tonic_web::enable(ControlServiceServer::new(Control::new(
                 cloned_cmd_tx.clone(),
@@ -125,6 +130,7 @@ pub async fn exec(port: u16, serve: bool) -> Result<(), Error> {
                 config_map.clone(),
                 project_map.clone(),
                 log_engine.clone(),
+                superviseur_events_rx.clone(),
             ))))
             .add_service(tonic_web::enable(ControlServiceServer::new(Control::new(
                 cmd_tx.clone(),
