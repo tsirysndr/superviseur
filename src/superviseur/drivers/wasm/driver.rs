@@ -158,19 +158,19 @@ impl Driver {
         let cmd = format!("wasmer run {}", self.service.command);
         if let Some(runtime) = &self.cfg.runtime {
             if check_wasm_runtime!(runtime, "lunatic") {
-                return format!("lunatic run {}", cmd);
+                return format!("lunatic run {}", self.service.command);
             }
 
             if check_wasm_runtime!(runtime, "wasmtime") {
-                return format!("wasmtime {}", cmd);
+                return format!("wasmtime {}", self.service.command);
             }
 
             if check_wasm_runtime!(runtime, "wasmer") {
-                return format!("wasmer run {}", cmd);
+                return format!("wasmer run {}", self.service.command);
             }
 
             if check_wasm_runtime!(runtime, "spiderlightning") {
-                return format!("slight -c slightfile.toml {}", cmd);
+                return format!("slight -c slightfile.toml run {}", self.service.command);
             }
 
             if check_wasm_runtime!(runtime, "spin") {
@@ -178,7 +178,7 @@ impl Driver {
             }
 
             if check_wasm_runtime!(runtime, "wasmedge") {
-                return format!("wasmedge {}", cmd);
+                return format!("wasmedge {}", self.service.command);
             }
         }
         cmd
@@ -408,29 +408,33 @@ impl DriverPlugin for Driver {
         }
 
         if let Some(runtime) = &self.cfg.runtime {
+            let mut build_command = "cargo build --target=wasm32-wasi --release";
+
             if check_wasm_runtime!(runtime, "spin") {
-                let envs = self.service.env.clone();
-                let working_dir = self.service.working_dir.clone();
-
-                let mut child = std::process::Command::new("sh")
-                    .arg("-c")
-                    .arg("spin build")
-                    .current_dir(working_dir)
-                    .envs(envs)
-                    .stdout(std::process::Stdio::piped())
-                    .stderr(std::process::Stdio::piped())
-                    .spawn()?;
-                let stdout = child.stdout.take().unwrap();
-                let stderr = child.stderr.take().unwrap();
-                self.write_logs(stdout, stderr);
-
-                child.wait()?;
-
-                self.event_tx.send(ProcessEvent::Built(
-                    self.service.name.clone(),
-                    project.clone(),
-                ))?;
+                build_command = "spin build";
             }
+
+            let envs = self.service.env.clone();
+            let working_dir = self.service.working_dir.clone();
+
+            let mut child = std::process::Command::new("sh")
+                .arg("-c")
+                .arg(build_command)
+                .current_dir(working_dir)
+                .envs(envs)
+                .stdout(std::process::Stdio::piped())
+                .stderr(std::process::Stdio::piped())
+                .spawn()?;
+            let stdout = child.stdout.take().unwrap();
+            let stderr = child.stderr.take().unwrap();
+            self.write_logs(stdout, stderr);
+
+            child.wait()?;
+
+            self.event_tx.send(ProcessEvent::Built(
+                self.service.name.clone(),
+                project.clone(),
+            ))?;
         }
 
         Ok(())

@@ -1,0 +1,20 @@
+/// a configs interface
+resource configs {
+    /// creates a handle to a configs object
+    static open: func(name: string) -> expected<configs, configs-error>
+
+    /// get a config value through a key
+    get: func(key: string) -> expected<list<u8>, configs-error>
+
+    /// set a config key and value
+    set: func(key: string, value: list<u8>) -> expected<unit, configs-error>
+}
+
+/// common config errors
+variant configs-error {
+    not-found(string),
+    invalid-value(string),
+    permission-denied(string),
+    io-error(string),
+    unexpected-error(string)
+}
