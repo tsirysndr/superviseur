@@ -15,9 +15,6 @@
   <a href="https://feat-webui--640724a8e12e5a011d6d59fb.chromatic.com" target="_blank">
   <img src="https://img.shields.io/badge/Storybook-FF4785?logo=storybook&logoColor=fff" />
   </a>
-  <a href="https://github.com/tsirysndr/superviseur/tree/master/webui" target="_blank">
-  <img src="https://img.shields.io/badge/-ApolloGraphQL-311C87?logo=apollo-graphql" />
-  </a>
   <a href="https://github.com/tsirysndr/superviseur/actions/workflows/release.yml" target="_blank">
     <img alt="release" src="https://github.com/tsirysndr/superviseur/actions/workflows/release.yml/badge.svg" />
   </a>
