@@ -21,6 +21,7 @@ async-graphql-actix-web = "5.0.6"
 async-recursion = "1.0.4"
 async-trait = "0.1.68"
 bat = "0.22.1"
+bollard = { version = "0.14.0", features = ["buildkit", "rustls", "tonic", "chrono", "ssl"] }
 chrono = "0.4.23"
 clap = "3.2.20"
 colored_json = "3.1.0"
@@ -46,7 +47,6 @@ rust-embed = {version = "6.6.0", features = ["debug-embed", "actix"]}
 serde = "1.0.152"
 serde_json = "1.0.96"
 sha256 = "1.1.2"
-shiplift = {version = "0.7.0", features = ["vendored-ssl"]}
 slab = "0.4.8"
 spinners = "4.1.0"
 sysinfo = "0.28.1"
