@@ -3,7 +3,7 @@ use tokio::net::UnixStream;
 use tonic::transport::{ Endpoint, Uri};
 use tower::service_fn;
 use owo_colors::OwoColorize;
-use crate::{config::verify_if_config_file_is_present, types::{UNIX_SOCKET_PATH, events::{SERVICE_STARTING, SERVICE_BUILDING, SERVICE_CRASHED, SERVICE_RESTARTING, SERVICE_STOPPING, SERVICE_LOGS, SERVICE_SETUP_ENV, ALL_SERVICES_STOPPED, ALL_SERVICES_BUILT, ALL_SERVICES_RESTARTED}}, api::superviseur::v1alpha1::{BuildRequest, control_service_client::ControlServiceClient, LoadConfigRequest, logging_service_client::LoggingServiceClient, EventsRequest}};
+use crate::{config::verify_if_config_file_is_present, types::{UNIX_SOCKET_PATH, events::{SERVICE_STARTING, SERVICE_BUILDING, SERVICE_CRASHED, SERVICE_ERROR, SERVICE_RESTARTING, SERVICE_STOPPING, SERVICE_LOGS, SERVICE_SETUP_ENV, ALL_SERVICES_STOPPED, ALL_SERVICES_BUILT, ALL_SERVICES_RESTARTED}}, api::superviseur::v1alpha1::{BuildRequest, control_service_client::ControlServiceClient, LoadConfigRequest, logging_service_client::LoggingServiceClient, EventsRequest}};
 
 use super::event_handler;
 

@@ -7,7 +7,7 @@ use crate::{
     api::superviseur::v1alpha1::{
         control_service_client::ControlServiceClient, LoadConfigRequest, StopRequest, EventsRequest, logging_service_client::LoggingServiceClient,
     },
-    types::{UNIX_SOCKET_PATH, events::{SERVICE_STARTING, SERVICE_BUILDING, SERVICE_CRASHED, SERVICE_RESTARTING, SERVICE_STOPPING, SERVICE_LOGS, SERVICE_SETUP_ENV, ALL_SERVICES_STOPPED, ALL_SERVICES_BUILT, ALL_SERVICES_RESTARTED}}, config::verify_if_config_file_is_present,
+    types::{UNIX_SOCKET_PATH, events::{SERVICE_STARTING, SERVICE_BUILDING, SERVICE_CRASHED, SERVICE_ERROR, SERVICE_RESTARTING, SERVICE_STOPPING, SERVICE_LOGS, SERVICE_SETUP_ENV, ALL_SERVICES_STOPPED, ALL_SERVICES_BUILT, ALL_SERVICES_RESTARTED}}, config::verify_if_config_file_is_present,
 };
 use owo_colors::OwoColorize;
 

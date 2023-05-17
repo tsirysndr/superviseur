@@ -25,6 +25,26 @@ pub mod core;
 pub mod logging;
 pub mod project;
 
+macro_rules! return_event {
+    ($tx: expr, $service_name: expr, $event: expr, $project: expr, $service: expr, $output: expr) => {{
+        if $service_name != $service && !$service_name.is_empty() {
+            continue;
+        }
+
+        $tx.send(Ok(EventsResponse {
+            event: $event.to_string(),
+            project: $project,
+            service: $service,
+            date: chrono::Utc::now().to_rfc3339(),
+            output: $output,
+        }))
+        .await
+        .unwrap();
+    }};
+}
+
+pub(crate) use return_event;
+
 pub async fn exec(port: u16, serve: bool) -> Result<(), Error> {
     let addr: SocketAddr = format!("0.0.0.0:{}", port).parse().unwrap();
     println!("{}", BANNER.bright_purple());

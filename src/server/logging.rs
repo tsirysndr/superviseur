@@ -15,9 +15,9 @@ use crate::{
         configuration::ConfigurationData,
         events::{
             SuperviseurEvent, ALL_SERVICES_BUILT, ALL_SERVICES_RESTARTED, ALL_SERVICES_STARTED,
-            ALL_SERVICES_STOPPED, SERVICE_BUILDING, SERVICE_BUILT, SERVICE_CRASHED, SERVICE_LOGS,
-            SERVICE_RESTARTED, SERVICE_RESTARTING, SERVICE_SETUP_ENV, SERVICE_STARTED,
-            SERVICE_STARTING, SERVICE_STOPPED, SERVICE_STOPPING,
+            ALL_SERVICES_STOPPED, SERVICE_BUILDING, SERVICE_BUILT, SERVICE_CRASHED, SERVICE_ERROR,
+            SERVICE_LOGS, SERVICE_RESTARTED, SERVICE_RESTARTING, SERVICE_SETUP_ENV,
+            SERVICE_STARTED, SERVICE_STARTING, SERVICE_STOPPED, SERVICE_STOPPING,
         },
         process::Process,
     },
@@ -26,6 +26,8 @@ use anyhow::Error;
 use chrono::{TimeZone, Utc};
 use tokio_stream::wrappers::ReceiverStream;
 use tonic::{Request, Response, Status};
+
+use super::return_event;
 
 pub struct Logging {
     superviseur: Superviseur,
@@ -286,190 +288,111 @@ impl LoggingService for Logging {
 
                 match events_rx.recv().await {
                     Some(SuperviseurEvent::Starting(project, service)) => {
-                        if service_name != service && !service_name.is_empty() {
-                            continue;
-                        }
-
-                        tx.send(Ok(EventsResponse {
-                            event: SERVICE_STARTING.to_string(),
+                        return_event!(
+                            tx,
+                            service_name,
+                            SERVICE_STARTING,
                             project,
                             service,
-                            date: chrono::Utc::now().to_rfc3339(),
-                            ..Default::default()
-                        }))
-                        .await
-                        .unwrap();
+                            "".into()
+                        )
                     }
 
                     Some(SuperviseurEvent::Stopping(project, service)) => {
-                        if service_name != service && !service_name.is_empty() {
-                            continue;
-                        }
-
-                        tx.send(Ok(EventsResponse {
-                            event: SERVICE_STOPPING.to_string(),
+                        return_event!(
+                            tx,
+                            service_name,
+                            SERVICE_STOPPING,
                             project,
                             service,
-                            date: chrono::Utc::now().to_rfc3339(),
-                            ..Default::default()
-                        }))
-                        .await
-                        .unwrap();
+                            "".into()
+                        )
                     }
 
                     Some(SuperviseurEvent::Restarting(project, service)) => {
-                        if service_name != service && !service_name.is_empty() {
-                            continue;
-                        }
-
-                        tx.send(Ok(EventsResponse {
-                            event: SERVICE_RESTARTING.to_string(),
+                        return_event!(
+                            tx,
+                            service_name,
+                            SERVICE_RESTARTING,
                             project,
                             service,
-                            date: chrono::Utc::now().to_rfc3339(),
-                            ..Default::default()
-                        }))
-                        .await
-                        .unwrap();
+                            "".into()
+                        )
                     }
 
                     Some(SuperviseurEvent::Building(project, service)) => {
-                        if service_name != service && !service_name.is_empty() {
-                            continue;
-                        }
-
-                        tx.send(Ok(EventsResponse {
-                            event: SERVICE_BUILDING.to_string(),
+                        return_event!(
+                            tx,
+                            service_name,
+                            SERVICE_BUILDING,
                             project,
                             service,
-                            date: chrono::Utc::now().to_rfc3339(),
-                            ..Default::default()
-                        }))
-                        .await
-                        .unwrap();
+                            "".into()
+                        )
                     }
 
-                    Some(SuperviseurEvent::SetupEnv(project, service, output)) => {
-                        if service_name != service && !service_name.is_empty() {
-                            continue;
-                        }
-
-                        tx.send(Ok(EventsResponse {
-                            event: SERVICE_SETUP_ENV.to_string(),
-                            project,
-                            service,
-                            date: chrono::Utc::now().to_rfc3339(),
-                            output,
-                        }))
-                        .await
-                        .unwrap();
-                    }
+                    Some(SuperviseurEvent::SetupEnv(project, service, output)) => return_event!(
+                        tx,
+                        service_name,
+                        SERVICE_SETUP_ENV,
+                        project,
+                        service,
+                        output
+                    ),
 
                     Some(SuperviseurEvent::Started(project, service)) => {
-                        if service_name != service && !service_name.is_empty() {
-                            continue;
-                        }
-
-                        tx.send(Ok(EventsResponse {
-                            event: SERVICE_STARTED.to_string(),
+                        return_event!(
+                            tx,
+                            service_name,
+                            SERVICE_STARTED,
                             project,
                             service,
-                            date: chrono::Utc::now().to_rfc3339(),
-                            ..Default::default()
-                        }))
-                        .await
-                        .unwrap();
+                            "".into()
+                        )
                     }
-
                     Some(SuperviseurEvent::Stopped(project, service)) => {
-                        if service_name != service && !service_name.is_empty() {
-                            continue;
-                        }
-
-                        tx.send(Ok(EventsResponse {
-                            event: SERVICE_STOPPED.to_string(),
+                        return_event!(
+                            tx,
+                            service_name,
+                            SERVICE_STOPPED,
                             project,
                             service,
-                            date: chrono::Utc::now().to_rfc3339(),
-                            ..Default::default()
-                        }))
-                        .await
-                        .unwrap();
+                            "".into()
+                        )
                     }
 
                     Some(SuperviseurEvent::Restarted(project, service)) => {
-                        if service_name != service && !service_name.is_empty() {
-                            continue;
-                        }
-                        tx.send(Ok(EventsResponse {
-                            event: SERVICE_RESTARTED.to_string(),
+                        return_event!(
+                            tx,
+                            service_name,
+                            SERVICE_RESTARTED,
                             project,
                             service,
-                            date: chrono::Utc::now().to_rfc3339(),
-                            ..Default::default()
-                        }))
-                        .await
-                        .unwrap();
+                            "".into()
+                        )
                     }
 
                     Some(SuperviseurEvent::Built(project, service)) => {
-                        if service_name != service && !service_name.is_empty() {
-                            continue;
-                        }
-                        tx.send(Ok(EventsResponse {
-                            event: SERVICE_BUILT.to_string(),
-                            project,
-                            service,
-                            date: chrono::Utc::now().to_rfc3339(),
-                            ..Default::default()
-                        }))
-                        .await
-                        .unwrap();
+                        return_event!(tx, service_name, SERVICE_BUILT, project, service, "".into())
                     }
 
                     Some(SuperviseurEvent::Logs(project, service, output)) => {
-                        if service_name != service && !service_name.is_empty() {
-                            continue;
-                        }
-                        tx.send(Ok(EventsResponse {
-                            event: SERVICE_LOGS.to_string(),
-                            project,
-                            service,
-                            date: chrono::Utc::now().to_rfc3339(),
-                            output,
-                        }))
-                        .await
-                        .unwrap();
+                        return_event!(tx, service_name, SERVICE_LOGS, project, service, output)
                     }
 
                     Some(SuperviseurEvent::Error(project, service, output)) => {
-                        if service_name != service && !service_name.is_empty() {
-                            continue;
-                        }
-                        tx.send(Ok(EventsResponse {
-                            event: "error".to_string(),
-                            project,
-                            service,
-                            date: chrono::Utc::now().to_rfc3339(),
-                            output,
-                        }))
-                        .await
-                        .unwrap();
+                        return_event!(tx, service_name, SERVICE_ERROR, project, service, output)
                     }
 
                     Some(SuperviseurEvent::Crashed(project, service)) => {
-                        if service_name != service && !service_name.is_empty() {
-                            continue;
-                        }
-                        tx.send(Ok(EventsResponse {
-                            event: SERVICE_CRASHED.to_string(),
+                        return_event!(
+                            tx,
+                            service_name,
+                            SERVICE_CRASHED,
                             project,
                             service,
-                            date: chrono::Utc::now().to_rfc3339(),
-                            ..Default::default()
-                        }))
-                        .await
-                        .unwrap();
+                            "".into()
+                        )
                     }
 
                     Some(SuperviseurEvent::AllServicesStarted(project)) => {
