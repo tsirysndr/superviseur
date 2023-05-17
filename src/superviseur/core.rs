@@ -183,7 +183,7 @@ impl SuperviseurInternal {
                     self.event_tx.clone(),
                     self.log_engine.clone(),
                     self.superviseur_event.clone(),
-                ),
+                )?,
                 service.clone(),
             );
             graph

@@ -4,6 +4,7 @@ use std::{
     thread,
 };
 
+use anyhow::Error;
 use async_recursion::async_recursion;
 use dyn_clone::clone_trait_object;
 use tokio::sync::mpsc;
@@ -157,14 +158,17 @@ impl DependencyGraph {
                             log_engine,
                             superviseur_event_tx,
                         ) => {
-                            cloned_graph.add_vertex(
+                            match cloned_graph.add_vertex(
                                 &service,
                                 processes,
                                 childs,
                                 event_tx,
                                 log_engine,
                                 superviseur_event_tx,
-                            );
+                            ) {
+                                Ok(_) => {}
+                                Err(_) => {}
+                            }
                         }
                         GraphCommand::AddEdge(from, to) => {
                             cloned_graph.add_edge(from, to);
@@ -213,7 +217,7 @@ impl DependencyGraph {
         event_tx: mpsc::UnboundedSender<ProcessEvent>,
         log_engine: Arc<Mutex<LogEngine>>,
         superviseur_event: mpsc::UnboundedSender<SuperviseurEvent>,
-    ) -> usize {
+    ) -> Result<usize, Error> {
         let mut vertex = Vertex::from(service);
         let project = self.project.clone();
 
@@ -252,7 +256,7 @@ impl DependencyGraph {
                     childs.clone(),
                     log_engine.clone(),
                     superviseur_event.clone(),
-                ));
+                )?);
             }
 
             if check_driver!(r#use, "nix") {
@@ -308,7 +312,7 @@ impl DependencyGraph {
             }
         }
         self.vertices.push(vertex);
-        self.vertices.len() - 1
+        Ok(self.vertices.len() - 1)
     }
 
     pub fn add_edge(&mut self, from: usize, to: usize) {

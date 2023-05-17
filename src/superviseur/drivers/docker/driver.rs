@@ -3,18 +3,21 @@ use std::{
     io::{self, BufRead, Write},
     process::Command,
     sync::{Arc, Mutex},
-    thread,
 };
 
 use async_trait::async_trait;
-use futures_util::Stream;
-use owo_colors::OwoColorize;
-use shiplift::{
-    rep::ContainerDetails,
-    tty::{self, TtyChunk},
-    ContainerConnectionOptions, ContainerOptions, Docker, LogsOptions, NetworkCreateOptions,
-    PullOptions,
+use bollard::{
+    container::{
+        CreateContainerOptions, ListContainersOptions, LogOutput, LogsOptions,
+        RemoveContainerOptions, RestartContainerOptions, StartContainerOptions,
+        StopContainerOptions,
+    },
+    image::ListImagesOptions,
+    network::{ConnectNetworkOptions, CreateNetworkOptions, ListNetworksOptions},
+    service::EndpointSettings,
+    Docker,
 };
+use owo_colors::OwoColorize;
 use tokio::sync::mpsc;
 use tokio_stream::StreamExt;
 
@@ -36,9 +39,11 @@ use crate::{
     util::convert_dir_path_to_absolute_path,
 };
 
+use super::{connect_network, create_network, hashmap};
+
 #[derive(Clone)]
 pub struct Driver {
-    docker: Docker,
+    docker: Option<Docker>,
     project: String,
     context: String,
     service: Service,
@@ -55,7 +60,7 @@ impl Default for Driver {
         let (event_tx, _) = mpsc::unbounded_channel();
         let (superviseur_event, _) = mpsc::unbounded_channel();
         Self {
-            docker: Docker::new(),
+            docker: None,
             project: "".to_string(),
             context: "".to_string(),
             service: Service::default(),
@@ -79,7 +84,7 @@ impl Driver {
         childs: Arc<Mutex<HashMap<String, i32>>>,
         log_engine: Arc<Mutex<LogEngine>>,
         superviseur_event: mpsc::UnboundedSender<SuperviseurEvent>,
-    ) -> Self {
+    ) -> Result<Self, anyhow::Error> {
         let config = service
             .r#use
             .as_ref()
@@ -88,8 +93,8 @@ impl Driver {
             .find(|(driver, _)| *driver == "docker")
             .map(|(_, x)| x)
             .unwrap();
-        Self {
-            docker: Docker::new(),
+        Ok(Self {
+            docker: Some(connect()?),
             project,
             context,
             service: service.clone(),
@@ -99,7 +104,7 @@ impl Driver {
             log_engine,
             config: Some(config.clone()),
             superviseur_event,
-        }
+        })
     }
 
     pub fn verify_docker(&self) -> Result<(), anyhow::Error> {
@@ -112,73 +117,81 @@ impl Driver {
         Ok(())
     }
 
+    pub async fn container_exists(&self, container_name: &str) -> Result<bool, anyhow::Error> {
+        let docker = self.clone().docker.unwrap();
+        let mut filters = HashMap::new();
+        filters.insert(String::from("name"), vec![String::from(container_name)]);
+        let options = Some(ListContainersOptions::<String> {
+            all: true,
+            filters,
+            ..Default::default()
+        });
+        let containers = docker.list_containers(options).await?;
+        Ok(!containers.is_empty())
+    }
+
     async fn setup_container_network(&self, container_name: &str) -> anyhow::Result<()> {
+        let docker = self.clone().docker.unwrap();
         match &self.config {
             Some(cfg) => {
-                let container = self.docker.containers().get(container_name);
-                let networks = self.docker.networks().list(&Default::default()).await?;
+                let mut filters = HashMap::new();
+                filters.insert(String::from("name"), vec![String::from(container_name)]);
+                let options = Some(ListContainersOptions::<String> {
+                    all: true,
+                    filters,
+                    ..Default::default()
+                });
+                let containers = docker.list_containers(options).await?;
+                let container = containers.first().unwrap().clone();
+                let networks = docker
+                    .list_networks(None::<ListNetworksOptions<String>>)
+                    .await?;
                 for network_name in cfg.networks.clone().unwrap_or(Vec::new()) {
-                    if let Some(network) = networks.iter().find(|x| x.name == network_name) {
-                        self.docker
-                            .networks()
-                            .get(&network.id)
-                            .connect(
-                                &ContainerConnectionOptions::builder(container.id())
-                                    .aliases(vec![&self.service.name])
-                                    .build(),
-                            )
-                            .await?;
+                    if let Some(_) = networks
+                        .iter()
+                        .find(|x| x.name == Some(network_name.clone()))
+                    {
+                        connect_network!(self.service.name, &network_name, container.id, docker);
                         continue;
                     }
-                    let network = self
-                        .docker
-                        .networks()
-                        .create(&NetworkCreateOptions::builder(&network_name).build())
-                        .await?;
-                    self.docker
-                        .networks()
-                        .get(&network.id)
-                        .connect(
-                            &ContainerConnectionOptions::builder(container.id())
-                                .aliases(vec![&self.service.name])
-                                .build(),
-                        )
-                        .await?;
+
+                    create_network!(docker, network_name);
+                    connect_network!(self.service.name, &network_name, container.id, docker);
                 }
+
                 if cfg.networks.clone().unwrap_or(Vec::new()).len() == 0 {
                     // create a network
                     let project_hash = format!("{:x}", md5::compute(&self.context));
                     let network_name = format!("{}_{}", self.project, project_hash);
                     // verify if network exists
-                    match self.docker.networks().get(&network_name).inspect().await {
-                        Ok(network) => {
+                    let mut filters = HashMap::new();
+                    filters.insert(String::from("name"), vec![network_name.clone()]);
+                    let networks = docker
+                        .list_networks(Some(ListNetworksOptions {
+                            filters,
+                            ..Default::default()
+                        }))
+                        .await?;
+
+                    match networks.first() {
+                        Some(_) => {
                             // network exists
-                            self.docker
-                                .networks()
-                                .get(&network.id)
-                                .connect(
-                                    &ContainerConnectionOptions::builder(container.id())
-                                        .aliases(vec![&self.service.name])
-                                        .build(),
-                                )
-                                .await?;
+                            connect_network!(
+                                self.service.name,
+                                &network_name,
+                                container.id,
+                                docker
+                            );
                         }
-                        Err(_) => {
+                        None => {
                             // network does not exist
-                            let network = self
-                                .docker
-                                .networks()
-                                .create(&NetworkCreateOptions::builder(&network_name).build())
-                                .await?;
-                            self.docker
-                                .networks()
-                                .get(&network.id)
-                                .connect(
-                                    &ContainerConnectionOptions::builder(container.id())
-                                        .aliases(vec![&self.service.name])
-                                        .build(),
-                                )
-                                .await?;
+                            create_network!(docker, network_name);
+                            connect_network!(
+                                self.service.name,
+                                &network_name,
+                                container.id,
+                                docker
+                            );
                         }
                     }
                 }
@@ -188,25 +201,17 @@ impl Driver {
         Ok(())
     }
 
-    fn remove_container(&self, container_details: ContainerDetails) -> anyhow::Result<()> {
-        let id = container_details.id;
-        Command::new("docker")
-            .arg("container")
-            .arg("stop")
-            .arg(&id)
-            .stdout(std::process::Stdio::piped())
-            .stderr(std::process::Stdio::piped())
-            .spawn()?
-            .wait()?;
+    async fn remove_container(&self, name: &str) -> anyhow::Result<()> {
+        let options = Some(StopContainerOptions { t: 30 });
+        let docker = self.clone().docker.unwrap();
+        docker.stop_container(name, options).await?;
 
-        Command::new("docker")
-            .arg("container")
-            .arg("rm")
-            .arg(&id)
-            .stdout(std::process::Stdio::piped())
-            .stderr(std::process::Stdio::piped())
-            .spawn()?
-            .wait()?;
+        let options = Some(RemoveContainerOptions {
+            force: true,
+            ..Default::default()
+        });
+        docker.remove_container(name, options).await?;
+
         Ok(())
     }
 
@@ -216,27 +221,52 @@ impl Driver {
                 "-> Skipping {} build, using image from config",
                 self.service.name.bright_green()
             );
-            let mut stream = self
-                .docker
-                .images()
-                .pull(&PullOptions::builder().image(img).build());
 
-            while let Some(pull_result) = stream.next().await {
-                match pull_result {
-                    Ok(output) => {
-                        print!("\r");
-                        print!(
-                            "{} {} {}",
-                            output["id"], output["status"], output["progress"]
-                        )
-                    }
-                    Err(e) => eprintln!("Error: {}", e),
+            let docker = self.clone().docker.unwrap();
+            let mut filters = HashMap::new();
+            filters.insert(
+                String::from("name"),
+                vec![img.clone().split(":").collect::<Vec<_>>()[0].to_string()],
+            );
+            let options = Some(ListImagesOptions::<String> {
+                all: true,
+                filters,
+                ..Default::default()
+            });
+            let images = docker.list_images(options).await?;
+            if !images.is_empty() {
+                println!("-> Image {} already exists", img.bright_green().bold());
+                return Ok(());
+            }
+
+            let mut child = Command::new("docker")
+                .arg("pull")
+                .arg(img)
+                .stdout(std::process::Stdio::piped())
+                .stderr(std::process::Stdio::piped())
+                .spawn()?;
+
+            if let Some(stdout) = child.stdout.take() {
+                let reader = io::BufReader::new(stdout);
+
+                for line in reader.lines() {
+                    println!("{}", line?);
                 }
             }
 
-            println!("");
+            if let Some(stderr) = child.stderr.take() {
+                let reader = io::BufReader::new(stderr);
 
-            return Ok(());
+                for line in reader.lines() {
+                    println!("{}", line?);
+                }
+            }
+
+            if child.wait()?.success() {
+                return Ok(());
+            }
+
+            return Err(anyhow::anyhow!("Failed to pull image"));
         }
         println!(
             "-> Building {}",
@@ -299,7 +329,11 @@ impl Driver {
         Ok(result)
     }
 
-    async fn build_container(&self, _project: String, container_name: String) -> anyhow::Result<()> {
+    async fn build_container(
+        &self,
+        _project: String,
+        container_name: String,
+    ) -> anyhow::Result<()> {
         let builder = &self
             .config
             .as_ref()
@@ -313,32 +347,39 @@ impl Driver {
             None => Vec::new(),
         })?;
 
-        let options = match self.service.port {
-            Some(port) => ContainerOptions::builder(builder)
-                .name(&container_name)
-                .env(
+        let docker = self.clone().docker.unwrap();
+
+        let options = Some(CreateContainerOptions {
+            name: container_name.clone(),
+            ..Default::default()
+        });
+
+        let config = match self.service.port {
+            Some(port) => bollard::container::Config {
+                image: Some(builder.to_string()),
+                exposed_ports: Some(hashmap! { format!("{}/tcp", port) => hashmap! {} }),
+                env: Some(
                     self.service
                         .env
                         .iter()
                         .map(|(key, value)| format!("{}={}", key, value))
                         .collect::<Vec<String>>(),
-                )
-                .expose(port, "tcp", port)
-                .volumes(volumes.iter().map(|x| x.as_str()).collect())
-                .build(),
-            None => ContainerOptions::builder(builder)
-                .name(&container_name)
-                .env(
-                    self.service
-                        .env
+                ),
+                volumes: Some(HashMap::from_iter(
+                    volumes
                         .iter()
-                        .map(|(key, value)| format!("{}={}", key, value))
-                        .collect::<Vec<String>>(),
-                )
-                .volumes(volumes.iter().map(|x| x.as_str()).collect())
-                .build(),
+                        .map(|volume| (volume.clone(), HashMap::new())),
+                )),
+                ..Default::default()
+            },
+            None => bollard::container::Config {
+                image: Some(builder.to_string()),
+                ..Default::default()
+            },
         };
-        self.docker.containers().create(&options).await?;
+
+        docker.create_container(options, config).await?;
+
         self.setup_container_network(&container_name).await?;
         println!("Container {} built", container_name.bright_green());
         Ok(())
@@ -350,13 +391,21 @@ impl DriverPlugin for Driver {
     async fn start(&self, project: String) -> Result<(), anyhow::Error> {
         self.verify_docker()?;
         let container_name = format!("{}_{}", project, self.service.name);
-        let container = self.docker.containers().get(&container_name);
-        match container.inspect().await {
-            Ok(_) => {
+        let docker = self.clone().docker.unwrap();
+
+        match self.container_exists(&container_name).await {
+            Ok(true) => {
                 println!(
                     "Container {} already exists",
                     &container_name.bright_green()
                 );
+            }
+            Ok(false) => {
+                println!(
+                    "Container {} does not exists",
+                    &container_name.bright_green()
+                );
+                self.build(project.clone()).await?;
             }
             Err(_) => {
                 println!(
@@ -367,9 +416,12 @@ impl DriverPlugin for Driver {
             }
         }
 
-        let container = self.docker.containers().get(&container_name);
-        container.start().await?;
-        let pid = container.inspect().await?.state.pid as u32;
+        docker
+            .start_container(&container_name, None::<StartContainerOptions<String>>)
+            .await?;
+
+        let container = docker.inspect_container(&container_name, None).await?;
+        let pid = container.state.unwrap_or_default().pid.unwrap_or_default() as u32;
 
         let mut processes = self.processes.lock().unwrap();
         let mut process = &mut processes
@@ -382,7 +434,6 @@ impl DriverPlugin for Driver {
         process.pid = Some(pid);
         drop(process);
         drop(processes);
-        drop(container);
 
         self.event_tx
             .send(ProcessEvent::Started(
@@ -395,41 +446,36 @@ impl DriverPlugin for Driver {
             self.service.name.clone(),
         ))?;
 
-        let docker = self.docker.clone();
         let service = self.service.clone();
         let log_engine = self.log_engine.clone();
         let project = self.project.clone();
         let superviseur_event = self.superviseur_event.clone();
-        thread::spawn(move || {
-            let rt = tokio::runtime::Runtime::new().unwrap();
-            let container = docker.containers().get(&container_name);
-            let id = rt.block_on(container.inspect()).unwrap().id;
-            let logs_stream = docker.containers().get(&id).logs(
-                &LogsOptions::builder()
-                    .stdout(true)
-                    .stderr(true)
-                    .follow(true)
-                    .timestamps(true)
-                    .build(),
-            );
-            rt.block_on(write_logs(
-                service,
-                log_engine,
-                project,
-                superviseur_event,
-                logs_stream,
-            ));
+
+        tokio::spawn(async move {
+            let options = Some(LogsOptions::<String> {
+                stdout: true,
+                stderr: true,
+                timestamps: true,
+                follow: true,
+                ..Default::default()
+            });
+            let stream = docker.logs(&container_name, options);
+            write_logs(service, log_engine, project, superviseur_event, stream).await;
+            Ok::<(), anyhow::Error>(())
         });
+
         Ok(())
     }
 
     async fn stop(&self, project: String) -> Result<(), anyhow::Error> {
         let container_name = format!("{}_{}", project, self.service.name);
-        let container = self.docker.containers().get(&container_name);
-        match container.inspect().await {
-            Ok(_) => {
+        let docker = self.clone().docker.unwrap();
+        match self.container_exists(&container_name).await {
+            Ok(true) => {
                 println!("Stopping container {}", &container_name.bright_green());
-                container.stop(None).await?;
+                docker
+                    .stop_container(&container_name, None::<StopContainerOptions>)
+                    .await?;
                 self.event_tx
                     .send(ProcessEvent::Stopped(
                         self.service.name.clone(),
@@ -443,6 +489,12 @@ impl DriverPlugin for Driver {
                     ))
                     .unwrap();
             }
+            Ok(false) => {
+                println!(
+                    "Container {} does not exists",
+                    &container_name.bright_green()
+                );
+            }
             Err(_) => {
                 println!(
                     "Container {} does not exists",
@@ -455,11 +507,13 @@ impl DriverPlugin for Driver {
 
     async fn restart(&self, project: String) -> Result<(), anyhow::Error> {
         let container_name = format!("{}_{}", project, self.service.name);
-        let container = self.docker.containers().get(&container_name);
-        match container.inspect().await {
+        let docker = self.clone().docker.unwrap();
+        match docker
+            .restart_container(&container_name, None::<RestartContainerOptions>)
+            .await
+        {
             Ok(_) => {
                 println!("Restarting container {}", &container_name.bright_green());
-                container.restart(None).await?;
                 self.superviseur_event.send(SuperviseurEvent::Restarted(
                     project,
                     self.service.name.clone(),
@@ -491,12 +545,15 @@ impl DriverPlugin for Driver {
         self.build_image(project.clone()).await?;
 
         let container_name = format!("{}_{}", project, self.service.name);
-        let container = self.docker.containers().get(&container_name);
-        if let Ok(container_details) = container.inspect().await {
-            self.remove_container(container_details)?;
+        let docker = self.clone().docker.unwrap();
+        if let Ok(container_details) = docker.inspect_container(&container_name, None).await {
+            if let Some(id) = container_details.id {
+                self.remove_container(&id).await?;
+            }
         }
         self.build_container(project.clone(), container_name)
             .await?;
+
         self.superviseur_event
             .send(SuperviseurEvent::Built(project, self.service.name.clone()))?;
         Ok(())
@@ -508,113 +565,66 @@ pub async fn write_logs(
     log_engine: Arc<Mutex<LogEngine>>,
     project: String,
     superviseur_event: mpsc::UnboundedSender<SuperviseurEvent>,
-    mut stream: impl Stream<Item = Result<tty::TtyChunk, shiplift::Error>> + Unpin,
+    stream: impl futures_util::Stream<Item = std::result::Result<LogOutput, bollard::errors::Error>>,
 ) {
     let cloned_service = service.clone();
 
     let service = cloned_service;
     let id = service.id.unwrap_or("-".to_string());
     let mut log_file = std::fs::File::create(&service.stdout).unwrap();
-    let mut err_file = std::fs::File::create(&service.stderr).unwrap();
+
+    let mut stream = Box::pin(stream);
 
     while let Some(result) = stream.next().await {
         match result {
-            Ok(chunk) => match chunk {
-                TtyChunk::StdOut(bytes) => {
-                    let line = String::from_utf8(bytes).unwrap();
+            Ok(bytes) => {
+                let line = bytes.to_string();
 
-                    let date = line.split(" ").take(1).collect::<String>();
-                    let mut line = line.split_whitespace();
-                    line.next();
-                    let line = line.collect::<Vec<&str>>().join(" ");
-                    let line = format!("{}\n", line);
+                let date = line.split(" ").take(1).collect::<String>();
+                let mut line = line.split_whitespace();
+                line.next();
+                let line = line.collect::<Vec<&str>>().join(" ");
+                let line = format!("{}\n", line);
 
-                    let log = Log {
-                        project: project.clone(),
-                        service: service.name.clone(),
-                        line: line.clone(),
-                        output: String::from("stdout"),
-                        date: tantivy::DateTime::from_timestamp_secs(
-                            chrono::DateTime::parse_from_rfc3339(&date)
-                                .unwrap()
-                                .timestamp(),
-                        ),
-                    };
+                let log = Log {
+                    project: project.clone(),
+                    service: service.name.clone(),
+                    line: line.clone(),
+                    output: String::from("stdout"),
+                    date: tantivy::DateTime::from_timestamp_secs(
+                        chrono::DateTime::parse_from_rfc3339(&date)
+                            .unwrap()
+                            .timestamp(),
+                    ),
+                };
 
-                    superviseur_event
-                        .send(SuperviseurEvent::Logs(
-                            project.clone(),
-                            service.name.clone(),
-                            line.clone(),
-                        ))
-                        .unwrap();
+                superviseur_event
+                    .send(SuperviseurEvent::Logs(
+                        project.clone(),
+                        service.name.clone(),
+                        line.clone(),
+                    ))
+                    .unwrap();
 
-                    let log_engine = log_engine.lock().unwrap();
-                    match log_engine.insert(&log) {
-                        Ok(_) => {}
-                        Err(e) => {
-                            println!("Error while inserting log: {}", e);
-                        }
+                let log_engine = log_engine.lock().unwrap();
+                match log_engine.insert(&log) {
+                    Ok(_) => {}
+                    Err(e) => {
+                        println!("Error while inserting log: {}", e);
                     }
-
-                    SimpleBroker::publish(TailLogStream {
-                        id: id.clone(),
-                        line: line.clone(),
-                    });
-                    SimpleBroker::publish(LogStream {
-                        id: id.clone(),
-                        line: line.clone(),
-                    });
-                    let service_name = format!("{} | ", service.name);
-                    print!("{} {}", service_name.cyan(), line.clone());
-                    log_file.write_all(line.as_bytes()).unwrap();
                 }
-                TtyChunk::StdErr(bytes) => {
-                    let line = String::from_utf8(bytes).unwrap();
 
-                    let date = line.split(" ").take(1).collect::<String>();
-                    let mut line = line.split_whitespace();
-                    line.next();
-                    let line = line.collect::<Vec<&str>>().join(" ");
-                    let line = format!("{}\n", line);
-
-                    let log = Log {
-                        project: project.clone(),
-                        service: service.name.clone(),
-                        line: line.clone(),
-                        output: String::from("stderr"),
-                        date: tantivy::DateTime::from_timestamp_secs(
-                            chrono::DateTime::parse_from_rfc3339(&date)
-                                .unwrap()
-                                .timestamp(),
-                        ),
-                    };
-                    let log_engine = log_engine.lock().unwrap();
-                    match log_engine.insert(&log) {
-                        Ok(_) => {}
-                        Err(e) => {
-                            println!("Error while inserting log: {}", e);
-                        }
-                    }
-                    err_file.write_all(line.as_bytes()).unwrap();
-                }
-                TtyChunk::StdIn(_) => unreachable!(),
-            },
-            Err(e) => {
-                println!("Error: {}", e);
-            }
-        }
-    }
-}
-
-async fn stream_result(
-    mut stream: impl Stream<Item = Result<tty::TtyChunk, shiplift::Error>> + Unpin,
-    prefix: &str,
-) {
-    while let Some(result) = stream.next().await {
-        match result {
-            Ok(chunk) => {
-                print_chunk(chunk, prefix);
+                SimpleBroker::publish(TailLogStream {
+                    id: id.clone(),
+                    line: line.clone(),
+                });
+                SimpleBroker::publish(LogStream {
+                    id: id.clone(),
+                    line: line.clone(),
+                });
+                let service_name = format!("{} | ", service.name);
+                print!("{} {}", service_name.cyan(), line.clone());
+                log_file.write_all(line.as_bytes()).unwrap();
             }
             Err(e) => {
                 println!("Error: {}", e);
@@ -623,10 +633,17 @@ async fn stream_result(
     }
 }
 
-fn print_chunk(chunk: TtyChunk, prefix: &str) {
-    match chunk {
-        TtyChunk::StdOut(bytes) => println!("{} {}", prefix, std::str::from_utf8(&bytes).unwrap()),
-        TtyChunk::StdErr(bytes) => eprintln!("{} {}", prefix, std::str::from_utf8(&bytes).unwrap()),
-        TtyChunk::StdIn(_) => unreachable!(),
+pub fn connect() -> Result<Docker, anyhow::Error> {
+    // check if running on macos
+    if cfg!(target_os = "macos") {
+        // set DOCKER_HOST env variable if not set
+        if std::env::var("DOCKER_HOST").is_err() {
+            let home = std::env::var("HOME").unwrap();
+            std::env::set_var(
+                "DOCKER_HOST",
+                format!("unix://{}/.docker/run/docker.sock", home),
+            );
+        }
     }
+    Ok(Docker::connect_with_local_defaults()?)
 }
