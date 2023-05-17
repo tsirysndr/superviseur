@@ -357,11 +357,19 @@ impl DependencyGraph {
             ))
             .unwrap();
 
-        self.vertices[index]
+        if let Err(e) = self.vertices[index]
             .driver
             .start(self.project.clone())
             .await
-            .unwrap();
+        {
+            self.superviseur_event
+                .send(SuperviseurEvent::Error(
+                    self.project.clone(),
+                    self.vertices[index].name.clone(),
+                    e.to_string(),
+                ))
+                .unwrap();
+        }
     }
 
     pub async fn stop_services(&self) {
@@ -398,11 +406,15 @@ impl DependencyGraph {
             ))
             .unwrap();
 
-        self.vertices[index]
-            .driver
-            .stop(self.project.clone())
-            .await
-            .unwrap();
+        if let Err(e) = self.vertices[index].driver.stop(self.project.clone()).await {
+            self.superviseur_event
+                .send(SuperviseurEvent::Error(
+                    self.project.clone(),
+                    self.vertices[index].name.clone(),
+                    format!("Failed to stop service: {}", e.to_string()),
+                ))
+                .unwrap();
+        }
     }
 
     pub async fn build_services(&self) {
@@ -439,10 +451,18 @@ impl DependencyGraph {
                 self.vertices[index].name.clone(),
             ))
             .unwrap();
-        self.vertices[index]
+        if let Err(e) = self.vertices[index]
             .driver
             .build(self.project.clone())
             .await
-            .unwrap();
+        {
+            self.superviseur_event
+                .send(SuperviseurEvent::Error(
+                    self.project.clone(),
+                    self.vertices[index].name.clone(),
+                    format!("Failed to build service: {}", e.to_string()),
+                ))
+                .unwrap();
+        }
     }
 }

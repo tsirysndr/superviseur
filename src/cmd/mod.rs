@@ -36,6 +36,13 @@ macro_rules! event_handler {
                     SERVICE_CRASHED => {
                         println!("{} has crashed", message.service.bright_green());
                     }
+                    SERVICE_ERROR => {
+                        println!(
+                            "{} has encountered an error",
+                            message.service.bright_green()
+                        );
+                        println!("{}", message.output);
+                    }
                     SERVICE_RESTARTING => {
                         println!("-> Restarting {} ...", message.service.bright_green());
                     }
