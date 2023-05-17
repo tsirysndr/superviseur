@@ -11,7 +11,6 @@ use anyhow::Error;
 use async_trait::async_trait;
 use nix::{
     sys::{
-        event,
         signal::{self, Signal},
     },
     unistd::Pid,
@@ -21,7 +20,6 @@ use spinners::{Spinner, Spinners};
 use tokio::sync::mpsc;
 
 use crate::{
-    api::superviseur,
     graphql::{
         schema::objects::subscriptions::{LogStream, TailLogStream},
         simple_broker::SimpleBroker,

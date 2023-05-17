@@ -299,7 +299,7 @@ impl Driver {
         Ok(result)
     }
 
-    async fn build_container(&self, project: String, container_name: String) -> anyhow::Result<()> {
+    async fn build_container(&self, _project: String, container_name: String) -> anyhow::Result<()> {
         let builder = &self
             .config
             .as_ref()
