@@ -135,7 +135,7 @@ body {
 
 .home-waves {
   --overlap: 5px;
-  bottom: calc(var(--overlap) * -1);
+  bottom: calc(var(--overlap) * -10);
   height: var(--waves-height);
   position: absolute;
   right: 0px;

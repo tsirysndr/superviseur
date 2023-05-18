@@ -13,93 +13,93 @@ function HomepageHeader() {
   const { siteConfig } = useDocusaurusContext();
   return (
     <header className={clsx("hero hero--primary", styles.heroBanner)}>
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "row",
-        }}
-      >
+      <div>
         <div
           style={{
             display: "flex",
-            flex: 1,
-            height: "70vh",
-            alignItems: "center",
+            flexDirection: "row",
           }}
         >
           <div
             style={{
-              color: "#000",
-              fontSize: "2rem",
-              fontFamily: "RockfordSans-Medium",
-              padding: "0 4rem",
-              textAlign: "left",
+              display: "flex",
+              flex: 1,
+              height: "70vh",
+              alignItems: "center",
             }}
           >
-            Compose your{" "}
-            <span
+            <div
               style={{
-                fontFamily: "RockfordSans-Bold",
-                color: "#ffad62",
+                color: "#000",
+                fontSize: "2rem",
+                fontFamily: "RockfordSans-Medium",
+                padding: "0 4rem",
+                textAlign: "left",
               }}
             >
-              containerized
-            </span>{" "}
-            and{" "}
-            <span
-              style={{
-                fontFamily: "RockfordSans-Bold",
-                color: "#ffad62",
-              }}
-            >
-              non-containerized
-            </span>{" "}
-            <span
-              style={{
-                fontFamily: "RockfordSans-Bold",
-                color: "#3bcbce",
-              }}
-            >
-              services
-            </span>{" "}
-            for localdev and deployments in{" "}
-            <span
-              style={{
-                fontFamily: "RockfordSans-Bold",
-                color: "#f780fb",
-              }}
-            >
-              HCL
-            </span>{" "}
-            or{" "}
-            <span
-              style={{
-                fontFamily: "RockfordSans-Bold",
-                color: "#f780fb",
-              }}
-            >
-              any language
-            </span>{" "}
-            with an{" "}
-            <span
-              style={{
-                fontFamily: "RockfordSans-Bold",
-                color: "#f780fb",
-              }}
-            >
-              SDK
-            </span>
+              Compose your{" "}
+              <span
+                style={{
+                  fontFamily: "RockfordSans-Bold",
+                  color: "#ffad62",
+                }}
+              >
+                containerized
+              </span>{" "}
+              and{" "}
+              <span
+                style={{
+                  fontFamily: "RockfordSans-Bold",
+                  color: "#ffad62",
+                }}
+              >
+                non-containerized
+              </span>{" "}
+              <span
+                style={{
+                  fontFamily: "RockfordSans-Bold",
+                  color: "#3bcbce",
+                }}
+              >
+                services
+              </span>{" "}
+              for localdev and deployments in{" "}
+              <span
+                style={{
+                  fontFamily: "RockfordSans-Bold",
+                  color: "#f780fb",
+                }}
+              >
+                HCL
+              </span>{" "}
+              or{" "}
+              <span
+                style={{
+                  fontFamily: "RockfordSans-Bold",
+                  color: "#f780fb",
+                }}
+              >
+                any language
+              </span>{" "}
+              with an{" "}
+              <span
+                style={{
+                  fontFamily: "RockfordSans-Bold",
+                  color: "#f780fb",
+                }}
+              >
+                SDK
+              </span>
+            </div>
+          </div>
+          <div style={{ flex: 1 }}>
+            <img className="astronauts" src={Astronauts} alt="Astronauts" />
           </div>
         </div>
-        <div style={{ flex: 1 }}>
-          <img className="astronauts" src={Astronauts} alt="Astronauts" />
+        <div className="home-waves">
+          <Waves />
         </div>
       </div>
-      <img
-        className="home-waves"
-        src={require("@site/static/img/waves.svg").default}
-        alt="Waves"
-      />
     </header>
   );
 }
