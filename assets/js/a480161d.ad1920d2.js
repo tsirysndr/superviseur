@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunksuperviseur=self.webpackChunksuperviseur||[]).push([[5862],{3449:s=>{s.exports=JSON.parse('{"label":"hola","permalink":"/superviseur/blog/tags/hola","allTagsPath":"/superviseur/blog/tags","count":1}')}}]);

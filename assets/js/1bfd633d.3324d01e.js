@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunksuperviseur=self.webpackChunksuperviseur||[]).push([[7147],{1705:e=>{e.exports=JSON.parse('{"permalink":"/superviseur/blog/tags/hola","page":1,"postsPerPage":10,"totalPages":1,"totalCount":1,"blogDescription":"Blog","blogTitle":"Blog"}')}}]);
