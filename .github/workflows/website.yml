@@ -1,6 +1,7 @@
 name: Build and Deploy Website Docs
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - master
