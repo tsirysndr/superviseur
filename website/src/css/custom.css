@@ -124,6 +124,10 @@ body {
   display: none;
 }
 
+.toggle_vylO {
+  display: none;
+}
+
 .astronauts {
   max-height: 70vh;
 }
