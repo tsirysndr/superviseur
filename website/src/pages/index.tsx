@@ -32,7 +32,7 @@ function HomepageHeader() {
               style={{
                 color: "#000",
                 fontSize: "2rem",
-                fontFamily: "RockfordSans-Medium",
+                fontFamily: "RockfordSans Medium",
                 padding: "0 4rem",
                 textAlign: "left",
               }}
@@ -40,7 +40,7 @@ function HomepageHeader() {
               Compose your{" "}
               <span
                 style={{
-                  fontFamily: "RockfordSans-Bold",
+                  fontFamily: "RockfordSans Bold",
                   color: "#ffad62",
                 }}
               >
@@ -49,7 +49,7 @@ function HomepageHeader() {
               and{" "}
               <span
                 style={{
-                  fontFamily: "RockfordSans-Bold",
+                  fontFamily: "RockfordSans Bold",
                   color: "#ffad62",
                 }}
               >
@@ -57,7 +57,7 @@ function HomepageHeader() {
               </span>{" "}
               <span
                 style={{
-                  fontFamily: "RockfordSans-Bold",
+                  fontFamily: "RockfordSans Bold",
                   color: "#3bcbce",
                 }}
               >
@@ -66,7 +66,7 @@ function HomepageHeader() {
               for localdev and deployments in{" "}
               <span
                 style={{
-                  fontFamily: "RockfordSans-Bold",
+                  fontFamily: "RockfordSans Bold",
                   color: "#f780fb",
                 }}
               >
@@ -75,7 +75,7 @@ function HomepageHeader() {
               or{" "}
               <span
                 style={{
-                  fontFamily: "RockfordSans-Bold",
+                  fontFamily: "RockfordSans Bold",
                   color: "#f780fb",
                 }}
               >
@@ -84,7 +84,7 @@ function HomepageHeader() {
               with an{" "}
               <span
                 style={{
-                  fontFamily: "RockfordSans-Bold",
+                  fontFamily: "RockfordSans Bold",
                   color: "#f780fb",
                 }}
               >

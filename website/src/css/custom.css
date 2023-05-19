@@ -7,12 +7,32 @@
 /* You can override the default Infima variables here. */
 
 @font-face {
-  font-family: 'RockfordSans';
-  src: url('../../static/fonts/RockfordSans-Bold.otf') format('opentype'),
-       url('../../static/fonts/RockfordSans-ExtraBold.otf') format('opentype'),
-       url('../../static/fonts/RockfordSans-Light.otf') format('opentype'),
-       url('../../static/fonts/RockfordSans-Medium.otf') format('opentype'),
-       url('../../static/fonts/RockfordSans-Regular.otf') format('opentype');
+  font-family: 'RockfordSans Bold';
+  src: url('../../static/fonts/RockfordSans-Bold.otf') format('opentype');
+  /* Add more font formats if necessary */
+}
+
+@font-face {
+  font-family: 'RockfordSans ExtraBold';
+  src: url('../../static/fonts/RockfordSans-ExtraBold.otf') format('opentype');
+  /* Add more font formats if necessary */
+}
+
+@font-face {
+  font-family: 'RockfordSans Light';
+  src: url('../../static/fonts/RockfordSans-Light.otf') format('opentype');
+  /* Add more font formats if necessary */
+}
+
+@font-face {
+  font-family: 'RockfordSans Medium';
+  src: url('../../static/fonts/RockfordSans-Medium.otf') format('opentype');
+  /* Add more font formats if necessary */
+}
+
+@font-face {
+  font-family: 'RockfordSans Regular';
+  src: url('../../static/fonts/RockfordSans-Regular.otf') format('opentype');
   /* Add more font formats if necessary */
 }
 
@@ -101,7 +121,7 @@ html[data-theme='dark'] .header-github-link:before {
 }
 
 body {
-  font-family: 'RockfordSans-Regular';
+  font-family: 'RockfordSans Regular';
 }
 
 .navbar {
@@ -109,7 +129,7 @@ body {
   color: #000;
   box-shadow: none;
   position: initial;
-  font-family: 'RockfordSans-Bold';
+  font-family: 'RockfordSans Bold';
 }
 
 .footer {
