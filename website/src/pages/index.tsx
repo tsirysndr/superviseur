@@ -32,7 +32,7 @@ function HomepageHeader() {
               style={{
                 color: "#000",
                 fontSize: "2rem",
-                fontFamily: "RockfordSans Medium",
+                fontFamily: "RockfordSans Regular",
                 padding: "0 4rem",
                 textAlign: "left",
               }}
