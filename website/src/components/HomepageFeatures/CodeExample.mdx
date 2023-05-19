@@ -69,7 +69,7 @@ pub fn main() {
     connect()
     |> with_project("deno-example")
     |> with_context(
-      "/Users/tsirysandratraina/Documents/GitHub/superviseur/examples/deno-fresh",
+      "../examples/deno-fresh",
     )
     |> with_service(deno_fresh)\n
   project
@@ -99,7 +99,7 @@ func main() {
   project := client.Connect().
     NewProject().
     WithName("deno-example").
-    WithContext("/Users/tsirysandratraina/Documents/GitHub/superviseur/examples/deno-fresh").
+    WithContext("../examples/deno-fresh").
     WithService(denoFresh)\n
   fmt.Println(project.Stdout())
 }
