@@ -43,41 +43,14 @@ export default function HomepageFeatures(): JSX.Element {
           >
             <div style={{ fontSize: "22px" }}>
               Define and run{" "}
-              <span
-                style={{ color: "#00ffed", fontFamily: "RockfordSans Bold" }}
-              >
-                multi-service
-              </span>{" "}
+              <span className="featureText aqua-blue">multi-service</span>{" "}
               applications on{" "}
-              <span
-                style={{ color: "#f800ff", fontFamily: "RockfordSans Bold" }}
-              >
-                isolated
-              </span>{" "}
+              <span className="featureText pink-magenta">isolated</span>{" "}
               environments with{" "}
-              <span
-                style={{ color: "#f800ff", fontFamily: "RockfordSans Bold" }}
-              >
-                Nix
-              </span>{" "}
-              or{" "}
-              <span
-                style={{ color: "#f800ff", fontFamily: "RockfordSans Bold" }}
-              >
-                Docker
-              </span>{" "}
-              using{" "}
-              <span
-                style={{ color: "#8900ff", fontFamily: "RockfordSans Bold" }}
-              >
-                HCL
-              </span>{" "}
-              or{" "}
-              <span
-                style={{ color: "#8900ff", fontFamily: "RockfordSans Bold" }}
-              >
-                any language
-              </span>{" "}
+              <span className="featureText pink-magenta">Nix</span> or{" "}
+              <span className="featureText pink-magenta">Docker</span> using{" "}
+              <span className="featureText purple-indigo">HCL</span> or{" "}
+              <span className="featureText purple-indigo">any language</span>{" "}
               you already know.
             </div>
           </div>
@@ -99,14 +72,10 @@ export default function HomepageFeatures(): JSX.Element {
           >
             <div style={{ fontSize: "22px" }}>
               Support many different environments and runtimes, including{" "}
-              <span style={{ color: "#3fe", fontFamily: "RockfordSans Bold" }}>
+              <span className="featureText aqua-blue">
                 Docker, Nix, Spin, WebAssembly
               </span>{" "}
-              and{" "}
-              <span style={{ color: "#3fe", fontFamily: "RockfordSans Bold" }}>
-                more
-              </span>
-              .
+              and <span className="featureText aqua-blue">more</span>.
             </div>
           </div>
           <div style={{ flex: 1, minWidth: 630 }}>

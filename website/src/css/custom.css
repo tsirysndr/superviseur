@@ -199,3 +199,20 @@ pre[class*="language-"] {
 pre {
   padding: 0 !important;
 }
+
+
+.pink-magenta {
+  color: #f800ff;
+}
+
+.purple-indigo {
+  color: #8900ff;
+}
+
+.aqua-blue {
+  color: #3fe;
+}
+
+.featureText {
+  font-family: 'RockfordSans Bold';
+}
