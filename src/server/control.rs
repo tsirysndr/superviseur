@@ -21,6 +21,7 @@ use crate::{
             StartResponse, StatusRequest, StatusResponse, StopRequest, StopResponse,
         },
     },
+    default_stderr, default_stdout,
     superviseur::{
         core::{ProcessEvent, Superviseur, SuperviseurCommand},
         drivers::setup_drivers,
@@ -429,9 +430,15 @@ impl ControlService for Control {
                 description: service.description.clone(),
                 working_dir: service.working_dir.clone(),
                 env: service.env.clone(),
-                auto_restart: service.autorestart,
-                stdout: service.stdout.clone(),
-                stderr: service.stderr.clone(),
+                auto_restart: service.autorestart.unwrap_or(false),
+                stdout: service
+                    .stdout
+                    .clone()
+                    .unwrap_or(default_stdout!(config.project, service.name)),
+                stderr: service
+                    .stderr
+                    .clone()
+                    .unwrap_or(default_stderr!(config.project, service.name)),
                 port: service.port,
                 ..Default::default()
             });

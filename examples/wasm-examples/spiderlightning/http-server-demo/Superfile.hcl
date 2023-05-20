@@ -7,11 +7,6 @@ service "http_server" {
   description = "HTTP server demo"
   depends_on = []
   env = {}
-  autostart = true
-  autorestart = false
-  namespace = "http_namespace"
-  stdout = "/tmp/http_server-stdout.log"
-  stderr = "/tmp/demo_server-stderr.log"
   port = 3000
 
   use "wasm" {

@@ -101,11 +101,11 @@ impl From<&mut types::configuration::Service> for Service {
                 .iter()
                 .map(|(k, v)| format!("{}={}", k, v))
                 .collect(),
-            auto_restart: service.autorestart,
+            auto_restart: service.autorestart.unwrap_or_default(),
             depends_on: service.dependencies.clone(),
             working_directory: service.working_dir.clone(),
-            log_file: service.stdout.clone(),
-            stderr_file: service.stderr.clone(),
+            log_file: service.stdout.clone().unwrap_or_default(),
+            stderr_file: service.stderr.clone().unwrap_or_default(),
             port: service.port.map(|x| x as i32),
             ..Default::default()
         }
@@ -134,11 +134,11 @@ impl From<&types::configuration::Service> for Service {
                 .iter()
                 .map(|(k, v)| format!("{}={}", k, v))
                 .collect(),
-            auto_restart: service.autorestart,
+            auto_restart: service.autorestart.unwrap_or_default(),
             depends_on: service.dependencies.clone(),
             working_directory: service.working_dir.clone(),
-            log_file: service.stdout.clone(),
-            stderr_file: service.stderr.clone(),
+            log_file: service.stdout.clone().unwrap_or_default(),
+            stderr_file: service.stderr.clone().unwrap_or_default(),
             port: service.port.map(|x| x as i32),
             ..Default::default()
         }

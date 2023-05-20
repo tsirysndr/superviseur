@@ -31,11 +31,6 @@ service "mysql" {
     MYSQL_PID_FILE = "./.mysql/./mysql.pid"
     MYSQL_UNIX_PORT = "./.mysql/mysql.sock"
   }
-  autostart = true
-  autorestart = false
-  namespace = "demo_namespace"
-  stdout = "/tmp/mysql-stdout.log"
-  stderr = "/tmp/mysql-stderr.log"
   flox = {
     environment = ".#nginx-golang-mysql"
   }

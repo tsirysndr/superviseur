@@ -11,6 +11,7 @@ use names::Generator;
 use tokio::sync::mpsc;
 
 use crate::{
+    default_stdout,
     graphql::simple_broker::SimpleBroker,
     superviseur::core::SuperviseurCommand,
     types::configuration::{ConfigurationData, Service},
@@ -86,14 +87,10 @@ impl ProjectConfiguration {
             r#type: service.r#type.unwrap_or("exec".to_string()),
             command: service.command,
             working_dir: working_directory,
-            stdout: service
-                .log_file
-                .unwrap_or(format!("/tmp/stdout-{}.log", service_id.clone())),
-            stderr: service
-                .stderr_file
-                .unwrap_or(format!("/tmp/stderr-{}.log", service_id)),
-            autorestart: service.auto_restart.unwrap_or(false),
-            autostart: service.auto_start.unwrap_or(false),
+            stdout: service.log_file,
+            stderr: service.stderr_file,
+            autorestart: service.auto_restart,
+            autostart: service.auto_start,
             env,
             depends_on: service.depends_on.unwrap_or(vec![]),
             port: service.port,
@@ -155,10 +152,14 @@ impl ProjectConfiguration {
         let mut stdout = vec![];
         for (_, service) in &config.services {
             // loop while the file does not exist
-            while !Path::new(&service.stdout).exists() {
+            let stdout_file = &service
+                .clone()
+                .stdout
+                .unwrap_or(default_stdout!(config.project, service.name));
+            while !Path::new(stdout_file).exists() {
                 sleep(Duration::from_secs(2));
             }
-            let lines = read_lines(&service.stdout).unwrap();
+            let lines = read_lines(&stdout_file).unwrap();
             stdout.extend(lines);
         }
         Ok(stdout)

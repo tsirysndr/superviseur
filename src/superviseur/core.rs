@@ -12,6 +12,7 @@ use futures::Future;
 use tokio::sync::mpsc;
 
 use crate::{
+    default_stderr, default_stdout,
     graphql::{
         schema::{
             self,
@@ -235,20 +236,24 @@ impl SuperviseurInternal {
         // update and skip if already loaded
         if let Some(process) = processes
             .iter_mut()
-            .find(|(p, key)| p.name == service.name && key == &project)
+            .find(|(p, key)| p.name == service.name.clone() && key == &project)
             .map(|(p, _)| p)
         {
             process.service_id = service.id.unwrap_or("-".to_string());
-            process.name = service.name;
+            process.name = service.name.clone();
             process.command = service.command;
             process.description = service.description;
             process.working_dir = service.working_dir;
             process.env = service.env;
             process.project = project.clone();
             process.r#type = service.r#type;
-            process.auto_restart = service.autorestart;
-            process.stdout = service.stdout;
-            process.stderr = service.stderr;
+            process.auto_restart = service.autorestart.unwrap_or(false);
+            process.stdout = service
+                .stdout
+                .unwrap_or(default_stdout!(project, service.name.clone()));
+            process.stderr = service
+                .stderr
+                .unwrap_or(default_stderr!(project, service.name.clone()));
             process.port = service.port;
             return Ok(());
         }
@@ -256,7 +261,7 @@ impl SuperviseurInternal {
         processes.push((
             Process {
                 service_id: service.id.unwrap_or("-".to_string()),
-                name: service.name,
+                name: service.name.clone(),
                 command: service.command,
                 description: service.description,
                 pid: None,
@@ -271,9 +276,13 @@ impl SuperviseurInternal {
                 env: service.env,
                 project: project.clone(),
                 r#type: service.r#type,
-                auto_restart: service.autorestart,
-                stdout: service.stdout,
-                stderr: service.stderr,
+                auto_restart: false,
+                stdout: service
+                    .stdout
+                    .unwrap_or(default_stdout!(project, service.name.clone())),
+                stderr: service
+                    .stderr
+                    .unwrap_or(default_stderr!(project, service.name)),
             },
             project,
         ));

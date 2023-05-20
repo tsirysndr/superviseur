@@ -7,11 +7,6 @@ service "tcp_echo_server" {
   description = "TCP echo server demo"
   depends_on = []
   env = {}
-  autostart = true
-  autorestart = false
-  namespace = "tcp_echo_namespace"
-  stdout = "/tmp/tcp_echo_server-stdout.log"
-  stderr = "/tmp/tcp_echo_server-stderr.log"
   port = 4000
 
   use "wasm" {

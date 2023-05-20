@@ -112,3 +112,18 @@ pub mod api {
         }
     }
 }
+
+macro_rules! default_stderr {
+    ($project: expr, $service: expr) => {
+        format!("/tmp/{}-{}.err", $project, $service)
+    };
+}
+
+macro_rules! default_stdout {
+    ($project: expr, $service: expr) => {
+        format!("/tmp/{}-{}.log", $project, $service)
+    };
+}
+
+pub(crate) use default_stderr;
+pub(crate) use default_stdout;

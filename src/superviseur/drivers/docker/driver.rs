@@ -22,6 +22,7 @@ use tokio::sync::mpsc;
 use tokio_stream::StreamExt;
 
 use crate::{
+    default_stdout,
     graphql::{
         schema::objects::subscriptions::{LogStream, TailLogStream},
         simple_broker::SimpleBroker,
@@ -571,7 +572,12 @@ pub async fn write_logs(
 
     let service = cloned_service;
     let id = service.id.unwrap_or("-".to_string());
-    let mut log_file = std::fs::File::create(&service.stdout).unwrap();
+    let mut log_file = std::fs::File::create(
+        &service
+            .stdout
+            .unwrap_or(default_stdout!(project, service.name)),
+    )
+    .unwrap();
 
     let mut stream = Box::pin(stream);
 

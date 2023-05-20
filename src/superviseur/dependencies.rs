@@ -55,12 +55,12 @@ impl From<&Service> for Vertex {
             depends_on: service.depends_on.clone(),
             dependencies: service.dependencies.clone(),
             env: service.env.clone(),
-            autostart: service.autostart,
-            autorestart: service.autorestart,
+            autostart: service.autostart.unwrap_or_default(),
+            autorestart: service.autorestart.unwrap_or_default(),
             namespace: service.namespace.clone(),
             port: service.port,
-            stdout: service.stdout.clone(),
-            stderr: service.stderr.clone(),
+            stdout: service.stdout.clone().unwrap_or_default(),
+            stderr: service.stderr.clone().unwrap_or_default(),
             driver: Box::new(exec::driver::Driver::default()),
         }
     }
@@ -80,12 +80,12 @@ impl Into<Service> for Vertex {
             depends_on: self.depends_on,
             dependencies: self.dependencies,
             env: self.env,
-            autostart: self.autostart,
-            autorestart: self.autorestart,
+            autostart: Some(self.autostart),
+            autorestart: Some(self.autorestart),
             namespace: self.namespace,
             port: self.port,
-            stdout: self.stdout,
-            stderr: self.stderr,
+            stdout: Some(self.stdout),
+            stderr: Some(self.stderr),
             ..Default::default()
         }
     }

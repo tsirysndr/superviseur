@@ -25,13 +25,17 @@ pub struct Service {
     #[serde(skip_serializing, skip_deserializing)]
     pub dependencies: Vec<String>,
     pub env: HashMap<String, String>,
-    pub autostart: bool,
-    pub autorestart: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub autostart: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub autorestart: Option<bool>,
     pub namespace: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub port: Option<u32>,
-    pub stdout: String,
-    pub stderr: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub stdout: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub stderr: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub wait_for: Option<Vec<String>>,
     #[serde(skip_serializing_if = "Option::is_none")]
