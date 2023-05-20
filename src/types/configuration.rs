@@ -29,6 +29,7 @@ pub struct Service {
     pub autostart: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub autorestart: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub namespace: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub port: Option<u32>,
