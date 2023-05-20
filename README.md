@@ -121,9 +121,6 @@ service "demo" {
   env = {
     "GITHUB_DOMAIN" = "github.com"
   }
-  autostart = true
-  autorestart = false
-  namespace = "demo_namespace"
   stdout = "/tmp/demo-stdout.log"
   stderr = "/tmp/demo-stderr.log"
 }
