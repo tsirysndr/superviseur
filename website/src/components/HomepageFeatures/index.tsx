@@ -29,7 +29,7 @@ export default function HomepageFeatures(): JSX.Element {
           className="container"
           style={{ display: "flex", flexDirection: "row" }}
         >
-          <div style={{ flex: 1 }}>
+          <div style={{ flex: 1, minWidth: 603 }}>
             <CodeExample />
           </div>
           <div
@@ -109,7 +109,7 @@ export default function HomepageFeatures(): JSX.Element {
               .
             </div>
           </div>
-          <div style={{ flex: 1 }}>
+          <div style={{ flex: 1, minWidth: 630 }}>
             <SupportedPlugins />
           </div>
         </div>

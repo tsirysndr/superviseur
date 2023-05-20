@@ -37,7 +37,7 @@ service "http" {
   env = { }
   port = 3000\n
   use "wasm" {
-    runtime "spin" { }
+    runtime "spin" { } # or "wasmedge", "lunatic", "spiderlightning"
   }
 }
 `}
