@@ -140,8 +140,11 @@ const config = {
         copyright: `Copyright © ${new Date().getFullYear()}  Tsiry Sandratraina. Built with Docusaurus.`,
       },
       prism: {
-        theme: lightCodeTheme,
-        darkTheme: darkCodeTheme,
+        additionalLanguages: ["hcl", "rust", "go", "typescript"],
+        theme: {
+          ...darkCodeTheme,
+          plain: { color: "#fff", backgroundColor: "transparent" },
+        },
       },
     }),
 };

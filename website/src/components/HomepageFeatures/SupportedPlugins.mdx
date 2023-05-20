@@ -1,0 +1,124 @@
+import CodeBlock from "@theme/CodeBlock";
+
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
+
+<Tabs>
+<TabItem value="hcl" label="Docker">
+  <CodeBlock language="hcl">{`
+project = "demo"\n
+service "redis" {
+  type = "docker"
+  command = "redis-server"
+  working_dir = "."
+  description = "Redis Service Example"
+  depends_on = []
+  env = {}
+  port = 6379\n
+  use "docker" {
+    image = "redislabs/redismod:edge"
+    ports = ["6379:6379"]
+  }
+}
+ `}
+  </CodeBlock>
+</TabItem>
+
+<TabItem value="wasm" label="WebAssembly">
+  <CodeBlock language="hcl">
+    {`
+project = "spin-demo"\n
+service "http" {
+  type = "wasm"
+  command = "target/wasm32-wasi/release/http_server.wasm"
+  working_dir = "."
+  description = "HTTP server demo"
+  depends_on = []
+  env = { }
+  port = 3000\n
+  use "wasm" {
+    runtime "spin" { } # or "wasmedge", "lunatic", "spiderlightning"
+  }
+}
+`}
+
+  </CodeBlock>
+</TabItem>
+
+<TabItem value="nix" label="Nix">
+  <CodeBlock language="hcl">
+    {`
+project = "deno-fresh"\n
+service "deno" {
+  type = "exec"
+  command = "./dev.ts"
+  working_dir = "."
+  description = "Deno example app"
+  depends_on = []
+  env = {}
+  port = 8000\n
+  use "nix" { }
+}
+`}
+  </CodeBlock>
+</TabItem>
+
+<TabItem value="flox" label="Flox">
+  <CodeBlock language="hcl">
+    {`
+project = "deno-fresh"\n
+service "deno" {
+  type = "exec"
+  command = "./dev.ts"
+  working_dir = "."
+  description = "Deno example app"
+  depends_on = []
+  env = {}
+  port = 8000\n
+  use "flox" {
+    environment = ".#deno-fresh"
+  }
+}
+  `}
+  </CodeBlock>
+</TabItem>
+
+<TabItem value="devenv" label="Devenv">
+  <CodeBlock language="hcl">
+    {`
+project = "deno-fresh"\n
+service "deno" {
+  type = "exec"
+  command = "./dev.ts"
+  working_dir = "."
+  description = "Deno example app"
+  depends_on = []
+  env = {}
+  port = 8000\n
+  use "devenv" { }
+}
+`}
+  </CodeBlock>
+</TabItem>
+
+<TabItem value="devbox" label="Devbox">
+  <CodeBlock language="hcl">
+    {`
+project = "deno-fresh"\n
+service "deno" {
+  type = "exec"
+  command = "./dev.ts"
+  working_dir = "."
+  description = "Deno example app"
+  depends_on = []
+  env = {}
+  port = 8000\n
+  use "devbox" {
+    packages = ["deno"]
+  }
+}
+`}
+  </CodeBlock>
+</TabItem>
+
+</Tabs>
