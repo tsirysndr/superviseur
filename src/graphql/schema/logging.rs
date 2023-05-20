@@ -11,6 +11,7 @@ use futures_util::Stream;
 use tokio_stream::StreamExt;
 
 use crate::{
+    default_stdout,
     graphql::{schema::objects::subscriptions::TailLogStream, simple_broker::SimpleBroker},
     types::configuration::ConfigurationData,
     util::read_lines,
@@ -51,8 +52,13 @@ impl LoggingQuery {
             .iter()
             .find(|(_, s)| s.id == Some(id.to_string()))
             .ok_or_else(|| Error::new("Service not found"))?;
-
-        let log_file = File::open(&service.stdout).map_err(|e| Error::new(e.to_string()))?;
+        let log_file = File::open(
+            &service
+                .stdout
+                .clone()
+                .unwrap_or(default_stdout!(config.project, service.name)),
+        )
+        .map_err(|e| Error::new(e.to_string()))?;
 
         let reader = BufReader::new(log_file);
 
@@ -88,7 +94,12 @@ impl LoggingQuery {
             .find(|(_, s)| s.id == Some(id.to_string()))
             .ok_or_else(|| Error::new("Service not found"))?;
 
-        let lines = read_lines(&service.stdout)?;
+        let lines = read_lines(
+            &service
+                .stdout
+                .clone()
+                .unwrap_or(default_stdout!(config.project, service.name)),
+        )?;
 
         Ok(Log { lines })
     }
@@ -124,7 +135,13 @@ impl LoggingSubscription {
             .find(|(_, s)| s.id == Some(id.to_string()))
             .ok_or_else(|| Error::new("Service not found"))?;
 
-        let log_file = File::open(&service.stdout).map_err(|e| Error::new(e.to_string()))?;
+        let log_file = File::open(
+            &service
+                .stdout
+                .clone()
+                .unwrap_or(default_stdout!(config.project, service.name)),
+        )
+        .map_err(|e| Error::new(e.to_string()))?;
 
         let reader = BufReader::new(log_file);
 
@@ -183,7 +200,13 @@ impl LoggingSubscription {
             .find(|(_, s)| s.id == Some(id.to_string()))
             .ok_or_else(|| Error::new("Service not found"))?;
 
-        let log_file = File::open(&service.stdout).map_err(|e| Error::new(e.to_string()))?;
+        let log_file = File::open(
+            &service
+                .stdout
+                .clone()
+                .unwrap_or(default_stdout!(config.project, service.name)),
+        )
+        .map_err(|e| Error::new(e.to_string()))?;
 
         let cloned_id = id.clone();
         thread::spawn(move || {

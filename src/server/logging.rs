@@ -10,6 +10,7 @@ use crate::{
         logging_service_server::LoggingService, EventsRequest, EventsResponse, LogDetails,
         LogRequest, LogResponse, SearchRequest, SearchResponse, TailRequest, TailResponse,
     },
+    default_stdout,
     superviseur::{core::Superviseur, logs::LogEngine},
     types::{
         configuration::ConfigurationData,
@@ -96,8 +97,13 @@ impl LoggingService for Logging {
             .find(|(_, s)| s.name == name)
             .ok_or_else(|| tonic::Status::not_found("Service not found"))?;
 
-        let log_file =
-            File::open(&service.stdout).map_err(|e| tonic::Status::internal(e.to_string()))?;
+        let log_file = File::open(
+            &service
+                .stdout
+                .clone()
+                .unwrap_or(default_stdout!(config.project, service.name)),
+        )
+        .map_err(|e| tonic::Status::internal(e.to_string()))?;
 
         let (tx, rx) = tokio::sync::mpsc::channel(1024);
 
@@ -117,7 +123,10 @@ impl LoggingService for Logging {
 
         if request.follow {
             let tx = tx.clone();
-            let stdout = service.stdout.clone();
+            let stdout = service
+                .stdout
+                .clone()
+                .unwrap_or(default_stdout!(config.project, service.name));
             tokio::spawn(async move {
                 let mut file = File::open(&stdout).unwrap();
                 let mut buf = [0; 1024];
@@ -165,8 +174,13 @@ impl LoggingService for Logging {
             .find(|(_, s)| s.name == name)
             .ok_or_else(|| tonic::Status::not_found("Service not found"))?;
 
-        let log_file =
-            File::open(&service.stdout).map_err(|e| tonic::Status::internal(e.to_string()))?;
+        let log_file = File::open(
+            service
+                .stdout
+                .clone()
+                .unwrap_or(default_stdout!(config.project, service.name)),
+        )
+        .map_err(|e| tonic::Status::internal(e.to_string()))?;
 
         let (tx, rx) = tokio::sync::mpsc::channel(1024);
 
@@ -195,8 +209,10 @@ impl LoggingService for Logging {
         if request.follow {
             let tx = tx.clone();
             let stdout = service.stdout.clone();
+            let mut file =
+                File::open(&stdout.unwrap_or(default_stdout!(config.project, service.name)))
+                    .unwrap();
             tokio::spawn(async move {
-                let mut file = File::open(&stdout).unwrap();
                 let mut buf = [0; 1024];
                 loop {
                     let n = file.read(&mut buf).unwrap();
@@ -396,14 +412,20 @@ impl LoggingService for Logging {
                     }
 
                     Some(SuperviseurEvent::AllServicesStarted(project)) => {
-                        tx.send(Ok(EventsResponse {
-                            event: ALL_SERVICES_STARTED.to_string(),
-                            project,
-                            date: chrono::Utc::now().to_rfc3339(),
-                            ..Default::default()
-                        }))
-                        .await
-                        .unwrap();
+                        match tx
+                            .send(Ok(EventsResponse {
+                                event: ALL_SERVICES_STARTED.to_string(),
+                                project,
+                                date: chrono::Utc::now().to_rfc3339(),
+                                ..Default::default()
+                            }))
+                            .await
+                        {
+                            Ok(_) => {}
+                            Err(e) => {
+                                println!("Error sending event: {}", e);
+                            }
+                        }
                     }
 
                     Some(SuperviseurEvent::AllServicesStopped(project)) => {

@@ -7,11 +7,7 @@ service "angular" {
   description = "Angular example"
   depends_on = []
   env = {}
-  autostart = true
-  autorestart = false
-  namespace = "demo_namespace"
-  stdout = "/tmp/angular-stdout.log"
-  stderr = "/tmp/angular-stderr.log"
+
   port = 4200
   
   build = {

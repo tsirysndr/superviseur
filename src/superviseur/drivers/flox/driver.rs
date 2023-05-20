@@ -13,6 +13,7 @@ use spinners::{Spinner, Spinners};
 use tokio::sync::mpsc;
 
 use crate::{
+    default_stderr, default_stdout,
     graphql::{
         schema::objects::subscriptions::{LogStream, TailLogStream},
         simple_broker::SimpleBroker,
@@ -116,7 +117,12 @@ impl Driver {
             let service = cloned_service;
             let id = service.id.unwrap_or("-".to_string());
             // write stdout to file
-            let mut log_file = std::fs::File::create(service.stdout).unwrap();
+            let mut log_file = std::fs::File::create(
+                service
+                    .stdout
+                    .unwrap_or(default_stdout!(project, service.name)),
+            )
+            .unwrap();
 
             let stdout = std::io::BufReader::new(stdout);
             for line in stdout.lines() {
@@ -161,7 +167,12 @@ impl Driver {
             }
 
             // write stderr to file
-            let mut err_file = std::fs::File::create(service.stderr).unwrap();
+            let mut err_file = std::fs::File::create(
+                service
+                    .stderr
+                    .unwrap_or(default_stderr!(project, service.name)),
+            )
+            .unwrap();
             let stderr = std::io::BufReader::new(stderr);
             for line in stderr.lines() {
                 let line = line.unwrap();

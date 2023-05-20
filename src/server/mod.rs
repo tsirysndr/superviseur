@@ -31,15 +31,21 @@ macro_rules! return_event {
             continue;
         }
 
-        $tx.send(Ok(EventsResponse {
-            event: $event.to_string(),
-            project: $project,
-            service: $service,
-            date: chrono::Utc::now().to_rfc3339(),
-            output: $output,
-        }))
-        .await
-        .unwrap();
+        match $tx
+            .send(Ok(EventsResponse {
+                event: $event.to_string(),
+                project: $project,
+                service: $service,
+                date: chrono::Utc::now().to_rfc3339(),
+                output: $output,
+            }))
+            .await
+        {
+            Ok(_) => {}
+            Err(e) => {
+                println!("Error sending event: {}", e);
+            }
+        }
     }};
 }
 
