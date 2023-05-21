@@ -59,7 +59,7 @@ pub struct Service {
     #[serde(
         rename = "test",
         skip_serializing_if = "Option::is_none",
-        serialize_with = "hcl::ser::labeled_block"
+        serialize_with = "hcl::ser::block"
     )]
     pub test: Option<TestConfig>,
 }
