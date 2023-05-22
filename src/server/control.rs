@@ -22,9 +22,11 @@ use crate::{
         },
     },
     default_stderr, default_stdout,
+    server::macros::{get_project_configuration, save_project_configuration},
     superviseur::{
         core::{ProcessEvent, Superviseur, SuperviseurCommand},
         drivers::setup_drivers,
+        provider::{self, kv::kv::Provider},
     },
     types::{
         self, configuration,
@@ -34,12 +36,14 @@ use crate::{
     util::convert_dir_path_to_absolute_path,
 };
 
+use super::macros::project_exists;
+
 pub struct Control {
     cmd_tx: mpsc::UnboundedSender<SuperviseurCommand>,
     event_tx: mpsc::UnboundedSender<ProcessEvent>,
     superviseur: Superviseur,
     processes: Arc<Mutex<Vec<(Process, String)>>>,
-    config_map: Arc<Mutex<HashMap<String, ConfigurationData>>>,
+    provider: Arc<Provider>,
     project_map: Arc<Mutex<HashMap<String, String>>>,
 }
 
@@ -49,7 +53,7 @@ impl Control {
         event_tx: mpsc::UnboundedSender<ProcessEvent>,
         superviseur: Superviseur,
         processes: Arc<Mutex<Vec<(Process, String)>>>,
-        config_map: Arc<Mutex<HashMap<String, ConfigurationData>>>,
+        provider: Arc<Provider>,
         project_map: Arc<Mutex<HashMap<String, String>>>,
     ) -> Self {
         Self {
@@ -57,7 +61,7 @@ impl Control {
             event_tx,
             superviseur,
             processes,
-            config_map,
+            provider,
             project_map,
         }
     }
@@ -69,7 +73,6 @@ impl Control {
     ) -> Result<(String, bool), Error> {
         let mut generator = Generator::default();
         let mut project_map = self.project_map.lock().unwrap();
-        let mut config_map = self.config_map.lock().unwrap();
 
         let mut is_new = false;
         // check if path is not already loaded
@@ -77,7 +80,7 @@ impl Control {
             // generate a new id for the project
             let id = generator.next().unwrap();
             project_map.insert(path.clone(), id.clone());
-            config_map.insert(id.clone(), config.clone());
+            self.provider.save_configuration(&id, config.clone())?;
             is_new = true;
             setup_drivers(config);
         }
@@ -136,11 +139,13 @@ impl ControlService for Control {
                 tonic::Status::internal(format!("Error while loading config: {}", e.to_string()))
             })?;
         let mut generator = Generator::default();
-        let mut config_map = self.config_map.lock().unwrap();
 
         // check if the config is already loaded
         if !is_new_config {
-            let old_config = config_map.get_mut(&project_id).unwrap();
+            let old_config = self
+                .provider
+                .build_configuration(&project_id)
+                .map_err(|e| tonic::Status::internal(e.to_string()))?;
             // reuse the id of the services
             for (service_name, service) in &mut config.services {
                 match old_config
@@ -184,7 +189,7 @@ impl ControlService for Control {
                 ))
                 .unwrap();
             // update the config
-            config_map.insert(project_id.clone(), config.clone());
+            save_project_configuration!(self, project_id, config);
         } else {
             config.services = config
                 .services
@@ -202,7 +207,7 @@ impl ControlService for Control {
                 .map_err(|e| tonic::Status::internal(e.to_string()))?;
 
             // update the config
-            config_map.insert(project_id.clone(), config.clone());
+            save_project_configuration!(self, project_id, config);
 
             let services = config.services.clone();
             let project = config.project.clone();
@@ -230,7 +235,7 @@ impl ControlService for Control {
                 .unwrap();
         }
 
-        let config = config_map.get_mut(&project_id).unwrap();
+        let mut config = get_project_configuration!(self, project_id);
 
         let services = config.services.clone();
         let mut services = services.into_iter();
@@ -278,13 +283,10 @@ impl ControlService for Control {
         let project_id = self
             .get_project_id(path.clone())
             .map_err(|e| tonic::Status::not_found(e.to_string()))?;
-        let config_map = self.config_map.lock().unwrap();
 
-        if !config_map.contains_key(&project_id) {
-            return Err(tonic::Status::not_found("Config file not found"));
-        }
+        project_exists!(self, project_id);
 
-        let config = config_map.get(&project_id).unwrap();
+        let config = get_project_configuration!(self, project_id);
 
         if name.len() > 0 {
             let (_, service) = config
@@ -320,13 +322,10 @@ impl ControlService for Control {
         let project_id = self
             .get_project_id(path.clone())
             .map_err(|e| tonic::Status::not_found(e.to_string()))?;
-        let config_map = self.config_map.lock().unwrap();
 
-        if !config_map.contains_key(&project_id) {
-            return Err(tonic::Status::not_found("Config file not found"));
-        }
+        project_exists!(self, project_id);
 
-        let config = config_map.get(&project_id).unwrap();
+        let config = get_project_configuration!(self, project_id);
 
         if name.len() > 0 {
             let (_, service) = config
@@ -361,13 +360,10 @@ impl ControlService for Control {
         let project_id = self
             .get_project_id(path.clone())
             .map_err(|e| tonic::Status::not_found(e.to_string()))?;
-        let config_map = self.config_map.lock().unwrap();
 
-        if !config_map.contains_key(&project_id) {
-            return Err(tonic::Status::not_found("Config file not found"));
-        }
+        project_exists!(self, project_id);
 
-        let config = config_map.get(&project_id).unwrap();
+        let config = get_project_configuration!(self, project_id);
 
         if name.len() > 0 {
             let (_, service) = config
@@ -402,13 +398,10 @@ impl ControlService for Control {
         let project_id = self
             .get_project_id(path.clone())
             .map_err(|e| tonic::Status::not_found(e.to_string()))?;
-        let config_map = self.config_map.lock().unwrap();
 
-        if !config_map.contains_key(&project_id) {
-            return Err(tonic::Status::not_found("Config file not found"));
-        }
+        project_exists!(self, project_id);
 
-        let config = config_map.get(&project_id).unwrap();
+        let config = get_project_configuration!(self, project_id);
 
         let (_, service) = config
             .services
@@ -456,13 +449,10 @@ impl ControlService for Control {
         let project_id = self
             .get_project_id(path.clone())
             .map_err(|e| tonic::Status::not_found(e.to_string()))?;
-        let config_map = self.config_map.lock().unwrap();
 
-        if !config_map.contains_key(&project_id) {
-            return Err(tonic::Status::not_found("Config file not found"));
-        }
+        project_exists!(self, project_id);
 
-        let config = config_map.get(&project_id).unwrap();
+        let config = get_project_configuration!(self, project_id);
         let services = config.services.clone();
         let mut list_response = ListResponse {
             services: services
@@ -512,13 +502,10 @@ impl ControlService for Control {
         let project_id = self
             .get_project_id(path.clone())
             .map_err(|e| tonic::Status::not_found(e.to_string()))?;
-        let config_map = self.config_map.lock().unwrap();
 
-        if !config_map.contains_key(&project_id) {
-            return Err(tonic::Status::not_found("Config file not found"));
-        }
+        project_exists!(self, project_id);
 
-        let config = config_map.get(&project_id).unwrap();
+        let config = get_project_configuration!(self, project_id);
 
         if name.len() > 0 {
             let (_, service) = config

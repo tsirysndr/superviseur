@@ -12,8 +12,11 @@ use names::Generator;
 use tokio::sync::mpsc;
 
 use crate::{
-    graphql::{schema::objects::subscriptions::ServiceStarted, simple_broker::SimpleBroker},
-    superviseur::core::SuperviseurCommand,
+    graphql::{
+        macros::project_exists, schema::objects::subscriptions::ServiceStarted,
+        simple_broker::SimpleBroker,
+    },
+    superviseur::{core::SuperviseurCommand, provider::kv::kv::Provider},
     types::{self, configuration::ConfigurationData, process::State},
 };
 
@@ -53,16 +56,16 @@ impl ControlQuery {
 
     async fn projects(&self, ctx: &Context<'_>) -> Result<Vec<Project>, Error> {
         let project_map = ctx.data::<Arc<Mutex<HashMap<String, String>>>>().unwrap();
-        let config_map = ctx
-            .data::<Arc<Mutex<HashMap<String, ConfigurationData>>>>()
-            .unwrap();
+        let provider = ctx.data::<Arc<Provider>>().unwrap();
 
         let project_map = project_map.lock().unwrap();
-        let config_map = config_map.lock().unwrap();
 
-        let projects = config_map
+        let projects = provider
+            .all_projects()
+            .map_err(|e| Error::new(e.to_string()))?;
+        let projects = projects
             .iter()
-            .map(|(id, config)| {
+            .map(|(id, name, _)| {
                 let config_path = match project_map.clone().into_iter().find(|(_, v)| v == id) {
                     Some((k, _)) => Some(k),
                     None => None,
@@ -70,12 +73,11 @@ impl ControlQuery {
 
                 Project {
                     id: ID(id.clone()),
-                    name: config.project.clone(),
+                    name: name.clone(),
                     config_path,
                 }
             })
             .collect();
-
         Ok(projects)
     }
 
@@ -83,20 +85,15 @@ impl ControlQuery {
         let processes = ctx
             .data::<Arc<Mutex<Vec<(types::process::Process, String)>>>>()
             .unwrap();
-        let config_map = ctx
-            .data::<Arc<Mutex<HashMap<String, ConfigurationData>>>>()
-            .unwrap();
+        let provider = ctx.data::<Arc<Provider>>().unwrap();
 
         let processes = processes.lock().unwrap();
 
-        let config_map = config_map.lock().unwrap();
         let project_id = project_id.to_string();
 
-        if !config_map.contains_key(&project_id) {
-            return Err(Error::new("Configuration file not found"));
-        }
+        project_exists!(provider, project_id);
 
-        let config = config_map.get(&project_id).unwrap();
+        let config = provider.build_configuration(&project_id)?;
 
         let services = config.services.clone();
         let mut services = services
@@ -121,34 +118,30 @@ impl ControlQuery {
 
     async fn project(&self, ctx: &Context<'_>, id: ID) -> Result<Project, Error> {
         let project_map = ctx.data::<Arc<Mutex<HashMap<String, String>>>>().unwrap();
-        let config_map = ctx
-            .data::<Arc<Mutex<HashMap<String, ConfigurationData>>>>()
-            .unwrap();
+        let provider = ctx.data::<Arc<Provider>>().unwrap();
 
         let project_map = project_map.lock().unwrap();
-        let config_map = config_map.lock().unwrap();
 
         let project_id = id.to_string();
 
-        match config_map.get(&project_id) {
-            Some(config) => {
-                let config_path = match project_map
-                    .clone()
-                    .into_iter()
-                    .find(|(_, v)| v == &project_id)
-                {
-                    Some((k, _)) => Some(k),
-                    None => None,
-                };
+        project_exists!(provider, project_id);
 
-                Ok(Project {
-                    id: ID(project_id),
-                    name: config.project.clone(),
-                    config_path,
-                })
-            }
-            None => Err(Error::new("Configuration file not found")),
-        }
+        let config = provider.build_configuration(&project_id)?;
+
+        let config_path = match project_map
+            .clone()
+            .into_iter()
+            .find(|(_, v)| v == &project_id)
+        {
+            Some((k, _)) => Some(k),
+            None => None,
+        };
+
+        Ok(Project {
+            id: ID(project_id),
+            name: config.project.clone(),
+            config_path,
+        })
     }
 
     async fn processes(&self, ctx: &Context<'_>) -> Result<Vec<Process>, Error> {
@@ -169,17 +162,11 @@ impl ControlQuery {
         let processes = ctx
             .data::<Arc<Mutex<Vec<(types::process::Process, String)>>>>()
             .unwrap();
-        let config_map = ctx
-            .data::<Arc<Mutex<HashMap<String, ConfigurationData>>>>()
-            .unwrap();
+        let provider = ctx.data::<Arc<Provider>>().unwrap();
 
-        let config_map = config_map.lock().unwrap();
+        project_exists!(provider, project_id);
 
-        if !config_map.contains_key(&project_id) {
-            return Err(Error::new("Configuration file not found"));
-        }
-
-        let config = config_map.get(&project_id).unwrap();
+        let config = provider.build_configuration(&project_id)?;
 
         let processes = processes.lock().unwrap();
 
@@ -226,9 +213,7 @@ impl ControlMutation {
         name: String,
         context: String,
     ) -> Result<ProjectConfiguration, Error> {
-        let config_map = ctx
-            .data::<Arc<Mutex<HashMap<String, ConfigurationData>>>>()
-            .unwrap();
+        let provider = ctx.data::<Arc<Provider>>().unwrap();
 
         let mut generator = Generator::default();
         let id = generator.next().unwrap();
@@ -240,17 +225,14 @@ impl ControlMutation {
             volume_settings: None,
         };
 
-        let mut config_map = config_map.lock().unwrap();
-        // check if project already exists by verifying if the context is already used
-        if config_map
-            .values()
-            .any(|c| c.context == Some(context.clone()))
-        {
+        let projects = provider
+            .all_projects()
+            .map_err(|e| Error::new(e.to_string()))?;
+        if projects.iter().any(|(_, _, ctx)| *ctx == context) {
             return Err(Error::new("Project already exists with this context"));
         }
 
-        config_map.insert(id.clone(), config.clone());
-        drop(config_map);
+        provider.save_configuration(&id, config)?;
 
         return Ok(ProjectConfiguration {
             id: ID(id),
@@ -273,17 +255,13 @@ impl ControlMutation {
         let processes = ctx
             .data::<Arc<Mutex<Vec<(types::process::Process, String)>>>>()
             .unwrap();
-        let config_map = ctx
-            .data::<Arc<Mutex<HashMap<String, ConfigurationData>>>>()
-            .unwrap();
+        let provider = ctx.data::<Arc<Provider>>().unwrap();
 
-        let config_map = config_map.lock().unwrap();
+        project_exists!(provider, project_id);
 
-        if !config_map.contains_key(&project_id) {
-            return Err(Error::new("Configuration file not found"));
-        }
-
-        let config = config_map.get(&project_id).unwrap();
+        let config = provider
+            .build_configuration(&project_id)
+            .map_err(|e| Error::new(e.to_string()))?;
 
         if id.is_none() {
             for (_, service) in &config.services {
@@ -343,17 +321,13 @@ impl ControlMutation {
         let processes = ctx
             .data::<Arc<Mutex<Vec<(types::process::Process, String)>>>>()
             .unwrap();
-        let config_map = ctx
-            .data::<Arc<Mutex<HashMap<String, ConfigurationData>>>>()
-            .unwrap();
+        let provider = ctx.data::<Arc<Provider>>().unwrap();
 
-        let config_map = config_map.lock().unwrap();
+        project_exists!(provider, project_id);
 
-        if !config_map.contains_key(&project_id) {
-            return Err(Error::new("Configuration file not found"));
-        }
-
-        let config = config_map.get(&project_id).unwrap();
+        let config = provider
+            .build_configuration(&project_id)
+            .map_err(|e| Error::new(e.to_string()))?;
 
         if id.is_none() {
             for (_, service) in &config.services {
@@ -409,18 +383,14 @@ impl ControlMutation {
         let processes = ctx
             .data::<Arc<Mutex<Vec<(types::process::Process, String)>>>>()
             .unwrap();
-        let config_map = ctx
-            .data::<Arc<Mutex<HashMap<String, ConfigurationData>>>>()
-            .unwrap();
+        let provider = ctx.data::<Arc<Provider>>().unwrap();
         let _project_map = ctx.data::<Arc<Mutex<HashMap<String, String>>>>().unwrap();
 
-        let config_map = config_map.lock().unwrap();
+        project_exists!(provider, project_id);
 
-        if !config_map.contains_key(&project_id) {
-            return Err(Error::new("Configuration file not found"));
-        }
-
-        let config = config_map.get(&project_id).unwrap();
+        let config = provider
+            .build_configuration(&project_id)
+            .map_err(|e| Error::new(e.to_string()))?;
 
         if id.is_none() {
             for (_, service) in &config.services {
@@ -477,18 +447,14 @@ impl ControlMutation {
         let processes = ctx
             .data::<Arc<Mutex<Vec<(types::process::Process, String)>>>>()
             .unwrap();
-        let config_map = ctx
-            .data::<Arc<Mutex<HashMap<String, ConfigurationData>>>>()
-            .unwrap();
+        let provider = ctx.data::<Arc<Provider>>().unwrap();
         let _project_map = ctx.data::<Arc<Mutex<HashMap<String, String>>>>().unwrap();
 
-        let mut config_map = config_map.lock().unwrap();
+        project_exists!(provider, project_id);
 
-        if !config_map.contains_key(&project_id) {
-            return Err(Error::new("Configuration file not found"));
-        }
-
-        let config = config_map.get_mut(&project_id).unwrap();
+        let mut config = provider
+            .build_configuration(&project_id)
+            .map_err(|e| Error::new(e.to_string()))?;
 
         let (_, service) = config
             .services
@@ -502,6 +468,8 @@ impl ControlMutation {
             .iter()
             .find(|(p, _)| Some(p.service_id.clone()) == service.id)
             .ok_or(Error::new("Process not found"))?;
+        let service = service.clone();
+        provider.save_configuration(&project_id, config)?;
 
         Ok(Service {
             status: process.state.to_string(),
@@ -520,17 +488,13 @@ impl ControlMutation {
         let processes = ctx
             .data::<Arc<Mutex<Vec<(types::process::Process, String)>>>>()
             .unwrap();
-        let config_map = ctx
-            .data::<Arc<Mutex<HashMap<String, ConfigurationData>>>>()
-            .unwrap();
+        let provider = ctx.data::<Arc<Provider>>().unwrap();
 
-        let mut config_map = config_map.lock().unwrap();
+        project_exists!(provider, project_id);
 
-        if !config_map.contains_key(&project_id) {
-            return Err(Error::new("Configuration file not found"));
-        }
-
-        let config = config_map.get_mut(&project_id).unwrap();
+        let mut config = provider
+            .build_configuration(&project_id)
+            .map_err(|e| Error::new(e.to_string()))?;
 
         let (_, service) = config
             .services
@@ -545,6 +509,11 @@ impl ControlMutation {
             .iter()
             .find(|(p, _)| Some(p.service_id.clone()) == service.id)
             .ok_or(Error::new("Process not found"))?;
+        let service = service.clone();
+
+        provider
+            .save_configuration(&project_id, config)
+            .map_err(|e| Error::new(e.to_string()))?;
 
         Ok(Service {
             status: process.state.to_string(),
@@ -564,17 +533,13 @@ impl ControlMutation {
         let processes = ctx
             .data::<Arc<Mutex<Vec<(types::process::Process, String)>>>>()
             .unwrap();
-        let config_map = ctx
-            .data::<Arc<Mutex<HashMap<String, ConfigurationData>>>>()
-            .unwrap();
+        let provider = ctx.data::<Arc<Provider>>().unwrap();
 
-        let mut config_map = config_map.lock().unwrap();
+        project_exists!(provider, project_id);
 
-        if !config_map.contains_key(&project_id) {
-            return Err(Error::new("Configuration file not found"));
-        }
-
-        let config = config_map.get_mut(&project_id).unwrap();
+        let mut config = provider
+            .build_configuration(&project_id)
+            .map_err(|e| Error::new(e.to_string()))?;
 
         let (_, service) = config
             .services
@@ -589,6 +554,12 @@ impl ControlMutation {
             .iter()
             .find(|(p, _)| Some(p.service_id.clone()) == service.id)
             .ok_or(Error::new("Process not found"))?;
+
+        let service = service.clone();
+
+        provider
+            .save_configuration(&project_id, config)
+            .map_err(|e| Error::new(e.to_string()))?;
 
         Ok(Service {
             status: process.state.to_string(),

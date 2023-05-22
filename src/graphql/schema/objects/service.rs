@@ -79,6 +79,39 @@ impl Service {
     }
 }
 
+impl From<types::configuration::Service> for Service {
+    fn from(service: types::configuration::Service) -> Self {
+        Self {
+            id: service
+                .id
+                .as_ref()
+                .map(|x| ID(x.to_owned()))
+                .unwrap_or_default(),
+            name: service.name.clone(),
+            description: service.description.clone(),
+            namespace: service
+                .namespace
+                .as_ref()
+                .map(|x| x.to_owned())
+                .unwrap_or_default(),
+            r#type: service.r#type.clone(),
+            command: service.command.clone(),
+            env: service
+                .env
+                .iter()
+                .map(|(k, v)| format!("{}={}", k, v))
+                .collect(),
+            auto_restart: service.autorestart.unwrap_or_default(),
+            depends_on: service.dependencies.clone(),
+            working_directory: service.working_dir.clone(),
+            log_file: service.stdout.clone().unwrap_or_default(),
+            stderr_file: service.stderr.clone().unwrap_or_default(),
+            port: service.port.map(|x| x as i32),
+            ..Default::default()
+        }
+    }
+}
+
 impl From<&mut types::configuration::Service> for Service {
     fn from(service: &mut types::configuration::Service) -> Self {
         Self {

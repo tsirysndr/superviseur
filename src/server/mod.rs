@@ -11,7 +11,10 @@ use crate::{
         logging_service_server::LoggingServiceServer, project_service_server::ProjectServiceServer,
     },
     server::{control::Control, logging::Logging, project::Project},
-    superviseur::{core::Superviseur, dependencies::DependencyGraph, logs::LogEngine},
+    superviseur::{
+        core::Superviseur, dependencies::DependencyGraph, logs::LogEngine,
+        provider::kv::kv::Provider,
+    },
     types::{configuration::Service, process::Process, BANNER, UNIX_SOCKET_PATH},
 };
 use anyhow::Error;
@@ -23,33 +26,8 @@ use tonic::transport::Server;
 pub mod control;
 pub mod core;
 pub mod logging;
+pub mod macros;
 pub mod project;
-
-macro_rules! return_event {
-    ($tx: expr, $service_name: expr, $event: expr, $project: expr, $service: expr, $output: expr) => {{
-        if $service_name != $service && !$service_name.is_empty() {
-            continue;
-        }
-
-        match $tx
-            .send(Ok(EventsResponse {
-                event: $event.to_string(),
-                project: $project,
-                service: $service,
-                date: chrono::Utc::now().to_rfc3339(),
-                output: $output,
-            }))
-            .await
-        {
-            Ok(_) => {}
-            Err(e) => {
-                println!("Error sending event: {}", e);
-            }
-        }
-    }};
-}
-
-pub(crate) use return_event;
 
 pub async fn exec(port: u16, serve: bool) -> Result<(), Error> {
     let addr: SocketAddr = format!("0.0.0.0:{}", port).parse().unwrap();
@@ -64,7 +42,7 @@ pub async fn exec(port: u16, serve: bool) -> Result<(), Error> {
     }
 
     let project_map = Arc::new(Mutex::new(HashMap::new()));
-    let config_map = Arc::new(Mutex::new(HashMap::new()));
+    let provider = Arc::new(Provider::default());
     let (cmd_tx, cmd_rx) = tokio::sync::mpsc::unbounded_channel();
     let (event_tx, events) = tokio::sync::mpsc::unbounded_channel();
     let processes = Arc::new(Mutex::new(vec![] as Vec<(Process, String)>));
@@ -81,7 +59,7 @@ pub async fn exec(port: u16, serve: bool) -> Result<(), Error> {
         event_tx.clone(),
         events,
         processes.clone(),
-        config_map.clone(),
+        provider.clone(),
         service_graph.clone(),
         service_map.clone(),
         log_engine.clone(),
@@ -92,8 +70,8 @@ pub async fn exec(port: u16, serve: bool) -> Result<(), Error> {
     let cloned_event_tx = event_tx.clone();
     let cloned_superviseur = superviseur.clone();
     let cloned_processes = processes.clone();
-    let cloned_config_map = config_map.clone();
     let cloned_project_map = project_map.clone();
+    let cloned_provider = Arc::clone(&provider);
     let cloned_log_engine = log_engine.clone();
     let cloned_superviseur_events_rx = superviseur_events_rx.clone();
 
@@ -114,7 +92,7 @@ pub async fn exec(port: u16, serve: bool) -> Result<(), Error> {
             .add_service(tonic_web::enable(LoggingServiceServer::new(Logging::new(
                 cloned_superviseur.clone(),
                 cloned_processes.clone(),
-                cloned_config_map.clone(),
+                cloned_provider.clone(),
                 cloned_project_map.clone(),
                 cloned_log_engine.clone(),
                 cloned_superviseur_events_rx.clone(),
@@ -124,7 +102,7 @@ pub async fn exec(port: u16, serve: bool) -> Result<(), Error> {
                 cloned_event_tx.clone(),
                 cloned_superviseur.clone(),
                 cloned_processes.clone(),
-                cloned_config_map.clone(),
+                cloned_provider.clone(),
                 cloned_project_map.clone(),
             ))))
             .add_service(tonic_web::enable(CoreServiceServer::new(core::Core::new(
@@ -132,13 +110,13 @@ pub async fn exec(port: u16, serve: bool) -> Result<(), Error> {
                 cloned_event_tx,
                 cloned_superviseur,
                 cloned_processes.clone(),
-                cloned_config_map.clone(),
+                cloned_provider.clone(),
                 cloned_project_map.clone(),
             ))))
             .add_service(tonic_web::enable(ProjectServiceServer::new(Project::new(
                 cloned_cmd_tx,
                 cloned_processes,
-                cloned_config_map,
+                cloned_provider,
                 cloned_project_map,
             ))))
             .serve_with_incoming(UnixListenerStream::new(listener))
@@ -153,7 +131,7 @@ pub async fn exec(port: u16, serve: bool) -> Result<(), Error> {
             .add_service(tonic_web::enable(LoggingServiceServer::new(Logging::new(
                 superviseur.clone(),
                 processes.clone(),
-                config_map.clone(),
+                provider.clone(),
                 project_map.clone(),
                 log_engine.clone(),
                 superviseur_events_rx.clone(),
@@ -163,7 +141,7 @@ pub async fn exec(port: u16, serve: bool) -> Result<(), Error> {
                 event_tx.clone(),
                 superviseur.clone(),
                 processes.clone(),
-                config_map.clone(),
+                provider.clone(),
                 project_map.clone(),
             ))))
             .add_service(tonic_web::enable(CoreServiceServer::new(core::Core::new(
@@ -171,13 +149,13 @@ pub async fn exec(port: u16, serve: bool) -> Result<(), Error> {
                 event_tx,
                 superviseur,
                 processes.clone(),
-                config_map.clone(),
+                provider.clone(),
                 project_map.clone(),
             ))))
             .add_service(tonic_web::enable(ProjectServiceServer::new(Project::new(
                 cmd_tx,
                 processes,
-                config_map,
+                provider,
                 project_map,
             ))))
             .serve(addr)

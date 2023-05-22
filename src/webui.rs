@@ -20,8 +20,11 @@ use crate::{
         schema::{Mutation, Query, Subscription},
         SuperviseurSchema,
     },
-    superviseur::core::{ProcessEvent, Superviseur, SuperviseurCommand},
-    types::{configuration::ConfigurationData, process::Process},
+    superviseur::{
+        core::{ProcessEvent, Superviseur, SuperviseurCommand},
+        provider::kv::kv::Provider,
+    },
+    types::process::Process,
 };
 
 #[derive(RustEmbed)]
@@ -99,7 +102,7 @@ pub async fn start_webui(
     event_tx: mpsc::UnboundedSender<ProcessEvent>,
     superviseur: Superviseur,
     processes: Arc<Mutex<Vec<(Process, String)>>>,
-    config_map: Arc<Mutex<HashMap<String, ConfigurationData>>>,
+    provider: Arc<Provider>,
     project_map: Arc<Mutex<HashMap<String, String>>>,
 ) -> std::io::Result<()> {
     let addr = format!("0.0.0.0:{}", 5478);
@@ -114,7 +117,7 @@ pub async fn start_webui(
     .data(cmd_tx)
     .data(event_tx)
     .data(processes)
-    .data(config_map)
+    .data(provider)
     .data(project_map)
     .finish();
 

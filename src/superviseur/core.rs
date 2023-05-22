@@ -34,6 +34,7 @@ use crate::{
 use super::{
     dependencies::{DependencyGraph, GraphCommand},
     logs::LogEngine,
+    provider::kv::kv::Provider,
     watch::WatchForChanges,
 };
 
@@ -47,7 +48,7 @@ impl Superviseur {
         event_tx: mpsc::UnboundedSender<ProcessEvent>,
         events: mpsc::UnboundedReceiver<ProcessEvent>,
         processes: Arc<Mutex<Vec<(Process, String)>>>,
-        config_map: Arc<Mutex<HashMap<String, ConfigurationData>>>,
+        provider: Arc<Provider>,
         service_graph: Arc<Mutex<Vec<(DependencyGraph, String)>>>,
         service_map: Arc<Mutex<Vec<(HashMap<usize, Service>, String)>>>,
         log_engine: Arc<Mutex<LogEngine>>,
@@ -62,7 +63,7 @@ impl Superviseur {
                 events,
                 processes,
                 childs,
-                config_map,
+                provider,
                 service_graph,
                 service_map,
                 log_engine,
@@ -112,7 +113,7 @@ struct SuperviseurInternal {
     event_tx: mpsc::UnboundedSender<ProcessEvent>,
     processes: Arc<Mutex<Vec<(Process, String)>>>,
     childs: Arc<Mutex<HashMap<String, i32>>>,
-    config_map: Arc<Mutex<Vec<(ConfigurationData, String)>>>,
+    provider: Arc<Provider>,
     service_graph: Arc<Mutex<Vec<(DependencyGraph, String)>>>,
     service_map: Arc<Mutex<Vec<(HashMap<usize, Service>, String)>>>,
     log_engine: Arc<Mutex<LogEngine>>,
@@ -127,20 +128,12 @@ impl SuperviseurInternal {
         events: mpsc::UnboundedReceiver<ProcessEvent>,
         processes: Arc<Mutex<Vec<(Process, String)>>>,
         childs: Arc<Mutex<HashMap<String, i32>>>,
-        config_map: Arc<Mutex<HashMap<String, ConfigurationData>>>,
+        provider: Arc<Provider>,
         service_graph: Arc<Mutex<Vec<(DependencyGraph, String)>>>,
         service_map: Arc<Mutex<Vec<(HashMap<usize, Service>, String)>>>,
         log_engine: Arc<Mutex<LogEngine>>,
         superviseur_event: mpsc::UnboundedSender<SuperviseurEvent>,
     ) -> Self {
-        let config_map = Arc::new(Mutex::new(
-            config_map
-                .lock()
-                .unwrap()
-                .iter()
-                .map(|(_, v)| (v.clone(), v.project.clone()))
-                .collect(),
-        ));
         Self {
             commands,
             events,
@@ -148,7 +141,7 @@ impl SuperviseurInternal {
             cmd_tx,
             processes,
             childs,
-            config_map,
+            provider,
             service_graph,
             service_map,
             log_engine,
@@ -161,10 +154,6 @@ impl SuperviseurInternal {
         cfg: ConfigurationData,
         project: String,
     ) -> Result<(), Error> {
-        let mut config_map = self.config_map.lock().unwrap();
-        config_map.retain(|(_, key)| *key != project);
-        config_map.push((cfg.clone(), project.clone()));
-
         let mut services = HashMap::new();
         let (cmd_tx, cmd_rx) = mpsc::unbounded_channel();
         let mut graph = DependencyGraph::new(
@@ -425,8 +414,15 @@ impl SuperviseurInternal {
     }
 
     fn handle_restart_all(&mut self, project: String) -> Result<(), Error> {
-        self.handle_stop_all(project.clone())?;
-        self.handle_start_all(project, false)?;
+        let service_graph = self.service_graph.lock().unwrap();
+        let graph = service_graph
+            .clone()
+            .into_iter()
+            .filter(|(_, key)| *key == project)
+            .map(|(s, _)| s)
+            .next()
+            .ok_or(anyhow::anyhow!("Project {} not found", project))?;
+        graph.cmd_tx.send(GraphCommand::RestartServices).unwrap();
         Ok(())
     }
 
@@ -609,12 +605,10 @@ impl SuperviseurInternal {
     }
 
     fn get_service(&self, service_name: &str, project: &str) -> Result<Service, Error> {
-        let config_map = self.config_map.lock().unwrap();
-        let config = config_map
-            .iter()
-            .find(|(_, k)| k == &project)
-            .map(|(c, _)| c)
-            .ok_or(anyhow::anyhow!("Config not found"))?;
+        let config = self
+            .provider
+            .build_configuration(project)
+            .map_err(|e| anyhow::anyhow!(e.to_string()))?;
         let (_, service) = config
             .services
             .iter()
@@ -627,12 +621,10 @@ impl SuperviseurInternal {
         &self,
         project: &str,
     ) -> Result<Vec<schema::objects::service::Service>, Error> {
-        let config_map = self.config_map.lock().unwrap();
-        let config = config_map
-            .iter()
-            .find(|(_, k)| k == &project)
-            .map(|(c, _)| c)
-            .ok_or(anyhow::anyhow!("Config not found"))?;
+        let config = self
+            .provider
+            .build_configuration(project)
+            .map_err(|e| anyhow::anyhow!(e.to_string()))?;
         let services = config
             .services
             .iter()

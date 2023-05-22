@@ -12,14 +12,14 @@ use crate::{
         project_service_server::ProjectService, GetProjectRequest, GetProjectResponse,
         ListProjectsRequest, ListProjectsResponse,
     },
-    superviseur::core::SuperviseurCommand,
-    types::{configuration::ConfigurationData, process::Process},
+    superviseur::{core::SuperviseurCommand, provider::kv::kv::Provider},
+    types::process::Process,
 };
 
 pub struct Project {
     cmd_tx: mpsc::UnboundedSender<SuperviseurCommand>,
     processes: Arc<Mutex<Vec<(Process, String)>>>,
-    config_map: Arc<Mutex<HashMap<String, ConfigurationData>>>,
+    provider: Arc<Provider>,
     project_map: Arc<Mutex<HashMap<String, String>>>,
 }
 
@@ -27,13 +27,13 @@ impl Project {
     pub fn new(
         cmd_tx: mpsc::UnboundedSender<SuperviseurCommand>,
         processes: Arc<Mutex<Vec<(Process, String)>>>,
-        config_map: Arc<Mutex<HashMap<String, ConfigurationData>>>,
+        provider: Arc<Provider>,
         project_map: Arc<Mutex<HashMap<String, String>>>,
     ) -> Self {
         Self {
             cmd_tx,
             processes,
-            config_map,
+            provider,
             project_map,
         }
     }
@@ -45,18 +45,17 @@ impl ProjectService for Project {
         &self,
         _request: tonic::Request<ListProjectsRequest>,
     ) -> Result<tonic::Response<ListProjectsResponse>, tonic::Status> {
-        let config_map = self.config_map.lock().unwrap();
+        let projects = self
+            .provider
+            .all_projects()
+            .map_err(|e| tonic::Status::internal(e.to_string()))?;
 
-        let projects = config_map
-            .iter()
-            .map(|(id, config)| ProjectProto {
-                id: id.clone(),
-                name: config.project.clone(),
-                context: config
-                    .context
-                    .as_ref()
-                    .map(|x| x.to_string())
-                    .unwrap_or_default(),
+        let projects = projects
+            .into_iter()
+            .map(|(id, name, context)| ProjectProto {
+                id,
+                name,
+                context,
                 ..Default::default()
             })
             .collect();
@@ -70,16 +69,19 @@ impl ProjectService for Project {
     ) -> Result<tonic::Response<GetProjectResponse>, tonic::Status> {
         let request = request.into_inner();
         let id = request.id;
-        let config_map = self.config_map.lock().unwrap();
-        let project = config_map.get(&id).map(|x| ProjectProto {
+        let (name, context) = self
+            .provider
+            .project(&id)
+            .map_err(|e| tonic::Status::internal(e.to_string()))?;
+        let config = self
+            .provider
+            .build_configuration(&id)
+            .map_err(|e| tonic::Status::internal(e.to_string()))?;
+        let project = Some(ProjectProto {
             id: id.clone(),
-            name: x.project.clone(),
-            context: x
-                .context
-                .as_ref()
-                .map(|x| x.to_string())
-                .unwrap_or_default(),
-            services: x
+            name,
+            context,
+            services: config
                 .services
                 .iter()
                 .map(|(_, service)| ServiceProto::from(service.clone()))
