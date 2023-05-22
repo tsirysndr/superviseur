@@ -31,7 +31,7 @@ pub fn new_store(
     kv_type: &str,
     endpoints: Vec<String>,
     config: StoreConfig,
-) -> Result<Box<dyn Store>, Error> {
+) -> Result<Box<dyn Store + Send + Sync>, Error> {
     match kv_type {
         consul::STORE_NAME => Ok(Box::new(Consul::new(endpoints, config))),
         inmemory::STORE_NAME => Ok(Box::new(InMemory::new(config))),

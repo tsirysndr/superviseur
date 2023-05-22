@@ -13,8 +13,11 @@ use crate::{
         core_service_server::CoreService, GetVersionRequest, GetVersionResponse,
         StartWebDashboardRequest, StartWebDashboardResponse,
     },
-    superviseur::core::{ProcessEvent, Superviseur, SuperviseurCommand},
-    types::{configuration::ConfigurationData, process::Process},
+    superviseur::{
+        core::{ProcessEvent, Superviseur, SuperviseurCommand},
+        provider::kv::kv::Provider,
+    },
+    types::process::Process,
     webui::start_webui,
 };
 
@@ -23,7 +26,7 @@ pub struct Core {
     event_tx: mpsc::UnboundedSender<ProcessEvent>,
     superviseur: Superviseur,
     processes: Arc<Mutex<Vec<(Process, String)>>>,
-    config_map: Arc<Mutex<HashMap<String, ConfigurationData>>>,
+    provider: Arc<Provider>,
     project_map: Arc<Mutex<HashMap<String, String>>>,
 }
 
@@ -33,7 +36,7 @@ impl Core {
         event_tx: mpsc::UnboundedSender<ProcessEvent>,
         superviseur: Superviseur,
         processes: Arc<Mutex<Vec<(Process, String)>>>,
-        config_map: Arc<Mutex<HashMap<String, ConfigurationData>>>,
+        provider: Arc<Provider>,
         project_map: Arc<Mutex<HashMap<String, String>>>,
     ) -> Self {
         Self {
@@ -41,7 +44,7 @@ impl Core {
             event_tx,
             superviseur,
             processes,
-            config_map,
+            provider,
             project_map,
         }
     }
@@ -80,7 +83,7 @@ impl CoreService for Core {
         let event_tx = self.event_tx.clone();
         let superviseur = self.superviseur.clone();
         let processes = self.processes.clone();
-        let config_map = self.config_map.clone();
+        let provider = self.provider.clone();
         let project_map = self.project_map.clone();
 
         let rt = Handle::current();
@@ -92,7 +95,7 @@ impl CoreService for Core {
                 event_tx,
                 superviseur,
                 processes,
-                config_map,
+                provider,
                 project_map,
             )) {
                 Ok(_) => {

@@ -57,6 +57,24 @@ service "deno" {
 }
 "#;
 
+pub const CONFIG_EXAMPLE_WITH_WASM: &str = r#"
+project = "spin-demo"
+
+service "http" {
+  type = "wasm"
+  command = "target/wasm32-wasi/release/http_server.wasm"
+  working_dir = "."
+  description = "HTTP server demo"
+  depends_on = []
+  env = { }
+  port = 3000
+
+  use "wasm" {
+    runtime "spin" { }
+  }
+}
+"#;
+
 #[test]
 pub fn can_save_configuration() {
     let provider = Provider::default();
@@ -145,6 +163,8 @@ pub fn can_build_configuration_with_env() {
     provider.save_configuration("project_id", config).unwrap();
     let configuration = provider.build_configuration("project_id").unwrap();
     let service = configuration.services.get("deno").unwrap();
+    let drivers = service.r#use.as_ref().unwrap();
+
     assert_eq!(configuration.project, "deno-fresh");
     assert_eq!(configuration.services.len(), 1);
     assert_eq!(service.name, "deno");
@@ -157,4 +177,50 @@ pub fn can_build_configuration_with_env() {
     assert_eq!(service.env.len(), 1);
     assert_eq!(service.env.get("PORT").unwrap(), "8000");
     assert_eq!(service.port, Some(8000));
+    assert_eq!(drivers.len(), 1);
+    assert!(drivers.get("devbox").unwrap().packages.is_some());
+    assert_eq!(
+        drivers.get("devbox").unwrap().packages.as_ref().unwrap(),
+        &vec!["deno".to_string()]
+    );
+}
+
+#[test]
+pub fn can_build_configuration_with_wasm() {
+    let provider = Provider::default();
+    let mut config = hcl::from_str::<ConfigurationData>(CONFIG_EXAMPLE_WITH_WASM).unwrap();
+    config.context = Some(".".to_string());
+    provider.save_configuration("project_id", config).unwrap();
+    let configuration = provider.build_configuration("project_id").unwrap();
+    let service = configuration.services.get("http").unwrap();
+    let drivers = service.r#use.as_ref().unwrap();
+
+    assert_eq!(configuration.project, "spin-demo");
+    assert_eq!(configuration.services.len(), 1);
+    assert_eq!(service.name, "http");
+    assert_eq!(service.r#type, "wasm");
+    assert_eq!(
+        service.command,
+        "target/wasm32-wasi/release/http_server.wasm"
+    );
+    assert_eq!(service.working_dir, ".");
+    assert_eq!(service.description, Some("HTTP server demo".to_string()));
+    assert_eq!(service.depends_on.len(), 0);
+    assert_eq!(service.dependencies.len(), 0);
+    assert_eq!(service.env.len(), 0);
+    assert_eq!(service.port, Some(3000));
+    assert_eq!(drivers.len(), 1);
+    assert!(drivers.get("wasm").unwrap().runtime.is_some());
+    assert_eq!(
+        drivers
+            .get("wasm")
+            .unwrap()
+            .runtime
+            .as_ref()
+            .unwrap()
+            .first()
+            .unwrap()
+            .0,
+        "spin"
+    );
 }

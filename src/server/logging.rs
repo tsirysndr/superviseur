@@ -11,7 +11,9 @@ use crate::{
         LogRequest, LogResponse, SearchRequest, SearchResponse, TailRequest, TailResponse,
     },
     default_stdout,
-    superviseur::{core::Superviseur, logs::LogEngine},
+    graphql::schema::objects::project,
+    server::macros::{get_project_configuration, project_exists},
+    superviseur::{core::Superviseur, logs::LogEngine, provider::kv::kv::Provider},
     types::{
         configuration::ConfigurationData,
         events::{
@@ -28,12 +30,12 @@ use chrono::{TimeZone, Utc};
 use tokio_stream::wrappers::ReceiverStream;
 use tonic::{Request, Response, Status};
 
-use super::return_event;
+use super::macros::return_event;
 
 pub struct Logging {
     superviseur: Superviseur,
     processes: Arc<Mutex<Vec<(Process, String)>>>,
-    config_map: Arc<Mutex<HashMap<String, ConfigurationData>>>,
+    provider: Arc<Provider>,
     project_map: Arc<Mutex<HashMap<String, String>>>,
     log_engine: Arc<Mutex<LogEngine>>,
     superviseur_events_rx:
@@ -44,7 +46,7 @@ impl Logging {
     pub fn new(
         superviseur: Superviseur,
         processes: Arc<Mutex<Vec<(Process, String)>>>,
-        config_map: Arc<Mutex<HashMap<String, ConfigurationData>>>,
+        provider: Arc<Provider>,
         project_map: Arc<Mutex<HashMap<String, String>>>,
         log_engine: Arc<Mutex<LogEngine>>,
         superviseur_events_rx: Arc<
@@ -54,7 +56,7 @@ impl Logging {
         Self {
             superviseur,
             processes,
-            config_map,
+            provider,
             project_map,
             log_engine,
             superviseur_events_rx,
@@ -83,13 +85,10 @@ impl LoggingService for Logging {
         let project_id = self
             .get_project_id(path.clone())
             .map_err(|e| tonic::Status::not_found(e.to_string()))?;
-        let config_map = self.config_map.lock().unwrap();
 
-        if !config_map.contains_key(&project_id) {
-            return Err(tonic::Status::not_found("Config file not found"));
-        }
+        project_exists!(self, project_id);
 
-        let config = config_map.get(&project_id).unwrap();
+        let config = get_project_configuration!(self, project_id);
 
         let (_, service) = config
             .services
@@ -160,13 +159,10 @@ impl LoggingService for Logging {
         let project_id = self
             .get_project_id(path.clone())
             .map_err(|e| tonic::Status::not_found(e.to_string()))?;
-        let config_map = self.config_map.lock().unwrap();
 
-        if !config_map.contains_key(&project_id) {
-            return Err(tonic::Status::not_found("Config file not found"));
-        }
+        project_exists!(self, project_id);
 
-        let config = config_map.get(&project_id).unwrap();
+        let config = get_project_configuration!(self, project_id);
 
         let (_, service) = config
             .services
@@ -246,13 +242,9 @@ impl LoggingService for Logging {
         let project_id = self
             .get_project_id(path.clone())
             .map_err(|e| tonic::Status::not_found(e.to_string()))?;
-        let config_map = self.config_map.lock().unwrap();
 
-        if !config_map.contains_key(&project_id) {
-            return Err(tonic::Status::not_found("Config file not found"));
-        }
-
-        let config = config_map.get(&project_id).unwrap();
+        project_exists!(self, project_id);
+        let config = get_project_configuration!(self, project_id);
 
         let query = format!("{} AND {} AND {}", config.project, service, term);
         let log_engine = self.log_engine.lock().unwrap();
@@ -291,11 +283,8 @@ impl LoggingService for Logging {
         let project_id = self
             .get_project_id(path.clone())
             .map_err(|e| tonic::Status::not_found(e.to_string()))?;
-        let config_map = self.config_map.lock().unwrap();
 
-        if !config_map.contains_key(&project_id) {
-            return Err(tonic::Status::not_found("Config file not found"));
-        }
+        project_exists!(self, project_id);
 
         tokio::spawn(async move {
             loop {

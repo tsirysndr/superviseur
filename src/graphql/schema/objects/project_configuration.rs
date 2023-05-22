@@ -13,8 +13,8 @@ use tokio::sync::mpsc;
 use crate::{
     default_stdout,
     graphql::simple_broker::SimpleBroker,
-    superviseur::core::SuperviseurCommand,
-    types::configuration::{ConfigurationData, Service},
+    superviseur::{core::SuperviseurCommand, provider::kv::kv::Provider},
+    types::configuration::Service,
     util::{convert_dir_path_to_absolute_path, read_lines},
 };
 
@@ -58,12 +58,11 @@ impl ProjectConfiguration {
             )));
         }
 
-        let config_map = ctx
-            .data::<Arc<Mutex<HashMap<String, ConfigurationData>>>>()
-            .unwrap();
+        let provider = ctx.data::<Arc<Provider>>().unwrap();
 
-        let mut config_map = config_map.lock().unwrap();
-        let config = config_map.get_mut(&self.id.to_string()).unwrap();
+        let mut config = provider
+            .build_configuration(&self.id.to_string())
+            .map_err(|e| Error::new(e.to_string()))?;
 
         let mut generator = Generator::default();
         let service_id = generator.next().unwrap();
@@ -98,6 +97,10 @@ impl ProjectConfiguration {
         };
         config.services.insert(service.name.clone(), service);
 
+        provider
+            .save_configuration(&self.id.to_string(), config)
+            .map_err(|e| Error::new(e.to_string()))?;
+
         Ok(&self)
     }
 
@@ -106,12 +109,11 @@ impl ProjectConfiguration {
             .data::<mpsc::UnboundedSender<SuperviseurCommand>>()
             .unwrap();
 
-        let config_map = ctx
-            .data::<Arc<Mutex<HashMap<String, ConfigurationData>>>>()
-            .unwrap();
+        let provider = ctx.data::<Arc<Provider>>().unwrap();
 
-        let mut config_map = config_map.lock().unwrap();
-        let config = config_map.get(&self.id.to_string()).unwrap();
+        let mut config = provider
+            .build_configuration(&self.id.to_string())
+            .map_err(|e| Error::new(e.to_string()))?;
 
         cmd_tx
             .send(SuperviseurCommand::LoadConfig(
@@ -119,8 +121,6 @@ impl ProjectConfiguration {
                 config.project.clone(),
             ))
             .unwrap();
-
-        let config = config_map.get_mut(&self.id.to_string()).unwrap();
 
         let services = config.services.clone();
         let mut services = services.into_iter();
@@ -162,6 +162,11 @@ impl ProjectConfiguration {
             let lines = read_lines(&stdout_file).unwrap();
             stdout.extend(lines);
         }
+
+        provider
+            .save_configuration(&self.id.to_string(), config)
+            .map_err(|e| Error::new(e.to_string()))?;
+
         Ok(stdout)
     }
 }

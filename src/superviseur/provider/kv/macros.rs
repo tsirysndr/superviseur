@@ -1,3 +1,15 @@
+macro_rules! reset_project {
+    ($self:ident, $project_id:ident) => {
+        let key = format!("{}/{}", $self.root_key, $project_id);
+        match $self.kv_client.delete_tree(&key) {
+            Ok(_) => {}
+            Err(e) => {
+                println!("Failed to reset project: {}", e);
+            }
+        }
+    };
+}
+
 macro_rules! save_project {
     ($self:ident, $project_id:ident, $project:expr) => {
         let key = format!("{}/{}/project", $self.root_key, $project_id);
@@ -21,13 +33,16 @@ macro_rules! save_project_context {
     };
 }
 
-macro_rules! save_service_id {
-    ($self:ident, $project_id:ident, $name:expr, $id:expr) => {
-        let key = format!("{}/{}/services/{}/id", $self.root_key, $project_id, $name);
-        if let Some(id) = $id {
+macro_rules! save_service_optional_param {
+    ($self:ident, $project_id:ident, $name:expr, $param:expr, $param_name:expr) => {
+        let key = format!(
+            "{}/{}/services/{}/{}",
+            $self.root_key, $project_id, $name, $param_name
+        );
+        if let Some(value) = $param {
             $self
                 .kv_client
-                .put(&key, &id)
+                .put(&key, &value)
                 .map_err(|e| anyhow!("Failed to save configuration: {}", e))?;
         }
     };
@@ -43,109 +58,28 @@ macro_rules! save_service_name {
     };
 }
 
-macro_rules! save_service_type {
-    ($self:ident, $project_id:ident, $name:expr, $type: expr) => {
-        let key = format!("{}/{}/services/{}/type", $self.root_key, $project_id, $name);
+macro_rules! save_service_param {
+    ($self:ident, $project_id:ident, $name:expr, $param:expr, $param_name:expr) => {
+        let key = format!(
+            "{}/{}/services/{}/{}",
+            $self.root_key, $project_id, $name, $param_name
+        );
         $self
             .kv_client
-            .put(&key, &$type)
+            .put(&key, &$param)
             .map_err(|e| anyhow!("Failed to save configuration: {}", e))?;
     };
 }
 
-macro_rules! save_service_command {
-    ($self:ident, $project_id:ident, $name:ident, $command:expr) => {
+macro_rules! save_service_vec_param {
+    ($self:ident, $project_id:ident, $name:ident, $param:expr, $param_name:expr) => {
         let key = format!(
-            "{}/{}/services/{}/command",
-            $self.root_key, $project_id, $name
+            "{}/{}/services/{}/{}",
+            $self.root_key, $project_id, $name, $param_name
         );
         $self
             .kv_client
-            .put(&key, &$command)
-            .map_err(|e| anyhow!("Failed to save configuration: {}", e))?;
-    };
-}
-
-macro_rules! save_service_working_dir {
-    ($self:ident, $project_id:ident, $name:ident, $working_dir:expr) => {
-        let key = format!(
-            "{}/{}/services/{}/working_dir",
-            $self.root_key, $project_id, $name
-        );
-        $self
-            .kv_client
-            .put(&key, &$working_dir)
-            .map_err(|e| anyhow!("Failed to save configuration: {}", e))?;
-    };
-}
-
-macro_rules! save_service_description {
-    ($self:ident, $project_id:ident, $name:ident, $description:expr) => {
-        let key = format!(
-            "{}/{}/services/{}/description",
-            $self.root_key, $project_id, $name
-        );
-        if let Some(description) = $description {
-            $self
-                .kv_client
-                .put(&key, &description)
-                .map_err(|e| anyhow!("Failed to save configuration: {}", e))?;
-        }
-    };
-}
-
-macro_rules! save_service_stop_command {
-    ($self:ident, $project_id:ident, $name:ident, $stop_command:expr) => {
-        let key = format!(
-            "{}/{}/services/{}/stop_command",
-            $self.root_key, $project_id, $name
-        );
-        if let Some(stop_command) = $stop_command {
-            $self
-                .kv_client
-                .put(&key, &stop_command)
-                .map_err(|e| anyhow!("Failed to save configuration: {}", e))?;
-        }
-    };
-}
-
-macro_rules! save_service_watch_dir {
-    ($self:ident, $project_id:ident, $name:ident, $watch_dir:expr) => {
-        let key = format!(
-            "{}/{}/services/{}/watch_dir",
-            $self.root_key, $project_id, $name
-        );
-        if let Some(watch_dir) = $watch_dir {
-            $self
-                .kv_client
-                .put(&key, &watch_dir)
-                .map_err(|e| anyhow!("Failed to save configuration: {}", e))?;
-        }
-    };
-}
-
-macro_rules! save_service_depends_on {
-    ($self:ident, $project_id:ident, $name:ident, $depends_on:expr) => {
-        let key = format!(
-            "{}/{}/services/{}/depends_on",
-            $self.root_key, $project_id, $name
-        );
-        $self
-            .kv_client
-            .put(&key, &$depends_on.join(","))
-            .map_err(|e| anyhow!("Failed to save configuration: {}", e))?;
-    };
-}
-
-macro_rules! save_service_dependencies {
-    ($self:ident, $project_id:ident, $name:ident, $dependencies:expr) => {
-        let key = format!(
-            "{}/{}/services/{}/dependencies",
-            $self.root_key, $project_id, $name
-        );
-        $self
-            .kv_client
-            .put(&key, &$dependencies.join(","))
+            .put(&key, &$param.join(","))
             .map_err(|e| anyhow!("Failed to save configuration: {}", e))?;
     };
 }
@@ -167,103 +101,46 @@ macro_rules! save_service_env {
     };
 }
 
-macro_rules! save_service_autostart {
-    ($self:ident, $project_id:ident, $name:ident, $autostart:expr) => {
+macro_rules! save_service_optional_bool_param {
+    ($self:ident, $project_id:ident, $name:ident, $param:expr, $param_name:expr) => {
         let key = format!(
-            "{}/{}/services/{}/autostart",
-            $self.root_key, $project_id, $name
+            "{}/{}/services/{}/{}",
+            $self.root_key, $project_id, $name, $param_name
         );
-        if let Some(autostart) = $autostart {
+        if let Some(value) = $param {
             $self
                 .kv_client
-                .put(&key, &autostart.to_string())
+                .put(&key, &value.to_string())
                 .map_err(|e| anyhow!("Failed to save configuration: {}", e))?;
         }
     };
 }
 
-macro_rules! save_service_auto_restart {
-    ($self:ident, $project_id:ident, $name:ident, $autorestart:expr) => {
+macro_rules! save_service_optional_u32 {
+    ($self:ident, $project_id:ident, $name:ident, $param:expr, $param_name:expr) => {
         let key = format!(
-            "{}/{}/services/{}/autorestart",
-            $self.root_key, $project_id, $name
+            "{}/{}/services/{}/{}",
+            $self.root_key, $project_id, $name, $param_name
         );
-        if let Some(autorestart) = $autorestart {
+        if let Some(value) = $param {
             $self
                 .kv_client
-                .put(&key, &autorestart.to_string())
+                .put(&key, &value.to_string())
                 .map_err(|e| anyhow!("Failed to save configuration: {}", e))?;
         }
     };
 }
 
-macro_rules! save_service_namespace {
-    ($self:ident, $project_id:ident, $name:ident, $namespace:expr) => {
+macro_rules! save_service_optional_vec_param {
+    ($self:ident, $project_id:ident, $name:ident, $param:expr, $param_name:expr) => {
         let key = format!(
-            "{}/{}/services/{}/namespace",
-            $self.root_key, $project_id, $name
+            "{}/{}/services/{}/{}",
+            $self.root_key, $project_id, $name, $param_name
         );
-        if let Some(namespace) = $namespace {
+        if let Some(value) = $param {
             $self
                 .kv_client
-                .put(&key, &namespace)
-                .map_err(|e| anyhow!("Failed to save configuration: {}", e))?;
-        }
-    };
-}
-
-macro_rules! save_service_port {
-    ($self:ident, $project_id:ident, $name:ident, $port:expr) => {
-        let key = format!("{}/{}/services/{}/port", $self.root_key, $project_id, $name);
-        if let Some(port) = $port {
-            $self
-                .kv_client
-                .put(&key, &port.to_string())
-                .map_err(|e| anyhow!("Failed to save configuration: {}", e))?;
-        }
-    };
-}
-
-macro_rules! save_service_stdout {
-    ($self:ident, $project_id:ident, $name:ident, $stdout:expr) => {
-        let key = format!(
-            "{}/{}/services/{}/stdout",
-            $self.root_key, $project_id, $name
-        );
-        if let Some(stdout) = $stdout {
-            $self
-                .kv_client
-                .put(&key, &stdout)
-                .map_err(|e| anyhow!("Failed to save configuration: {}", e))?;
-        }
-    };
-}
-
-macro_rules! save_service_stderr {
-    ($self:ident, $project_id:ident, $name:ident, $stderr:expr) => {
-        let key = format!(
-            "{}/{}/services/{}/stderr",
-            $self.root_key, $project_id, $name
-        );
-        if let Some(stderr) = $stderr {
-            $self
-                .kv_client
-                .put(&key, &stderr)
-                .map_err(|e| anyhow!("Failed to save configuration: {}", e))?;
-        }
-    };
-}
-
-macro_rules! save_service_wait_for {
-    ($self:ident, $project_id:ident, $name:ident, $wait_for:expr) => {
-        let key = format!(
-            "{}/{}/services/{}/wait_for",
-            $self.root_key, $project_id, $name
-        );
-        if let Some(wait_for) = $wait_for {
-            $self
-                .kv_client
-                .put(&key, &wait_for.join(","))
+                .put(&key, &value.join(","))
                 .map_err(|e| anyhow!("Failed to save configuration: {}", e))?;
         }
     };
@@ -526,11 +403,8 @@ macro_rules! decode_vec_param {
         for kv_pair in $kv_pairs
             .clone()
             .into_iter()
-            .filter(|kv_pair| kv_pair.key.ends_with($param))
+            .filter(|kv_pair| kv_pair.key.ends_with($param) && !kv_pair.value.is_empty())
         {
-            if kv_pair.value.is_empty() {
-                continue;
-            }
             let name = kv_pair.key.split("/").nth(3).unwrap();
             $services.get_mut(name).unwrap().$param_name =
                 kv_pair.value.split(",").map(|s| s.to_string()).collect();
@@ -543,11 +417,8 @@ macro_rules! decode_optional_vec_param {
         for kv_pair in $kv_pairs
             .clone()
             .into_iter()
-            .filter(|kv_pair| kv_pair.key.ends_with($param))
+            .filter(|kv_pair| kv_pair.key.ends_with($param) && !kv_pair.value.is_empty())
         {
-            if kv_pair.value.is_empty() {
-                continue;
-            }
             let name = kv_pair.key.split("/").nth(3).unwrap();
             $services
                 .get_mut(name)
@@ -563,11 +434,8 @@ macro_rules! decode_env {
         for kv_pair in $kv_pairs
             .clone()
             .into_iter()
-            .filter(|kv_pair| kv_pair.key.ends_with("/env"))
+            .filter(|kv_pair| kv_pair.key.ends_with("/env") && !kv_pair.value.is_empty())
         {
-            if kv_pair.value.is_empty() {
-                continue;
-            }
             let name = kv_pair.key.split("/").nth(3).unwrap();
             let env = kv_pair
                 .value
@@ -633,7 +501,126 @@ macro_rules! decode_optional_build {
     };
 }
 
+macro_rules! decode_driver_name {
+    ($kv_pairs:ident, $drivers:ident, $services:ident) => {
+        for kv_pair in $kv_pairs.clone().into_iter().filter(|kv_pair| {
+            kv_pair.key.ends_with("/name")
+                && kv_pair.key.contains("/use/")
+                && !kv_pair.key.contains("/runtime/")
+        }) {
+            $drivers.insert(kv_pair.value, DriverConfig::default());
+            let service_name = kv_pair.key.split("/").nth(3).unwrap();
+            $services
+                .get_mut(service_name)
+                .unwrap()
+                .r#use
+                .replace($drivers.clone());
+        }
+    };
+}
+
+macro_rules! decode_driver_optional_param {
+    ($kv_pairs:ident, $drivers:ident, $param:expr, $param_name:ident, $services:ident) => {
+        for kv_pair in $kv_pairs.clone().into_iter().filter(|kv_pair| {
+            kv_pair.key.ends_with($param)
+                && kv_pair.key.contains("/use/")
+                && !kv_pair.value.is_empty()
+        }) {
+            let name = kv_pair.key.split("/").nth(5).unwrap();
+            $drivers
+                .get_mut(name)
+                .unwrap()
+                .$param_name
+                .replace(kv_pair.value);
+            let service_name = kv_pair.key.split("/").nth(3).unwrap();
+            $services
+                .get_mut(service_name)
+                .unwrap()
+                .r#use
+                .replace($drivers.clone());
+        }
+    };
+}
+
+macro_rules! decode_driver_optional_vec_param {
+    ($kv_pairs:ident, $drivers:ident, $param:expr, $param_name:ident, $services:ident) => {
+        for kv_pair in $kv_pairs.clone().into_iter().filter(|kv_pair| {
+            kv_pair.key.ends_with($param)
+                && kv_pair.key.contains("/use/")
+                && !kv_pair.value.is_empty()
+        }) {
+            let name = kv_pair.key.split("/").nth(5).unwrap();
+            $drivers
+                .get_mut(name)
+                .unwrap()
+                .$param_name
+                .replace(kv_pair.value.split(",").map(|s| s.to_string()).collect());
+            let service_name = kv_pair.key.split("/").nth(3).unwrap();
+            $services
+                .get_mut(service_name)
+                .unwrap()
+                .r#use
+                .replace($drivers.clone());
+        }
+    };
+}
+
+macro_rules! decode_driver_wasm_runtime {
+    ($kv_pairs:ident, $runtimes:ident, $services:ident, $drivers:ident) => {
+        for kv_pair in $kv_pairs.clone().into_iter().filter(|kv_pair| {
+            kv_pair.key.ends_with("/runtime/name") && kv_pair.key.contains("/use/")
+        }) {
+            $runtimes.insert(kv_pair.value, RuntimeConfig::default());
+            let driver_name = kv_pair.key.split("/").nth(5).unwrap();
+            $drivers
+                .get_mut(driver_name)
+                .unwrap()
+                .runtime
+                .replace($runtimes.clone());
+            let service_name = kv_pair.key.split("/").nth(3).unwrap();
+            $services
+                .get_mut(service_name)
+                .unwrap()
+                .r#use
+                .replace($drivers.clone());
+        }
+    };
+}
+
+macro_rules! decode_wasm_runtime_optional_param {
+    ($kv_pairs:ident, $runtimes:ident, $param:expr, $param_name:ident, $services:ident, $drivers:ident) => {
+        for kv_pair in $kv_pairs.clone().into_iter().filter(|kv_pair| {
+            kv_pair.key.ends_with($param)
+                && kv_pair.key.contains("/use/")
+                && !kv_pair.value.is_empty()
+        }) {
+            let name = kv_pair.key.split("/").nth(6).unwrap();
+            $runtimes
+                .get_mut(name)
+                .unwrap()
+                .$param_name
+                .replace(kv_pair.value);
+            let driver_name = kv_pair.key.split("/").nth(5).unwrap();
+            $drivers
+                .get_mut(driver_name)
+                .unwrap()
+                .runtime
+                .replace($runtimes.clone());
+            let service_name = kv_pair.key.split("/").nth(3).unwrap();
+            $services
+                .get_mut(service_name)
+                .unwrap()
+                .r#use
+                .replace($drivers.clone());
+        }
+    };
+}
+
 pub(crate) use decode_command;
+pub(crate) use decode_driver_name;
+pub(crate) use decode_driver_optional_param;
+pub(crate) use decode_driver_optional_vec_param;
+pub(crate) use decode_driver_wasm_runtime;
 pub(crate) use decode_env;
 pub(crate) use decode_name;
 pub(crate) use decode_optional_bool;
@@ -643,18 +630,14 @@ pub(crate) use decode_optional_u32;
 pub(crate) use decode_optional_vec_param;
 pub(crate) use decode_param;
 pub(crate) use decode_vec_param;
+pub(crate) use decode_wasm_runtime_optional_param;
 pub(crate) use get_project;
+pub(crate) use reset_project;
 pub(crate) use save_network_driver;
 pub(crate) use save_networks;
 pub(crate) use save_project;
 pub(crate) use save_project_context;
-pub(crate) use save_service_auto_restart;
-pub(crate) use save_service_autostart;
 pub(crate) use save_service_build_command;
-pub(crate) use save_service_command;
-pub(crate) use save_service_dependencies;
-pub(crate) use save_service_depends_on;
-pub(crate) use save_service_description;
 pub(crate) use save_service_driver_environment;
 pub(crate) use save_service_driver_image;
 pub(crate) use save_service_driver_name;
@@ -663,17 +646,13 @@ pub(crate) use save_service_driver_packages;
 pub(crate) use save_service_driver_ports;
 pub(crate) use save_service_driver_volumes;
 pub(crate) use save_service_env;
-pub(crate) use save_service_id;
 pub(crate) use save_service_name;
-pub(crate) use save_service_namespace;
-pub(crate) use save_service_port;
-pub(crate) use save_service_stderr;
-pub(crate) use save_service_stdout;
-pub(crate) use save_service_stop_command;
-pub(crate) use save_service_type;
-pub(crate) use save_service_wait_for;
+pub(crate) use save_service_optional_bool_param;
+pub(crate) use save_service_optional_param;
+pub(crate) use save_service_optional_u32;
+pub(crate) use save_service_optional_vec_param;
+pub(crate) use save_service_param;
+pub(crate) use save_service_vec_param;
 pub(crate) use save_service_wasm_runtime_name;
 pub(crate) use save_service_wasm_spin_from;
-pub(crate) use save_service_watch_dir;
-pub(crate) use save_service_working_dir;
 pub(crate) use save_volumes;

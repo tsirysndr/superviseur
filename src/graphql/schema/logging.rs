@@ -1,8 +1,7 @@
 use std::{
-    collections::HashMap,
     fs::File,
     io::{BufRead, BufReader},
-    sync::{Arc, Mutex},
+    sync::{Arc},
     thread,
 };
 
@@ -12,8 +11,11 @@ use tokio_stream::StreamExt;
 
 use crate::{
     default_stdout,
-    graphql::{schema::objects::subscriptions::TailLogStream, simple_broker::SimpleBroker},
-    types::configuration::ConfigurationData,
+    graphql::{
+        macros::project_exists, schema::objects::subscriptions::TailLogStream,
+        simple_broker::SimpleBroker,
+    },
+    superviseur::provider::kv::kv::Provider,
     util::read_lines,
 };
 
@@ -35,17 +37,13 @@ impl LoggingQuery {
         project_id: ID,
     ) -> Result<Log, Error> {
         let project_id = project_id.to_string();
-        let config_map = ctx
-            .data::<Arc<Mutex<HashMap<String, ConfigurationData>>>>()
-            .unwrap();
+        let provider = ctx.data::<Arc<Provider>>().unwrap();
 
-        let config_map = config_map.lock().unwrap();
+        project_exists!(provider, project_id);
 
-        if !config_map.contains_key(&project_id) {
-            return Err(Error::new("Config file not found"));
-        }
-
-        let config = config_map.get(&project_id).unwrap();
+        let config = provider
+            .build_configuration(&project_id)
+            .map_err(|e| Error::new(e.to_string()))?;
 
         let (_, service) = config
             .services
@@ -76,17 +74,13 @@ impl LoggingQuery {
 
     async fn logs(&self, ctx: &Context<'_>, id: ID, project_id: ID) -> Result<Log, Error> {
         let project_id = project_id.to_string();
-        let config_map = ctx
-            .data::<Arc<Mutex<HashMap<String, ConfigurationData>>>>()
-            .unwrap();
+        let provider = ctx.data::<Arc<Provider>>().unwrap();
 
-        let config_map = config_map.lock().unwrap();
+        project_exists!(provider, project_id);
 
-        if !config_map.contains_key(&project_id) {
-            return Err(Error::new("Config file not found"));
-        }
-
-        let config = config_map.get(&project_id).unwrap();
+        let config = provider
+            .build_configuration(&project_id)
+            .map_err(|e| Error::new(e.to_string()))?;
 
         let (_, service) = config
             .services
@@ -117,17 +111,13 @@ impl LoggingSubscription {
         project_id: ID,
     ) -> Result<impl Stream<Item = TailLogStream>, Error> {
         let project_id = project_id.to_string();
-        let config_map = ctx
-            .data::<Arc<Mutex<HashMap<String, ConfigurationData>>>>()
-            .unwrap();
+        let provider = ctx.data::<Arc<Provider>>().unwrap();
 
-        let config_map = config_map.lock().unwrap();
+        project_exists!(provider, project_id);
 
-        if !config_map.contains_key(&project_id) {
-            return Err(Error::new("Config file not found"));
-        }
-
-        let config = config_map.get(&project_id).unwrap();
+        let config = provider
+            .build_configuration(&project_id)
+            .map_err(|e| Error::new(e.to_string()))?;
 
         let (_, service) = config
             .services
@@ -182,17 +172,13 @@ impl LoggingSubscription {
         project_id: ID,
     ) -> Result<impl Stream<Item = subscriptions::LogStream>, Error> {
         let project_id = project_id.to_string();
-        let config_map = ctx
-            .data::<Arc<Mutex<HashMap<String, ConfigurationData>>>>()
-            .unwrap();
+        let provider = ctx.data::<Arc<Provider>>().unwrap();
 
-        let config_map = config_map.lock().unwrap();
+        project_exists!(provider, project_id);
 
-        if !config_map.contains_key(&project_id) {
-            return Err(Error::new("Config file not found"));
-        }
-
-        let config = config_map.get(&project_id).unwrap();
+        let config = provider
+            .build_configuration(&project_id)
+            .map_err(|e| Error::new(e.to_string()))?;
 
         let (_, service) = config
             .services

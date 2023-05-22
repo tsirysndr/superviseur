@@ -114,6 +114,7 @@ pub enum GraphCommand {
     StopServices,
     BuildServices,
     StartServices(bool),
+    RestartServices,
 }
 
 #[derive(Clone)]
@@ -196,6 +197,10 @@ impl DependencyGraph {
                             if build {
                                 cloned_graph.build_services().await;
                             }
+                            cloned_graph.start_services().await;
+                        }
+                        GraphCommand::RestartServices => {
+                            cloned_graph.stop_services().await;
                             cloned_graph.start_services().await;
                         }
                     }

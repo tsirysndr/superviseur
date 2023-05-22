@@ -97,7 +97,7 @@ pub struct Process {
     pub mem: Option<f32>,
     #[tabled(display_with = "display_up_time", rename = "STATUS")]
     pub up_time: Option<DateTime<Utc>>,
-    #[tabled(rename = "COMMAND")]
+    #[tabled(rename = "COMMAND", display_with = "display_command")]
     pub command: String,
     #[tabled(skip)]
     pub working_dir: String,
@@ -162,5 +162,13 @@ fn display_port(port: &Option<u32>) -> String {
         Some(0) => "-".to_string(),
         Some(port) => port.clone().to_string(),
         None => "-".to_string(),
+    }
+}
+
+fn display_command(command: &str) -> String {
+    if command.len() > 20 {
+        format!("\"{}...\"", &command[..20])
+    } else {
+        format!("\"{}\"", command.to_string())
     }
 }
