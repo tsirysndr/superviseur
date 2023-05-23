@@ -1,0 +1,89 @@
+syntax = "proto3";
+
+package superviseur.v1alpha1;
+
+import "objects/v1alpha1/service.proto";
+import "objects/v1alpha1/process.proto";
+
+message LoadConfigRequest {
+  string config = 1;
+  string file_path = 2;
+  string config_format = 3;
+}
+
+message LoadConfigResponse {
+  bool success = 1;
+}
+
+message StartRequest {
+  string name = 1;
+  string config_file_path = 2;
+  bool build = 3;
+}
+
+message StartResponse {
+  bool success = 1;
+}
+
+message StopRequest {
+  string name = 1;
+  string config_file_path = 2;
+}
+
+message StopResponse {
+  bool success = 1;
+}
+
+message RestartRequest {
+  string name = 1;
+  string config_file_path = 2;
+}
+
+message RestartResponse {
+  bool success = 1;
+}
+
+message StatusRequest {
+  string name = 1;
+  string config_file_path = 2;
+}
+
+message StatusResponse {
+  objects.v1alpha1.Process process = 1;
+}
+
+message ListRequest {
+  string config_file_path = 1;
+}
+
+message ListRunningProcessesRequest {
+  string config_file_path = 1;
+}
+
+message ListRunningProcessesResponse {
+  repeated objects.v1alpha1.Process processes = 1;
+}
+
+message ListResponse {
+  repeated objects.v1alpha1.Service services = 1;
+}
+
+message BuildRequest {
+  string name = 1;
+  string config_file_path = 2;
+}
+
+message BuildResponse {
+  bool success = 1;
+}
+
+service ControlService {
+  rpc LoadConfig (LoadConfigRequest) returns (LoadConfigResponse) {}
+  rpc Start (StartRequest) returns (StartResponse) {}
+  rpc Stop (StopRequest) returns (StopResponse) {}
+  rpc Restart (RestartRequest) returns (RestartResponse) {}
+  rpc Status (StatusRequest) returns (StatusResponse) {}
+  rpc List (ListRequest) returns (ListResponse) {}
+  rpc Build (BuildRequest) returns (BuildResponse) {}
+  rpc ListRunningProcesses (ListRunningProcessesRequest) returns (ListRunningProcessesResponse) {}
+}

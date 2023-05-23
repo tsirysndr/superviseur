@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package objects.v1alpha1;
+
+message Service {
+  string id = 1;
+  string name = 2;
+  string command = 3;
+  string description = 4;
+  string namespace = 5;
+  string type = 6;
+  string status = 7;
+  repeated string depends_on = 8;
+  bool auto_restart = 9;
+  int32 port = 10;
+}

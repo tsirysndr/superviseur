@@ -1,0 +1,128 @@
+{
+  "name": "superviseur",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@apollo/client": "^3.7.10",
+    "@buf/tsiry_superviseurapis.bufbuild_connect-es": "^0.8.1-20230305211704-dea3def645e0.2",
+    "@buf/tsiry_superviseurapis.bufbuild_connect-web": "^0.8.1-20230305211704-dea3def645e0.1",
+    "@buf/tsiry_superviseurapis.grpc_web": "^1.4.2-20230305211704-dea3def645e0.2",
+    "@bufbuild/connect": "^0.8.1",
+    "@bufbuild/connect-query": "^0.1.1",
+    "@bufbuild/connect-web": "^0.8.1",
+    "@bufbuild/protobuf": "^1.1.0",
+    "@emotion/react": "^11.10.6",
+    "@emotion/styled": "^11.10.6",
+    "@fontsource/ubuntu": "^4.5.11",
+    "@styled-icons/bootstrap": "^10.47.0",
+    "@styled-icons/evaicons-outline": "^10.46.0",
+    "@styled-icons/evaicons-solid": "^10.46.0",
+    "@styled-icons/evil": "^10.46.0",
+    "@styled-icons/fa-solid": "^10.47.0",
+    "@styled-icons/feather": "^10.47.0",
+    "@styled-icons/fluentui-system-regular": "^10.47.0",
+    "@styled-icons/icomoon": "^10.46.0",
+    "@styled-icons/ionicons-outline": "^10.46.0",
+    "@styled-icons/ionicons-sharp": "^10.46.0",
+    "@styled-icons/remix-fill": "^10.46.0",
+    "@styled-icons/remix-line": "^10.46.0",
+    "@styled-icons/simple-icons": "^10.46.0",
+    "@tanstack/react-query": "^4.26.1",
+    "@testing-library/jest-dom": "^5.16.5",
+    "@testing-library/react": "^13.4.0",
+    "@testing-library/user-event": "^13.5.0",
+    "@types/jest": "^27.5.2",
+    "@types/node": "^16.18.14",
+    "@types/react": "^18.0.28",
+    "@types/react-dom": "^18.0.11",
+    "baseui": "^12.2.0",
+    "dayjs": "^1.11.7",
+    "google-protobuf": "^3.21.2",
+    "graphql": "15.7.2",
+    "graphql-tag": "^2.12.6",
+    "grpc-web": "^1.4.2",
+    "lodash": "^4.17.21",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-graph-vis": "^1.0.7",
+    "react-hook-form": "^7.43.5",
+    "react-router-dom": "^6.8.2",
+    "react-scripts": "5.0.1",
+    "reactflow": "^11.5.6",
+    "recoil": "^0.7.7",
+    "styled-components": "^5.3.8",
+    "styletron-engine-atomic": "^1.5.0",
+    "styletron-react": "^6.1.0",
+    "subscriptions-transport-ws": "^0.11.0",
+    "typescript": "^4.9.5",
+    "web-vitals": "^2.1.4"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "dev": "cross-env REACT_APP_MOCKS=true react-scripts start",
+    "build": "cross-env CI=false react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject",
+    "storybook": "start-storybook -p 6006 -s public",
+    "build-storybook": "build-storybook -s public",
+    "test-storybook": "test-storybook",
+    "chromatic": "chromatic",
+    "graphql:generate": "graphql-codegen --config codegen.yml"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ],
+    "overrides": [
+      {
+        "files": [
+          "**/*.stories.*"
+        ],
+        "rules": {
+          "import/no-anonymous-default-export": "off"
+        }
+      }
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "devDependencies": {
+    "@babel/core": "7",
+    "@babel/plugin-syntax-flow": "^7.18.6",
+    "@babel/plugin-transform-react-jsx": "^7.21.0",
+    "@graphql-codegen/cli": "^3.2.2",
+    "@graphql-codegen/introspection": "2.2.1",
+    "@graphql-codegen/typescript": "2.7.5",
+    "@graphql-codegen/typescript-operations": "2.5.5",
+    "@graphql-codegen/typescript-react-apollo": "3.3.5",
+    "@storybook/addon-actions": "^6.5.16",
+    "@storybook/addon-essentials": "^6.5.16",
+    "@storybook/addon-interactions": "^6.5.16",
+    "@storybook/addon-links": "^6.5.16",
+    "@storybook/builder-webpack5": "^6.5.16",
+    "@storybook/manager-webpack5": "^6.5.16",
+    "@storybook/node-logger": "^6.5.16",
+    "@storybook/preset-create-react-app": "^4.1.2",
+    "@storybook/react": "^6.5.16",
+    "@storybook/testing-library": "^0.0.13",
+    "@testing-library/dom": "^9.0.0",
+    "babel-plugin-named-exports-order": "^0.0.2",
+    "chromatic": "^6.17.1",
+    "cross-env": "^7.0.3",
+    "msw": "^1.1.0",
+    "msw-storybook-addon": "^1.8.0",
+    "prop-types": "^15.8.1",
+    "webpack": "^5.75.0"
+  }
+}
