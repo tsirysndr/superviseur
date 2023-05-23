@@ -1,10 +1,10 @@
-name: 'Chromatic'
+name: "Chromatic"
 
 on:
   push:
     paths:
-      - 'webui/**'
-      - '.github/workflows/chromatic.yml'
+      - "webui/**"
+      - ".github/workflows/chromatic.yml"
   workflow_dispatch:
 
 # List of jobs
@@ -19,8 +19,7 @@ jobs:
         with:
           bun-version: latest
       - name: Install dependencies
-        run: cd ./webui && bun install
+        run: cd ./crates/webui/webui && bun install
         # 👇 Adds Chromatic as a step in the workflow
       - name: Publish to Chromatic
-        run: cd ./webui && bun run build-storybook && bun run chromatic -- --project-token=${{ secrets.CHROMATIC_PROJECT_TOKEN }} --exit-zero-on-changes
-        
+        run: cd ./crates/webui/webui && bun run build-storybook && bun run chromatic -- --project-token=${{ secrets.CHROMATIC_PROJECT_TOKEN }} --exit-zero-on-changes
