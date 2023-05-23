@@ -4,9 +4,6 @@
 			"path": ".."
 		},
 		{
-			"path": "../webui"
-		},
-		{
 			"path": "../examples/deno-fresh"
 		},
 		{
@@ -26,6 +23,9 @@
 		},
 		{
 			"path": "../sdk/rust"
+		},
+		{
+			"path": "../crates/webui/webui"
 		}
 	],
 	"settings": {

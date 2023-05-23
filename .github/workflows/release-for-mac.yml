@@ -35,15 +35,15 @@ jobs:
         with:
           node-version: 16
       - name: Install webui dependencies
-        run: cd ./webui && bun install
+        run: cd ./crates/webui/webui && bun install
       - name: Build webui
-        run: cd ./webui && bun run build
+        run: cd ./crates/webui/webui && bun run build
       - name: Running cargo build
         uses: actions-rs/cargo@v1
         with:
           command: build
           toolchain: stable
-          args: --release --target ${{ matrix.target }}
+          args: -p superviseur --release --target ${{ matrix.target }}
       - name: Install aarch64-apple-darwin toolchain
         if: matrix.target == 'aarch64-apple-darwin'
         run: rustup target add aarch64-apple-darwin
