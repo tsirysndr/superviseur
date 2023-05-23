@@ -136,3 +136,33 @@ impl LogEngine {
             .collect())
     }
 }
+
+#[cfg(test)]
+pub mod tests {
+    use std::time::Duration;
+
+    #[test]
+    fn test_log_engine() {
+        use crate::log::LogEngine;
+        use superviseur_types::log::Log;
+
+        let log_engine = LogEngine::new();
+        let log = Log {
+            project: "demo_project".to_string(),
+            service: "demo_service".to_string(),
+            line: "demo_line".to_string(),
+            date: tantivy::DateTime::from_timestamp_secs(
+                chrono::DateTime::parse_from_rfc3339("2021-01-01T00:00:00Z")
+                    .unwrap()
+                    .timestamp(),
+            ),
+            output: "demo_output".to_string(),
+        };
+        log_engine.insert(&log).unwrap();
+        std::thread::sleep(Duration::from_secs(1));
+        let logs = log_engine.search("demo_line").unwrap();
+        assert_eq!(logs.len(), 1);
+        let logs = log_engine.search_in_service("demo_line").unwrap();
+        assert_eq!(logs.len(), 1);
+    }
+}

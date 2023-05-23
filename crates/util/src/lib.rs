@@ -31,3 +31,21 @@ pub fn read_lines(path: &str) -> Result<Vec<String>, Error> {
     }
     Ok(lines)
 }
+
+#[cfg(test)]
+pub mod tests {
+    #[test]
+    fn convert_dir_path_to_absolute_path() {
+        let current_dir = std::env::current_dir().unwrap();
+        let current_dir = current_dir.to_str().unwrap();
+        let dir = "./test";
+        let dir = super::convert_dir_path_to_absolute_path(dir, current_dir).unwrap();
+        assert_eq!(dir, format!("{}/test", current_dir));
+    }
+
+    #[test]
+    fn read_lines() {
+        let lines = super::read_lines("Cargo.toml").unwrap();
+        assert_eq!(lines[0], "[package]");
+    }
+}
