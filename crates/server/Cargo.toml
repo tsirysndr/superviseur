@@ -1,0 +1,33 @@
+[package]
+edition = "2021"
+name = "superviseur-server"
+version = "0.1.0"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow = "1.0.69"
+chrono = "0.4.23"
+hcl-rs = "0.12.3"
+indexmap = {version = "1.9.2", features = ["serde"]}
+local-ip-addr = "0.1.1"
+names = "0.14.0"
+owo-colors = "3.5.0"
+prost = "0.11.8"
+serde = "1.0.152"
+superviseur-core = {path = "../core", version = "0.1.0"}
+superviseur-drivers = {path = "../drivers", version = "0.1.0"}
+superviseur-log = {path = "../log", version = "0.1.0"}
+superviseur-macros = {path = "../macros", version = "0.1.0"}
+superviseur-provider = {path = "../provider", version = "0.1.0"}
+superviseur-types = {path = "../types", version = "0.1.0"}
+superviseur-util = {path = "../util", version = "0.1.0"}
+superviseur-webui = {path = "../webui", version = "0.1.0"}
+tokio = {version = "1.24.2", features = ["tokio-macros", "macros", "rt", "rt-multi-thread"]}
+tokio-stream = {version = "0.1.12", features = ["net"]}
+toml = "0.7.2"
+tonic = "0.8.3"
+tonic-web = "0.4.0"
+
+[build-dependencies]
+tonic-build = "0.8"

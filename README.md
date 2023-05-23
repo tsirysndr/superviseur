@@ -43,7 +43,7 @@ curl -fsSL https://bun.sh/install | bash
 # Compile
 git clone https://github.com/tsirysndr/superviseur
 cd superviseur/webui && bun install && bun run build && cd ..
-cargo install --path .
+cargo install --path crates/cli
 ```
 
 ### macOS/Linux

@@ -1,0 +1,68 @@
+@font-face {
+  font-family: 'RockfordSansLight';
+  src: local('RockfordSansLight'), url(./Assets/fonts/RockfordSans-Light.otf) format('opentype');
+}
+
+@font-face {
+  font-family: 'RockfordSansRegular';
+  src: local('RockfordSans'), url(./Assets/fonts/RockfordSans-Regular.otf) format('opentype');
+}
+
+@font-face {
+  font-family: 'RockfordSansMedium';
+  src: local('RockfordSans'), url(./Assets/fonts/RockfordSans-Medium.otf) format('opentype');
+}
+
+@font-face {
+  font-family: 'RockfordSansBold';
+    font-weight: 900;
+    src: local('RockfordSans'), url(./Assets/fonts/RockfordSans-Bold.otf) format('opentype');
+}
+
+@font-face {
+  font-family: 'RockfordSansExtraBold';
+    font-weight: 900;
+    src: local('RockfordSans'), url(./Assets/fonts/RockfordSans-ExtraBold.otf) format('opentype');
+}
+
+body {
+  margin: 0;
+  font-family: RockfordSansRegular, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+.react-flow__node {
+  border-color: #e72dff;
+  border-width: 2px;
+}
+
+.react-flow__node-default {
+  border-color: #e72dff;
+  border-width: 2px;
+}
+
+.react-flow__node-default.selectable:hover, .react-flow__node-input.selectable:hover, .react-flow__node-output.selectable:hover, .react-flow__node-group.selectable:hover {
+  box-shadow: 0 1px 4px 1px #e62dff20;
+}
+.react-flow__node-default.selectable.selected,
+.react-flow__node-default.selectable:focus,
+.react-flow__node-default.selectable:focus-visible,
+.react-flow__node-input.selectable.selected,
+.react-flow__node-input.selectable:focus,
+.react-flow__node-input.selectable:focus-visible,
+.react-flow__node-output.selectable.selected,
+.react-flow__node-output.selectable:focus,
+.react-flow__node-output.selectable:focus-visible,
+.react-flow__node-group.selectable.selected,
+.react-flow__node-group.selectable:focus,
+.react-flow__node-group.selectable:focus-visible {
+  box-shadow: 0 0 0 0.5px #e62dff20;
+}

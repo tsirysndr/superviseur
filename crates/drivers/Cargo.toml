@@ -1,0 +1,33 @@
+[package]
+authors = ["Tsiry Sandratraina <tsiry.sndr@aol.com>"]
+categories = ["command-line-utilities"]
+description = "Define and run multi-service applications on isolated environments with Nix or Docker"
+edition = "2021"
+keywords = ["compose", "supervisor", "cli", "docker", "nix"]
+license = "MPL-2.0"
+name = "superviseur-drivers"
+readme = "README.md"
+repository = "https://github.com/tsirysndr/superviseur"
+version = "0.1.0"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow = "1.0.69"
+async-trait = "0.1.68"
+bollard = {version = "0.14.0", features = ["buildkit", "rustls", "tonic", "chrono", "ssl"]}
+chrono = "0.4.23"
+dyn-clone = "1.0.11"
+futures-util = "0.3.26"
+md5 = "0.7.0"
+nix = "0.26.2"
+owo-colors = "3.5.0"
+spinners = "4.1.0"
+superviseur-graphql = {path = "../graphql", version = "0.1.0"}
+superviseur-log = {path = "../log", version = "0.1.0"}
+superviseur-macros = {path = "../macros", version = "0.1.0"}
+superviseur-types = {path = "../types", version = "0.1.0"}
+superviseur-util = {path = "../util", version = "0.1.0"}
+tantivy = "0.19.2"
+tokio = {version = "1.24.2", features = ["tokio-macros", "macros", "rt", "rt-multi-thread"]}
+tokio-stream = {version = "0.1.12", features = ["net"]}

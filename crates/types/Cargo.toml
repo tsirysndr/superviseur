@@ -1,0 +1,22 @@
+[package]
+authors = ["Tsiry Sandratraina <tsiry.sndr@aol.com>"]
+categories = ["command-line-utilities"]
+description = "Define and run multi-service applications on isolated environments with Nix or Docker"
+edition = "2021"
+keywords = ["compose", "supervisor", "cli", "docker", "nix"]
+license = "MPL-2.0"
+name = "superviseur-types"
+readme = "README.md"
+repository = "https://github.com/tsirysndr/superviseur"
+version = "0.1.0"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow = "1.0.69"
+chrono = "0.4.23"
+hcl-rs = "0.12.3"
+indexmap = {version = "1.9.2", features = ["serde"]}
+serde = "1.0.152"
+tabled = "0.10.0"
+tantivy = "0.19.2"

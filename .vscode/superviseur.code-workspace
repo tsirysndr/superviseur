@@ -28,5 +28,7 @@
 			"path": "../sdk/rust"
 		}
 	],
-	"settings": {}
+	"settings": {
+		"rust-analyzer.showUnlinkedFileNotification": false
+	}
 }
