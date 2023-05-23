@@ -6,7 +6,6 @@ edition = "2021"
 keywords = ["compose", "supervisor", "cli", "docker", "nix"]
 license = "MPL-2.0"
 name = "superviseur-types"
-readme = "README.md"
 repository = "https://github.com/tsirysndr/superviseur"
 version = "0.1.0"
 
