@@ -172,3 +172,65 @@ fn display_command(command: &str) -> String {
         format!("\"{}\"", command.to_string())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_display_command() {
+        assert_eq!(
+            display_command("echo \"Hello World\""),
+            "\"echo \"Hello World\"\""
+        );
+        assert_eq!(
+            display_command("echo \"Hello World\" && sleep 1"),
+            "\"echo \"Hello World\" &...\""
+        );
+        assert_eq!(display_port(&Some(0)), "-".to_string());
+        assert_eq!(display_port(&Some(8080)), "8080".to_string());
+    }
+
+    #[test]
+    fn test_display_option() {
+        assert_eq!(display_option(&Some(0)), "0".to_string());
+        assert_eq!(display_option(&Some("test")), "test".to_string());
+        assert_eq!(display_option(&None::<String>), "?".to_string());
+    }
+
+    #[test]
+    fn test_display_up_time() {
+        assert_eq!(
+            display_up_time(&Some(Utc::now() - Duration::seconds(10))),
+            "Up 10 seconds ago".to_string()
+        );
+        assert_eq!(
+            display_up_time(&Some(Utc::now() - Duration::minutes(1))),
+            "Up 1 minute ago".to_string()
+        );
+        assert_eq!(
+            display_up_time(&Some(Utc::now() - Duration::minutes(2))),
+            "Up 2 minutes ago".to_string()
+        );
+        assert_eq!(
+            display_up_time(&Some(Utc::now() - Duration::hours(1))),
+            "Up 1 hour ago".to_string()
+        );
+        assert_eq!(
+            display_up_time(&Some(Utc::now() - Duration::hours(2))),
+            "Up 2 hours ago".to_string()
+        );
+        assert_eq!(
+            display_up_time(&Some(Utc::now() - Duration::days(1))),
+            "Up 1 day ago".to_string()
+        );
+        assert_eq!(
+            display_up_time(&Some(Utc::now() - Duration::days(2))),
+            "Up 2 days ago".to_string()
+        );
+        assert_eq!(
+            display_up_time(&None::<DateTime<Utc>>),
+            "Stopped".to_string()
+        );
+    }
+}
