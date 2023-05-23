@@ -12,6 +12,10 @@
     <img src="https://img.shields.io/crates/dr/superviseur" />
   </a>
 
+  <a href="https://codecov.io/gh/tsirysndr/superviseur" target="_blank">
+    <img src="https://codecov.io/gh/tsirysndr/superviseur/branch/master/graph/badge.svg?token=" />
+  </a>
+
   <a href="https://feat-webui--640724a8e12e5a011d6d59fb.chromatic.com" target="_blank">
   <img src="https://img.shields.io/badge/Storybook-FF4785?logo=storybook&logoColor=fff" />
   </a>
