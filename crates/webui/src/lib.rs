@@ -47,6 +47,11 @@ async fn index() -> impl Responder {
     handle_embedded_file("index.html")
 }
 
+#[actix_web::get("/new")]
+async fn index_new() -> impl Responder {
+    handle_embedded_file("index.html")
+}
+
 #[actix_web::get("/projects/{_:.*}")]
 async fn index_projects() -> impl Responder {
     handle_embedded_file("index.html")
@@ -132,6 +137,7 @@ pub async fn start_webui(
                     .to(index_ws),
             )
             .service(index)
+            .service(index_new)
             .service(index_projects)
             .service(dist)
     })

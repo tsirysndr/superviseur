@@ -3,7 +3,7 @@ import { uniqueId, startCase } from "lodash";
 import { FC, useState } from "react";
 import { Service } from "../../Hooks/GraphQL";
 import { ListItem, ListItemLabel } from "baseui/list";
-import { Terminal } from "@styled-icons/fa-solid/Terminal";
+import { Stack } from "@styled-icons/octicons";
 
 const Container = styled.div`
   min-height: 50px;
@@ -30,7 +30,7 @@ const SearchResults: FC<SearchResultsProps> = ({ results, onSelect }) => {
       {results.map((result) => (
         <div key={uniqueId()} onClick={() => onSelect(result.id)}>
           <ListItem
-            artwork={() => <Terminal size={20} color="#ff00cb" />}
+            artwork={() => <Stack size={20} color="#ff00cb" />}
             overrides={{
               Root: {
                 style: {

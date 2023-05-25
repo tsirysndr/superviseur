@@ -12,28 +12,29 @@ use superviseur_types::{BANNER, UNIX_SOCKET_PATH};
 use crate::config::verify_if_config_file_is_present;
 
 pub async fn execute_ui() -> Result<(), Error> {
-    let (config, config_format) = verify_if_config_file_is_present()?;
-    let current_dir = std::env::current_dir()?;
+    let mut config_file_path = "";
+    let current_dir = std::env::current_dir()?;    
     let channel = Endpoint::try_from("http://[::]:50051")?
-    .connect_with_connector(service_fn(move |_: Uri| UnixStream::connect(UNIX_SOCKET_PATH)))
-        .await
-        .map_err(|_| 
-            Error::msg(format!("Cannot connect to the Superviseur daemon at unix:{}. Is the superviseur daemon running?", UNIX_SOCKET_PATH)))?;
+        .connect_with_connector(service_fn(move |_: Uri| UnixStream::connect(UNIX_SOCKET_PATH)))
+                .await
+                .map_err(|_| 
+                    Error::msg(format!("Cannot connect to the Superviseur daemon at unix:{}. Is the superviseur daemon running?", UNIX_SOCKET_PATH)))?;
 
-    // let mut client = ControlServiceClient::connect("http://127.0.0.1:5476").await?;
-
-    let mut client = ControlServiceClient::new(channel.clone());
-
-    let request = tonic::Request::new(LoadConfigRequest {
-        config,
-        file_path: current_dir.to_str().unwrap().to_string(),
-        config_format
-    });
-    client.load_config(request).await?;
+    if let Ok((config, config_format)) = verify_if_config_file_is_present() {
+        let mut client = ControlServiceClient::new(channel.clone());
+    
+        let request = tonic::Request::new(LoadConfigRequest {
+            config,
+            file_path: current_dir.to_str().unwrap().to_string(),
+            config_format
+        });
+        client.load_config(request).await?;
+        config_file_path = current_dir.to_str().unwrap();
+    }
 
     let mut client = CoreServiceClient::new(channel);
     let request = tonic::Request::new(StartWebDashboardRequest {
-        config_file_path: current_dir.to_str().unwrap().to_string(),
+        config_file_path: config_file_path.to_string(),
     });
     let response = client.start_web_dashboard(request).await?;
     let response = response.into_inner();

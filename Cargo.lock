@@ -325,9 +325,9 @@ dependencies = [
 
 [[package]]
 name = "anyhow"
-version = "1.0.69"
+version = "1.0.71"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "224afbd727c3d6e4b90103ece64b8d1b67fbb1973b1046c2281eed3f3803f800"
+checksum = "9c7d0618f0e0b7e8ff11427422b64564d5fb0be1940354bfe2e0529b18a9d9b8"
 
 [[package]]
 name = "arc-swap"
@@ -1066,6 +1066,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "dirs"
+version = "5.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "44c45a9d03d6676652bcb5e724c7e988de1acad23a711b5217ab9cbecbec2225"
+dependencies = [
+ "dirs-sys",
+]
+
+[[package]]
 name = "dirs-next"
 version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1073,6 +1082,18 @@ checksum = "b98cf8ebf19c3d1b223e151f99a4f9f0690dca41414773390fc824184ac833e1"
 dependencies = [
  "cfg-if",
  "dirs-sys-next",
+]
+
+[[package]]
+name = "dirs-sys"
+version = "0.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "520f05a5cbd335fae5a99ff7a6ab8627577660ee5cfd6a94a6a929b52ff0321c"
+dependencies = [
+ "libc",
+ "option-ext",
+ "redox_users",
+ "windows-sys 0.48.0",
 ]
 
 [[package]]
@@ -1428,6 +1449,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "hcl-primitives"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f6b293c5397cb844292c1205a91899ab0e65cb2bed7a7794ee95038945059a74"
+dependencies = [
+ "itoa",
+ "kstring",
+ "ryu",
+ "serde",
+ "unicode-ident",
+]
+
+[[package]]
 name = "hcl-rs"
 version = "0.12.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1440,6 +1474,21 @@ dependencies = [
  "ryu",
  "serde",
  "unicode-ident",
+ "vecmap-rs",
+]
+
+[[package]]
+name = "hcl-rs"
+version = "0.14.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cd33f7c4bdc89b0d4193395eb9a5147619c697beb2336b5faf04d910ad42620e"
+dependencies = [
+ "hcl-primitives",
+ "indexmap",
+ "itoa",
+ "pest",
+ "pest_derive",
+ "serde",
  "vecmap-rs",
 ]
 
@@ -1761,6 +1810,16 @@ checksum = "8367585489f01bc55dd27404dcf56b95e6da061a256a666ab23be9ba96a2e587"
 dependencies = [
  "bitflags",
  "libc",
+]
+
+[[package]]
+name = "kstring"
+version = "2.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ec3066350882a1cd6d950d055997f379ac37fd39f81cd4d8ed186032eb3c5747"
+dependencies = [
+ "serde",
+ "static_assertions",
 ]
 
 [[package]]
@@ -2200,6 +2259,12 @@ name = "openssl-probe"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ff011a302c396a5197692431fc1948019154afc178baf7d8e37367442a4601cf"
+
+[[package]]
+name = "option-ext"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "04744f49eae99ab78e0d5c0b603ab218f515ea8cfe5a456d7629ad883a3b6e7d"
 
 [[package]]
 name = "os_str_bytes"
@@ -3052,7 +3117,7 @@ dependencies = [
  "chrono",
  "clap",
  "colored_json",
- "hcl-rs",
+ "hcl-rs 0.12.3",
  "indexmap",
  "inquire",
  "local-ip-addr",
@@ -3067,6 +3132,14 @@ dependencies = [
  "toml",
  "tonic",
  "tower",
+]
+
+[[package]]
+name = "superviseur-code"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "tokio",
 ]
 
 [[package]]
@@ -3120,13 +3193,16 @@ dependencies = [
  "anyhow",
  "async-graphql",
  "async-graphql-actix-web",
+ "dirs",
  "futures",
  "futures-channel",
  "futures-util",
+ "hcl-rs 0.14.2",
  "indexmap",
  "names",
  "once_cell",
  "slab",
+ "superviseur-code",
  "superviseur-macros",
  "superviseur-provider",
  "superviseur-types",
@@ -3152,7 +3228,7 @@ name = "superviseur-provider"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "hcl-rs",
+ "hcl-rs 0.12.3",
  "indexmap",
  "superviseur-types",
 ]
@@ -3163,13 +3239,14 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "chrono",
- "hcl-rs",
+ "hcl-rs 0.12.3",
  "indexmap",
  "local-ip-addr",
  "names",
  "owo-colors",
  "prost",
  "serde",
+ "superviseur-code",
  "superviseur-core",
  "superviseur-drivers",
  "superviseur-log",
@@ -3192,7 +3269,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "chrono",
- "hcl-rs",
+ "hcl-rs 0.12.3",
  "indexmap",
  "serde",
  "tabled",

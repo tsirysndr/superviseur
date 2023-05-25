@@ -10,6 +10,7 @@ import SearchResults from "./SearchResults";
 import { Service } from "../../Hooks/GraphQL";
 import ServiceDetails from "../ServiceDetails";
 import { Drawer } from "baseui/drawer";
+import { Link } from "react-router-dom";
 
 const Container = styled.div`
   display: flex;
@@ -24,8 +25,9 @@ const Container = styled.div`
 const Logo = styled.div`
   color: #fff;
   font-weight: bold;
-  width: 130px;
-  text-align: center;
+  width: 225px;
+  text-align: left;
+  padding-left: 25px;
 `;
 
 const Settings = styled.div`
@@ -55,7 +57,9 @@ const Navbar: FC<NavbarProps> = ({ onSearch, results }) => {
   }, [watch, onSearch]);
   return (
     <Container>
-      <Logo>Superviseur</Logo>
+      <Link to="/" style={{ textDecoration: "none" }}>
+        <Logo>Superviseur</Logo>
+      </Link>
       <Controller
         render={({ field }) => (
           <Popover
@@ -78,7 +82,7 @@ const Navbar: FC<NavbarProps> = ({ onSearch, results }) => {
             <div>
               <Input
                 {...(field as any)}
-                placeholder="Search for a service ..."
+                placeholder="Search for a project, service ..."
                 clearable
                 clearOnEscape
                 size={SIZE.default}

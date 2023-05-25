@@ -20,7 +20,16 @@ message GetProjectResponse {
   objects.v1alpha1.Project project = 1;
 }
 
+message OpenProjectRequest {
+  string id = 1;
+}
+
+message OpenProjectResponse {
+  string line = 1;
+}
+
 service ProjectService {
   rpc ListProjects(ListProjectsRequest) returns (ListProjectsResponse);
   rpc GetProject(GetProjectRequest) returns (GetProjectResponse);
+  rpc OpenProject(OpenProjectRequest) returns (stream OpenProjectResponse);
 }

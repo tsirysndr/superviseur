@@ -1,12 +1,12 @@
-use std::{collections::HashMap, path::Path, sync::Arc, thread::sleep, time::Duration};
+use crate::simple_broker::SimpleBroker;
 use async_graphql::{Context, Error, Object, ID};
 use names::Generator;
+use std::{collections::HashMap, path::Path, sync::Arc, thread::sleep, time::Duration};
+use superviseur_macros::default_stdout;
 use superviseur_provider::kv::kv::Provider;
 use superviseur_types::{command::SuperviseurCommand, configuration::Service};
-use tokio::sync::mpsc;
-use crate::simple_broker::SimpleBroker;
 use superviseur_util::{convert_dir_path_to_absolute_path, read_lines};
-use superviseur_macros::default_stdout;
+use tokio::sync::mpsc;
 
 use super::{service_configuration::ServiceConfiguration, subscriptions::AllServicesStarted};
 
@@ -30,6 +30,10 @@ impl ProjectConfiguration {
 
     async fn description(&self) -> Option<&str> {
         self.description.as_deref()
+    }
+
+    async fn context(&self) -> &str {
+        &self.context
     }
 
     async fn with_service(

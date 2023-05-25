@@ -16,6 +16,7 @@ use crate::cmd::{
 };
 use anyhow::Error;
 use clap::{arg, Command, SubCommand};
+use cmd::code::execute_code;
 use superviseur_server::server;
 use superviseur_types::configuration::ConfigFormat;
 
@@ -131,6 +132,11 @@ Define and run multi-service applications on isolated environments with Nix or D
               .arg(arg!(<query> "The query to search"))
               .about("Search the log of a service"),
       )
+      .subcommand(
+        Command::new("code")
+            .arg(arg!(<name> "The name of the project to open in VSCode"))
+            .about("Open a project in VSCode"),
+      )
 }
 
 #[tokio::main]
@@ -213,6 +219,10 @@ async fn main() -> Result<(), Error> {
             let name = args.value_of("name");
             let query = args.value_of("query");
             execute_search_log(name.unwrap(), query.unwrap()).await?;
+        }
+        Some(("code", args)) => {
+            let name = args.value_of("name");
+            execute_code(name.unwrap()).await?;
         }
         _ => cli().print_help()?,
     }
