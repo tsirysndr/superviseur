@@ -1,5 +1,5 @@
 import { FC } from "react";
-import NewServiceModal, { NewServiceModalProps } from "./NewServiceModal";
+import NewServiceModal from "./NewServiceModal";
 import { useRecoilState } from "recoil";
 import { newServiceModalState } from "./NewServiceModalState";
 
@@ -9,10 +9,15 @@ export type NewServiceModalWithDataProps = {
 };
 
 const NewServiceModalWithData: FC<NewServiceModalWithDataProps> = (props) => {
-  const [{ templates, databases }, setState] =
+  const [{ templates, databases, messaging }] =
     useRecoilState(newServiceModalState);
   return (
-    <NewServiceModal {...props} templates={templates} databases={databases} />
+    <NewServiceModal
+      {...props}
+      templates={templates}
+      databases={databases}
+      messaging={messaging}
+    />
   );
 };
 

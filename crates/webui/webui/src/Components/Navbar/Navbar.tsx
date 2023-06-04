@@ -11,6 +11,7 @@ import { Service } from "../../Hooks/GraphQL";
 import ServiceDetails from "../ServiceDetails";
 import { Drawer } from "baseui/drawer";
 import { Link } from "react-router-dom";
+import CurrentProject from "./CurrentProject";
 
 const Container = styled.div`
   display: flex;
@@ -25,18 +26,26 @@ const Container = styled.div`
 const Logo = styled.div`
   color: #fff;
   font-weight: bold;
-  width: 225px;
+  width: 112px;
   text-align: left;
   padding-left: 25px;
 `;
 
 const Settings = styled.div`
-  width: 200px;
+  flex: 1;
   display: flex;
   flex-direction: row;
   align-items: center;
   justify-content: flex-end;
   padding-right: 25px;
+`;
+
+const LeftNav = styled.div`
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  flex: 1;
 `;
 
 interface NavbarProps {
@@ -57,9 +66,12 @@ const Navbar: FC<NavbarProps> = ({ onSearch, results }) => {
   }, [watch, onSearch]);
   return (
     <Container>
-      <Link to="/" style={{ textDecoration: "none" }}>
-        <Logo>Superviseur</Logo>
-      </Link>
+      <LeftNav>
+        <Link to="/" style={{ textDecoration: "none" }}>
+          <Logo>Superviseur</Logo>
+        </Link>
+        <CurrentProject />
+      </LeftNav>
       <Controller
         render={({ field }) => (
           <Popover
@@ -79,7 +91,14 @@ const Navbar: FC<NavbarProps> = ({ onSearch, results }) => {
             )}
             overrides={styles.popover}
           >
-            <div>
+            <div
+              style={{
+                display: "flex",
+                flex: 1,
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
               <Input
                 {...(field as any)}
                 placeholder="Search for a project, service ..."
@@ -149,7 +168,7 @@ const styles = {
     Root: {
       style: {
         width: "400px",
-        height: "35px",
+        height: "43px",
         borderWidth: "0px",
         borderRadius: "2px",
         backgroundColor: "#5a10c5",

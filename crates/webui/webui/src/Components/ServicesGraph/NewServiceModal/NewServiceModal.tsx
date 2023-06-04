@@ -3,10 +3,12 @@ import { Input } from "baseui/input";
 import { Modal, ModalBody } from "baseui/modal";
 import { FC, useState } from "react";
 import { Stack, ChevronRight } from "@styled-icons/octicons";
+import { MessageCircleOutline } from "@styled-icons/evaicons-outline";
 import { Terminal } from "@styled-icons/remix-fill";
 import { Database2 } from "@styled-icons/remix-line";
 import Templates from "./Templates";
 import Databases from "./Databases";
+import Messaging from "./Messaging";
 
 const Action = styled.div`
   height: 50px;
@@ -35,6 +37,7 @@ export type NewServiceModalProps = {
   onClose: () => void;
   templates: any[];
   databases: any[];
+  messaging: any[];
 };
 
 const NewServiceModal: FC<NewServiceModalProps> = ({
@@ -42,8 +45,10 @@ const NewServiceModal: FC<NewServiceModalProps> = ({
   onClose,
   templates,
   databases,
+  messaging,
 }) => {
-  const [tab, setTab] = useState<"templates" | "databases" | null>(null);
+  const [tab, setTab] =
+    useState<"templates" | "databases" | "messaging" | null>(null);
   const _onClose = () => {
     onClose();
     setTab(null);
@@ -103,6 +108,19 @@ const NewServiceModal: FC<NewServiceModalProps> = ({
                   color="#000"
                 />
               </Action>
+              <Action onClick={() => setTab("messaging")}>
+                <MessageCircleOutline
+                  color="#ff0a80"
+                  size={20}
+                  style={{ marginRight: 15 }}
+                />
+                <div>Messaging</div>
+                <ChevronRight
+                  size={20}
+                  style={{ marginLeft: "auto" }}
+                  color="#000"
+                />
+              </Action>
               <Action>
                 <Terminal
                   color="#ff0a80"
@@ -115,6 +133,7 @@ const NewServiceModal: FC<NewServiceModalProps> = ({
           )}
           {tab === "templates" && <Templates data={templates} />}
           {tab === "databases" && <Databases data={databases} />}
+          {tab === "messaging" && <Messaging data={messaging} />}
         </CardContent>
       </ModalBody>
     </Modal>

@@ -1,7 +1,7 @@
 {
   "files": {
     "main.css": "/static/css/main.61403641.css",
-    "main.js": "/static/js/main.650773b9.js",
+    "main.js": "/static/js/main.1a5e8dec.js",
     "static/js/787.cb4325f6.chunk.js": "/static/js/787.cb4325f6.chunk.js",
     "static/media/ubuntu-all-400-normal.woff": "/static/media/ubuntu-all-400-normal.8629f83ad2c45e75a914.woff",
     "static/media/RockfordSans-ExtraBold.otf": "/static/media/RockfordSans-ExtraBold.1513e8fd97078bfb7708.otf",
@@ -22,17 +22,20 @@
     "static/media/bun.svg": "/static/media/bun.4f94828236634ff78a332e705f09fc79.svg",
     "static/media/mysql.svg": "/static/media/mysql.0697e026464104aea8919845703174b9.svg",
     "static/media/redis.svg": "/static/media/redis.ac3daad2b9f9bf478a2bf49dbb4c3d4c.svg",
+    "static/media/kafka.svg": "/static/media/kafka.e7d8fe1d18b91a8871b9c66cf80d4ca1.svg",
     "static/media/nodejs.svg": "/static/media/nodejs.7ca28bcc5b19ce40dfc23043cfb31f27.svg",
     "static/media/mongodb.svg": "/static/media/mongodb.9f73d8c9195613a2ef106c244c01e6e7.svg",
     "static/media/fresh.svg": "/static/media/fresh.75b33975f7b385b15fc9d97346088431.svg",
+    "static/media/rabbitmq.svg": "/static/media/rabbitmq.c9f156289726ee6cbe5d77e85fa38346.svg",
     "index.html": "/index.html",
     "static/media/wasm.svg": "/static/media/wasm.d2b14cf4214ab0d03cbe5738090c6c22.svg",
+    "static/media/nats.svg": "/static/media/nats.5ee42c5209de5b1699f3ca8886f11379.svg",
     "main.61403641.css.map": "/static/css/main.61403641.css.map",
-    "main.650773b9.js.map": "/static/js/main.650773b9.js.map",
+    "main.1a5e8dec.js.map": "/static/js/main.1a5e8dec.js.map",
     "787.cb4325f6.chunk.js.map": "/static/js/787.cb4325f6.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.61403641.css",
-    "static/js/main.650773b9.js"
+    "static/js/main.1a5e8dec.js"
   ]
 }

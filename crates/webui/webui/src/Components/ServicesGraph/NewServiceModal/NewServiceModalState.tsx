@@ -10,6 +10,10 @@ import Hono from "../../../Images/hono.png";
 import Bun from "../../../Images/bun.svg";
 import Deno from "../../../Images/deno.svg";
 import Wasm from "../../../Images/wasm.svg";
+import NATS from "../../../Images/nats.svg";
+import RabbitMQ from "../../../Images/rabbitmq.svg";
+import Kafka from "../../../Images/kafka.svg";
+import Cockroachdb from "../../../Images/cockroachdb.png";
 
 export const newServiceModalState = atom({
   key: "newServiceState",
@@ -82,6 +86,32 @@ export const newServiceModalState = atom({
         name: "Add MySQL",
         tags: ["docker"],
         icon: MySQL,
+      },
+      {
+        id: "4c02014d-7c42-40b0-b5ac-466e84535e14",
+        name: "Add CockroachDB",
+        tags: ["docker"],
+        icon: Cockroachdb,
+      },
+    ],
+    messaging: [
+      {
+        id: "b4f5b0a0-0b0a-4b0a-8b0a-0b0a0b0a0b0k",
+        name: "Add NATS",
+        tags: ["docker"],
+        icon: NATS,
+      },
+      {
+        id: "b4f5b0a0-0b0a-4b0a-8b0a-0b0a0b0a0b0l",
+        name: "Add RabbitMQ",
+        tags: ["docker"],
+        icon: RabbitMQ,
+      },
+      {
+        id: "b4f5b0a0-0b0a-4b0a-8b0a-0b0a0b0a0b0m",
+        name: "Add Apache Kafka",
+        tags: ["docker"],
+        icon: Kafka,
       },
     ],
     selectedTemplate: null,
