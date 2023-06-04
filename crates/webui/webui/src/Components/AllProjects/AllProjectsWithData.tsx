@@ -5,7 +5,9 @@ import AllProjects from "./AllProjects";
 
 const AllProjectsWithData: FC = () => {
   const navigate = useNavigate();
-  const { data, loading } = useGetProjectsQuery();
+  const { data, loading } = useGetProjectsQuery({
+    fetchPolicy: "cache-and-network",
+  });
   const onCreateProject = () => navigate("/new");
   const onOpenProject = (projectId: string) =>
     navigate(`/projects/${projectId}`);

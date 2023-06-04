@@ -1,7 +1,10 @@
 import styled from "@emotion/styled";
-import { FC } from "react";
+import { FC, useState } from "react";
 import { FlexGrid, FlexGridItem } from "baseui/flex-grid";
 import { BlockProps } from "baseui/block";
+import { Tag, KIND, VARIANT } from "baseui/tag";
+import { Delete } from "@styled-icons/fluentui-system-regular";
+import { CodeSlash } from "@styled-icons/bootstrap";
 
 const NoProjects = styled.div`
   height: 400px;
@@ -18,15 +21,14 @@ const NoProjects = styled.div`
 `;
 
 const Name = styled.div`
-  font-weight: 600;
+  font-weight: 500;
 `;
 
 const itemProps: BlockProps = {
   backgroundColor: "#a0cfe812",
   height: "150px",
   display: "flex",
-  padding: "25px",
-  color: "#2be6e6",
+  color: "#310755",
   overrides: {
     Block: {
       style: {
@@ -35,6 +37,86 @@ const itemProps: BlockProps = {
       },
     },
   },
+};
+
+const Actions = styled.div`
+  display: flex;
+  position: absolute;
+  top: 0;
+  right: 0;
+  flex-direction: row;
+  padding: 10px;
+  background-color: #f8fcfd;
+`;
+
+const Button = styled.div`
+  border: none;
+  background-color: initial;
+  z-index: 2;
+  cursor: pointer;
+  padding: 2px;
+`;
+
+export type ProjectProps = {
+  data: any;
+  onOpenProject: (id: string) => void;
+};
+
+const Project: FC<ProjectProps> = (props) => {
+  const [displayMenu, setDisplayMenu] = useState(false);
+  const { data, onOpenProject } = props;
+  return (
+    <FlexGridItem
+      {...itemProps}
+      {...props}
+      onClick={() => onOpenProject(data.id)}
+      onMouseEnter={() => setDisplayMenu(true)}
+      onMouseLeave={() => setDisplayMenu(false)}
+    >
+      <div style={{ padding: 15, flex: 1, position: "relative" }}>
+        {displayMenu && (
+          <Actions>
+            <Button
+              onClick={(event) => {
+                event.stopPropagation();
+              }}
+            >
+              <CodeSlash size={20} color="#630be2" />
+            </Button>
+            <Button
+              onClick={(event) => {
+                event.stopPropagation();
+              }}
+            >
+              <Delete size={20} color="#630be2" />
+            </Button>
+          </Actions>
+        )}
+        <div style={{ height: "calc(100% - 34px)" }}>
+          <Name>{data.name}</Name>
+        </div>
+        <div>
+          <Tag
+            color="#630be2"
+            kind={KIND.custom}
+            closeable={false}
+            variant={VARIANT.outlined}
+            overrides={{
+              Root: {
+                style: {
+                  lineHeight: "11px",
+                  paddingTop: "0px",
+                  paddingBottom: "0px",
+                },
+              },
+            }}
+          >
+            devbox
+          </Tag>
+        </div>
+      </div>
+    </FlexGridItem>
+  );
 };
 
 export type AllProjectsProps = {
@@ -62,14 +144,7 @@ const AllProjects: FC<AllProjectsProps> = ({
           flexGridRowGap="scale800"
         >
           {projects.map((project) => (
-            <FlexGridItem
-              {...itemProps}
-              onClick={() => onOpenProject(project.id)}
-            >
-              <div>
-                <Name>{project.name}</Name>
-              </div>
-            </FlexGridItem>
+            <Project data={project} onOpenProject={onOpenProject} />
           ))}
         </FlexGrid>
       )}

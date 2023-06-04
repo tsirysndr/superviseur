@@ -11,7 +11,8 @@ import ServicesGraph from "./ServicesGraph";
 import _ from "lodash";
 import { Node } from "../../Types/Node";
 import { Edge } from "../../Types/Edge";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
+import { useHotkeys } from "react-hotkeys-hook";
 
 const ServicesGraphWithData: FC = () => {
   const [nodes, setNodes] = useState<Node[]>([]);
@@ -24,6 +25,13 @@ const ServicesGraphWithData: FC = () => {
   const { projectId } = useParams();
   const { data, loading } = useGetServicesQuery({
     variables: { projectId: projectId! },
+  });
+
+  const navigate = useNavigate();
+
+  useHotkeys("ctrl+n", (e) => {
+    e.preventDefault();
+    navigate("/new");
   });
 
   useEffect(() => {

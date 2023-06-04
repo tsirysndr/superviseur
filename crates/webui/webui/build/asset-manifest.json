@@ -1,7 +1,7 @@
 {
   "files": {
     "main.css": "/static/css/main.61403641.css",
-    "main.js": "/static/js/main.abb3a14f.js",
+    "main.js": "/static/js/main.650773b9.js",
     "static/js/787.cb4325f6.chunk.js": "/static/js/787.cb4325f6.chunk.js",
     "static/media/ubuntu-all-400-normal.woff": "/static/media/ubuntu-all-400-normal.8629f83ad2c45e75a914.woff",
     "static/media/RockfordSans-ExtraBold.otf": "/static/media/RockfordSans-ExtraBold.1513e8fd97078bfb7708.otf",
@@ -9,6 +9,7 @@
     "static/media/RockfordSans-Medium.otf": "/static/media/RockfordSans-Medium.e10344a796535b513215.otf",
     "static/media/RockfordSans-Regular.otf": "/static/media/RockfordSans-Regular.652654f28f1c111914b9.otf",
     "static/media/RockfordSans-Light.otf": "/static/media/RockfordSans-Light.b4a12e8abb38f7d105c4.otf",
+    "service-worker.js": "/service-worker.js",
     "static/media/ubuntu-latin-ext-400-normal.woff2": "/static/media/ubuntu-latin-ext-400-normal.9967dbf10fc3cb92edfb.woff2",
     "static/media/ubuntu-latin-400-normal.woff2": "/static/media/ubuntu-latin-400-normal.2f02effe392a63dc07a5.woff2",
     "static/media/ubuntu-cyrillic-ext-400-normal.woff2": "/static/media/ubuntu-cyrillic-ext-400-normal.80c010be16bde8b7e613.woff2",
@@ -27,11 +28,11 @@
     "index.html": "/index.html",
     "static/media/wasm.svg": "/static/media/wasm.d2b14cf4214ab0d03cbe5738090c6c22.svg",
     "main.61403641.css.map": "/static/css/main.61403641.css.map",
-    "main.abb3a14f.js.map": "/static/js/main.abb3a14f.js.map",
+    "main.650773b9.js.map": "/static/js/main.650773b9.js.map",
     "787.cb4325f6.chunk.js.map": "/static/js/787.cb4325f6.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.61403641.css",
-    "static/js/main.abb3a14f.js"
+    "static/js/main.650773b9.js"
   ]
 }

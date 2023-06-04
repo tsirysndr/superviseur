@@ -116,3 +116,11 @@ export const ON_RESTART_ALL = gql`
     }
   }
 `;
+
+export const ON_OPEN_PROJECT = gql`
+  subscription OnOpenProject($id: ID!) {
+    onOpenProject(id: $id) {
+      line
+    }
+  }
+`;

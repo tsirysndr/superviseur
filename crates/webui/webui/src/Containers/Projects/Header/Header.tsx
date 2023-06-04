@@ -2,6 +2,8 @@ import styled from "@emotion/styled";
 import { Button } from "baseui/button";
 import { Plus } from "baseui/icon";
 import { FC } from "react";
+import { Command } from "@styled-icons/boxicons-regular";
+import { useHotkeys } from "react-hotkeys-hook";
 
 const Wrapper = styled.div`
   display: flex;
@@ -15,13 +17,28 @@ export type HeaderProps = {
 };
 
 const Header: FC<HeaderProps> = ({ onCreateProject }) => {
+  useHotkeys("ctrl+n", (e) => {
+    e.preventDefault();
+    onCreateProject();
+  });
   return (
     <>
       <Wrapper>
         <h2>Projects</h2>
         <Button
           onClick={onCreateProject}
-          startEnhancer={() => <Plus size={20} color="#630be2" />}
+          startEnhancer={() => (
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "row",
+                alignItems: "center",
+              }}
+            >
+              <Command size={15} color="#630be2" />
+              <div>N</div>
+            </div>
+          )}
           overrides={{
             BaseButton: {
               style: {

@@ -7,6 +7,7 @@ import { Node } from "../../Types/Node";
 import ServiceDetails from "../ServiceDetails";
 import Background from "./Background";
 import Actions from "./Actions";
+import NewService from "./NewService";
 
 const options = {
   layout: {
@@ -121,7 +122,8 @@ const ServicesGraph: FC<ServicesGraphProps> = (props) => {
       >
         <Background />
       </div>
-      <Actions />
+      {props.nodes.length > 0 && <Actions />}
+      {props.nodes.length === 0 && <NewService />}
       <Graph graph={graph} options={options} events={events} ref={graphRef} />
       <Drawer
         isOpen={isOpen}
