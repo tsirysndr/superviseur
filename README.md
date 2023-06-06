@@ -42,7 +42,7 @@ sudo apt-get install -y protobuf-compiler # Ubuntu/Debian
 curl -fsSL https://bun.sh/install | bash
 # Compile
 git clone https://github.com/tsirysndr/superviseur
-cd superviseur/webui && bun install && bun run build && cd ..
+cd superviseur/crates/webui/webui && bun install && bun run build && cd ../../../
 cargo install --path crates/cli
 ```
 
