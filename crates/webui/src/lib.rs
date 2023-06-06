@@ -1,4 +1,5 @@
 use actix_cors::Cors;
+use actix_files::Files;
 use actix_web::{
     guard,
     http::header::HOST,
@@ -42,8 +43,23 @@ async fn dist(path: web::Path<String>) -> impl Responder {
     handle_embedded_file(path.as_str())
 }
 
+#[actix_web::get("/service-worker.js")]
+async fn service_worker() -> impl Responder {
+    handle_embedded_file("service-worker.js")
+}
+
+#[actix_web::get("/manifest.json")]
+async fn manifest() -> impl Responder {
+    handle_embedded_file("manifest.json")
+}
+
 #[actix_web::get("/")]
 async fn index() -> impl Responder {
+    handle_embedded_file("index.html")
+}
+
+#[actix_web::get("/new")]
+async fn index_new() -> impl Responder {
     handle_embedded_file("index.html")
 }
 
@@ -132,8 +148,11 @@ pub async fn start_webui(
                     .to(index_ws),
             )
             .service(index)
+            .service(index_new)
             .service(index_projects)
             .service(dist)
+            .service(service_worker)
+            .service(manifest)
     })
     .bind(addr)?
     .run()

@@ -9,17 +9,21 @@ use async_graphql::{MergedObject, MergedSubscription};
 use self::{
     control::{ControlMutation, ControlQuery, ControlSubscription},
     logging::{LoggingQuery, LoggingSubscription},
+    project::{ProjectMutation, ProjectQuery},
+    service::{ServiceMutation, ServiceQuery},
 };
 
 pub mod control;
 pub mod logging;
 pub mod objects;
+pub mod project;
+pub mod service;
 
 #[derive(Default, MergedObject)]
-pub struct Query(ControlQuery, LoggingQuery);
+pub struct Query(ControlQuery, LoggingQuery, ProjectQuery, ServiceQuery);
 
 #[derive(Default, MergedObject)]
-pub struct Mutation(ControlMutation);
+pub struct Mutation(ControlMutation, ProjectMutation, ServiceMutation);
 
 #[derive(Default, MergedSubscription)]
 pub struct Subscription(LoggingSubscription, ControlSubscription);

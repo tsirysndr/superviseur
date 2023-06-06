@@ -44,6 +44,9 @@ export type Mutation = {
   __typename?: 'Mutation';
   createEnvVar: Service;
   deleteEnvVar: Service;
+  deleteProject: Project;
+  newProject: ProjectConfiguration;
+  openProject: Project;
   restart: Process;
   start: Process;
   stop: Process;
@@ -63,6 +66,22 @@ export type MutationDeleteEnvVarArgs = {
   id: Scalars['ID'];
   name: Scalars['String'];
   projectId: Scalars['ID'];
+};
+
+
+export type MutationDeleteProjectArgs = {
+  id: Scalars['ID'];
+};
+
+
+export type MutationNewProjectArgs = {
+  context?: InputMaybe<Scalars['String']>;
+  name: Scalars['String'];
+};
+
+
+export type MutationOpenProjectArgs = {
+  id: Scalars['ID'];
 };
 
 
@@ -112,9 +131,29 @@ export type Process = {
 
 export type Project = {
   __typename?: 'Project';
-  configPath: Scalars['String'];
+  configPath?: Maybe<Scalars['String']>;
   id: Scalars['String'];
   name: Scalars['String'];
+};
+
+export type ProjectConfiguration = {
+  __typename?: 'ProjectConfiguration';
+  context: Scalars['String'];
+  description?: Maybe<Scalars['String']>;
+  id: Scalars['ID'];
+  name: Scalars['String'];
+  stdout: Array<Scalars['String']>;
+  withService: ProjectConfiguration;
+};
+
+
+export type ProjectConfigurationWithServiceArgs = {
+  service: ServiceConfiguration;
+};
+
+export type ProjectOpened = {
+  __typename?: 'ProjectOpened';
+  line: Scalars['String'];
 };
 
 export type Query = {
@@ -181,6 +220,25 @@ export type Service = {
   workingDirectory: Scalars['String'];
 };
 
+export type ServiceConfiguration = {
+  autoRestart?: InputMaybe<Scalars['Boolean']>;
+  autoStart?: InputMaybe<Scalars['Boolean']>;
+  command: Scalars['String'];
+  dependsOn?: InputMaybe<Array<Scalars['String']>>;
+  description?: InputMaybe<Scalars['String']>;
+  enableDocker?: InputMaybe<Scalars['Boolean']>;
+  enableFlox?: InputMaybe<Scalars['Boolean']>;
+  enableNix?: InputMaybe<Scalars['Boolean']>;
+  env?: InputMaybe<Array<Scalars['String']>>;
+  floxEnviroment?: InputMaybe<Scalars['String']>;
+  logFile?: InputMaybe<Scalars['String']>;
+  name: Scalars['String'];
+  port?: InputMaybe<Scalars['Int']>;
+  stderrFile?: InputMaybe<Scalars['String']>;
+  type?: InputMaybe<Scalars['String']>;
+  workingDirectory?: InputMaybe<Scalars['String']>;
+};
+
 export type ServiceRestarted = {
   __typename?: 'ServiceRestarted';
   payload: Service;
@@ -214,6 +272,7 @@ export type ServiceStopping = {
 export type Subscription = {
   __typename?: 'Subscription';
   logs: LogStream;
+  onOpenProject: ProjectOpened;
   onRestart: ServiceRestarted;
   onRestartAll: AllServicesRestarted;
   onStart: ServiceStarted;
@@ -229,6 +288,11 @@ export type Subscription = {
 export type SubscriptionLogsArgs = {
   id: Scalars['ID'];
   projectId: Scalars['ID'];
+};
+
+
+export type SubscriptionOnOpenProjectArgs = {
+  id: Scalars['ID'];
 };
 
 
@@ -295,6 +359,20 @@ export type UpdateEnvVarMutationVariables = Exact<{
 
 export type UpdateEnvVarMutation = { __typename?: 'Mutation', updateEnvVar: { __typename?: 'Service', id: string, env: Array<string> } };
 
+export type NewProjectMutationVariables = Exact<{
+  name: Scalars['String'];
+}>;
+
+
+export type NewProjectMutation = { __typename?: 'Mutation', newProject: { __typename?: 'ProjectConfiguration', id: string, context: string, name: string } };
+
+export type OpenProjectMutationVariables = Exact<{
+  id: Scalars['ID'];
+}>;
+
+
+export type OpenProjectMutation = { __typename?: 'Mutation', openProject: { __typename?: 'Project', id: string, configPath?: string | null } };
+
 export type GetStatusQueryVariables = Exact<{
   id: Scalars['ID'];
 }>;
@@ -333,14 +411,14 @@ export type GetEnvVarsQuery = { __typename?: 'Query', service: { __typename?: 'S
 export type GetProjectsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetProjectsQuery = { __typename?: 'Query', projects: Array<{ __typename?: 'Project', id: string, name: string, configPath: string }> };
+export type GetProjectsQuery = { __typename?: 'Query', projects: Array<{ __typename?: 'Project', id: string, name: string, configPath?: string | null }> };
 
 export type GetProjectQueryVariables = Exact<{
   id: Scalars['ID'];
 }>;
 
 
-export type GetProjectQuery = { __typename?: 'Query', project: { __typename?: 'Project', id: string, name: string, configPath: string } };
+export type GetProjectQuery = { __typename?: 'Query', project: { __typename?: 'Project', id: string, name: string, configPath?: string | null } };
 
 export type OnStartSubscriptionVariables = Exact<{ [key: string]: never; }>;
 
@@ -381,6 +459,13 @@ export type OnRestartAllSubscriptionVariables = Exact<{ [key: string]: never; }>
 
 
 export type OnRestartAllSubscription = { __typename?: 'Subscription', onRestartAll: { __typename?: 'AllServicesRestarted', payload: Array<{ __typename?: 'Service', id: string, name: string, status: string }> } };
+
+export type OnOpenProjectSubscriptionVariables = Exact<{
+  id: Scalars['ID'];
+}>;
+
+
+export type OnOpenProjectSubscription = { __typename?: 'Subscription', onOpenProject: { __typename?: 'ProjectOpened', line: string } };
 
 export type ProcessFragmentFragment = { __typename?: 'Process', name: string, serviceId: string, description?: string | null, pid?: number | null, ppid?: number | null, command: string, workingDirectory: string, project: string, type: string, logFile: string, stderrFile: string, autoRestart: boolean, env: Array<string>, state: string, upTime: string };
 
@@ -668,6 +753,75 @@ export function useUpdateEnvVarMutation(baseOptions?: Apollo.MutationHookOptions
 export type UpdateEnvVarMutationHookResult = ReturnType<typeof useUpdateEnvVarMutation>;
 export type UpdateEnvVarMutationResult = Apollo.MutationResult<UpdateEnvVarMutation>;
 export type UpdateEnvVarMutationOptions = Apollo.BaseMutationOptions<UpdateEnvVarMutation, UpdateEnvVarMutationVariables>;
+export const NewProjectDocument = gql`
+    mutation NewProject($name: String!) {
+  newProject(name: $name) {
+    id
+    context
+    name
+  }
+}
+    `;
+export type NewProjectMutationFn = Apollo.MutationFunction<NewProjectMutation, NewProjectMutationVariables>;
+
+/**
+ * __useNewProjectMutation__
+ *
+ * To run a mutation, you first call `useNewProjectMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useNewProjectMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [newProjectMutation, { data, loading, error }] = useNewProjectMutation({
+ *   variables: {
+ *      name: // value for 'name'
+ *   },
+ * });
+ */
+export function useNewProjectMutation(baseOptions?: Apollo.MutationHookOptions<NewProjectMutation, NewProjectMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<NewProjectMutation, NewProjectMutationVariables>(NewProjectDocument, options);
+      }
+export type NewProjectMutationHookResult = ReturnType<typeof useNewProjectMutation>;
+export type NewProjectMutationResult = Apollo.MutationResult<NewProjectMutation>;
+export type NewProjectMutationOptions = Apollo.BaseMutationOptions<NewProjectMutation, NewProjectMutationVariables>;
+export const OpenProjectDocument = gql`
+    mutation OpenProject($id: ID!) {
+  openProject(id: $id) {
+    id
+    configPath
+  }
+}
+    `;
+export type OpenProjectMutationFn = Apollo.MutationFunction<OpenProjectMutation, OpenProjectMutationVariables>;
+
+/**
+ * __useOpenProjectMutation__
+ *
+ * To run a mutation, you first call `useOpenProjectMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useOpenProjectMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [openProjectMutation, { data, loading, error }] = useOpenProjectMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useOpenProjectMutation(baseOptions?: Apollo.MutationHookOptions<OpenProjectMutation, OpenProjectMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<OpenProjectMutation, OpenProjectMutationVariables>(OpenProjectDocument, options);
+      }
+export type OpenProjectMutationHookResult = ReturnType<typeof useOpenProjectMutation>;
+export type OpenProjectMutationResult = Apollo.MutationResult<OpenProjectMutation>;
+export type OpenProjectMutationOptions = Apollo.BaseMutationOptions<OpenProjectMutation, OpenProjectMutationVariables>;
 export const GetStatusDocument = gql`
     query GetStatus($id: ID!) {
   status(id: $id) {
@@ -1197,6 +1351,36 @@ export function useOnRestartAllSubscription(baseOptions?: Apollo.SubscriptionHoo
       }
 export type OnRestartAllSubscriptionHookResult = ReturnType<typeof useOnRestartAllSubscription>;
 export type OnRestartAllSubscriptionResult = Apollo.SubscriptionResult<OnRestartAllSubscription>;
+export const OnOpenProjectDocument = gql`
+    subscription OnOpenProject($id: ID!) {
+  onOpenProject(id: $id) {
+    line
+  }
+}
+    `;
+
+/**
+ * __useOnOpenProjectSubscription__
+ *
+ * To run a query within a React component, call `useOnOpenProjectSubscription` and pass it any options that fit your needs.
+ * When your component renders, `useOnOpenProjectSubscription` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useOnOpenProjectSubscription({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useOnOpenProjectSubscription(baseOptions: Apollo.SubscriptionHookOptions<OnOpenProjectSubscription, OnOpenProjectSubscriptionVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useSubscription<OnOpenProjectSubscription, OnOpenProjectSubscriptionVariables>(OnOpenProjectDocument, options);
+      }
+export type OnOpenProjectSubscriptionHookResult = ReturnType<typeof useOnOpenProjectSubscription>;
+export type OnOpenProjectSubscriptionResult = Apollo.SubscriptionResult<OnOpenProjectSubscription>;
 export const GetLogsDocument = gql`
     query GetLogs($id: ID!, $projectId: ID!) {
   logs(id: $id, projectId: $projectId) {

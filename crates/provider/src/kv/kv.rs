@@ -325,6 +325,12 @@ impl Provider {
         Ok(kv_pairs)
     }
 
+    pub fn delete_configuration(&self, project_id: &str) -> Result<(), Error> {
+        self.kv_client
+            .delete_tree(&format!("{}/{}", self.root_key, project_id))?;
+        Ok(())
+    }
+
     pub fn create_kv_client(
         &self,
         kv_type: &str,

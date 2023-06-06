@@ -186,3 +186,16 @@ impl AllServicesBuilt {
         &self.payload
     }
 }
+
+#[derive(Default, Clone)]
+pub struct ProjectOpened {
+    pub id: String,
+    pub line: String,
+}
+
+#[Object]
+impl ProjectOpened {
+    async fn line(&self) -> &str {
+        &self.line
+    }
+}

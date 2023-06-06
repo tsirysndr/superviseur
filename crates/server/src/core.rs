@@ -4,17 +4,17 @@ use std::{
     thread,
 };
 
-use anyhow::Error;
-use superviseur_core::core::Superviseur;
-use superviseur_provider::kv::kv::Provider;
-use superviseur_types::{command::SuperviseurCommand, events::ProcessEvent, process::Process};
-use tokio::{runtime::Handle, sync::mpsc};
-use tonic::{Request, Response};
-use superviseur_webui::start_webui;
 use crate::api::superviseur::v1alpha1::{
     core_service_server::CoreService, GetVersionRequest, GetVersionResponse,
     StartWebDashboardRequest, StartWebDashboardResponse,
 };
+use anyhow::Error;
+use superviseur_core::core::Superviseur;
+use superviseur_provider::kv::kv::Provider;
+use superviseur_types::{command::SuperviseurCommand, events::ProcessEvent, process::Process};
+use superviseur_webui::start_webui;
+use tokio::{runtime::Handle, sync::mpsc};
+use tonic::{Request, Response};
 pub struct Core {
     cmd_tx: mpsc::UnboundedSender<SuperviseurCommand>,
     event_tx: mpsc::UnboundedSender<ProcessEvent>,
@@ -69,9 +69,13 @@ impl CoreService for Core {
     ) -> Result<Response<StartWebDashboardResponse>, tonic::Status> {
         let request = request.into_inner();
         let path = request.config_file_path;
-        let project_id = self
-            .get_project_id(path.clone())
-            .map_err(|e| tonic::Status::internal(e.to_string()))?;
+        let project_id = match path.as_str() {
+            "" => None,
+            _ => Some(
+                self.get_project_id(path.clone())
+                    .map_err(|e| tonic::Status::internal(e.to_string()))?,
+            ),
+        };
 
         let cmd_tx = self.cmd_tx.clone();
         let event_tx = self.event_tx.clone();
@@ -106,8 +110,14 @@ impl CoreService for Core {
         let ip = local_ip_addr::get_local_ip_address()
             .map_err(|e| tonic::Status::internal(e.to_string()))?;
         let port = 5478;
-        Ok(Response::new(StartWebDashboardResponse {
-            url: format!("http://{}:{}/projects/{}", ip, port, project_id),
-        }))
+
+        match project_id {
+            Some(project_id) => Ok(Response::new(StartWebDashboardResponse {
+                url: format!("http://{}:{}/projects/{}", ip, port, project_id),
+            })),
+            None => Ok(Response::new(StartWebDashboardResponse {
+                url: format!("http://{}:{}", ip, port),
+            })),
+        }
     }
 }

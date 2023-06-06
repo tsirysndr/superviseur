@@ -64,3 +64,22 @@ export const UPDATE_ENV_VAR = gql`
     }
   }
 `;
+
+export const NEW_PROJECT = gql`
+  mutation NewProject($name: String!) {
+    newProject(name: $name) {
+      id
+      context
+      name
+    }
+  }
+`;
+
+export const OPEN_PROJECT = gql`
+  mutation OpenProject($id: ID!) {
+    openProject(id: $id) {
+      id
+      configPath
+    }
+  }
+`;

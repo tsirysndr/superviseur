@@ -21,11 +21,13 @@ names = "0.14.0"
 owo-colors = "3.5.0"
 prost = "0.11.8"
 serde = "1.0.152"
+superviseur-code = {path = "../code", version = "0.1.0"}
 superviseur-core = {path = "../core", version = "0.1.0"}
 superviseur-drivers = {path = "../drivers", version = "0.1.0"}
 superviseur-log = {path = "../log", version = "0.1.0"}
 superviseur-macros = {path = "../macros", version = "0.1.0"}
 superviseur-provider = {path = "../provider", version = "0.1.0"}
+superviseur-template = {path = "../template", version = "0.1.0"}
 superviseur-types = {path = "../types", version = "0.1.0"}
 superviseur-util = {path = "../util", version = "0.1.0"}
 superviseur-webui = {path = "../webui", version = "0.1.0"}
