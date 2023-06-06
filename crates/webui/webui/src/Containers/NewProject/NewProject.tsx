@@ -64,6 +64,7 @@ const NewProject: FC = () => {
                 }),
               },
             }}
+            autoFocus={true}
           />
           <CardContent>
             <Templates />

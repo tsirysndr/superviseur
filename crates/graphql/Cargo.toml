@@ -27,6 +27,7 @@ slab = "0.4.8"
 superviseur-code = {path = "../code", version = "0.1.0"}
 superviseur-macros = {path = "../macros", version = "0.1.0"}
 superviseur-provider = {path = "../provider", version = "0.1.0"}
+superviseur-template = {path = "../template", version = "0.1.0"}
 superviseur-types = {path = "../types", version = "0.1.0"}
 superviseur-util = {path = "../util", version = "0.1.0"}
 tokio = {version = "1.24.2", features = ["tokio-macros", "macros", "rt", "rt-multi-thread"]}

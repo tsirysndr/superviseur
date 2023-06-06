@@ -57,8 +57,6 @@ const CurrentProject: FC<CurrentProjectProps> = ({
 
   useEffect(() => {
     const keyDownHandler = (event: any) => {
-      console.log("User pressed: ", event.key);
-
       if (event.key === "Enter") {
         event.preventDefault();
         setEdit(false);

@@ -27,6 +27,7 @@ superviseur-drivers = {path = "../drivers", version = "0.1.0"}
 superviseur-log = {path = "../log", version = "0.1.0"}
 superviseur-macros = {path = "../macros", version = "0.1.0"}
 superviseur-provider = {path = "../provider", version = "0.1.0"}
+superviseur-template = {path = "../template", version = "0.1.0"}
 superviseur-types = {path = "../types", version = "0.1.0"}
 superviseur-util = {path = "../util", version = "0.1.0"}
 superviseur-webui = {path = "../webui", version = "0.1.0"}
