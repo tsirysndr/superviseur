@@ -35,22 +35,36 @@ Project Status: 🐲 Unstable, alpha-ish quality.
 
 ## 🚚 Installation
 
+Compiling from source, without Nix:
+
 ```bash
 # Install dependencies
 brew install protobuf # macOS
 sudo apt-get install -y protobuf-compiler # Ubuntu/Debian
 curl -fsSL https://bun.sh/install | bash
 # Compile
-git clone https://github.com/tsirysndr/superviseur
+git clone https://github.com/tsirysndr/superviseur.git
 cd superviseur/crates/webui/webui && bun install && bun run build && cd ../../../
+cargo install --path crates/cli
+```
+
+with Nix:
+```bash
+git clone https://github.com/tsirysndr/superviseur.git
+cd superviseur
+nix develop --experimental-features "nix-command flakes" flake/
+cd crates/webui/webui && bun install && bun run build && cd ../../../
 cargo install --path crates/cli
 ```
 
 ### macOS/Linux
 
+Using [Homebrew](https://brew.sh/):
+
 ```bash
 brew install tsirysndr/tap/superviseur
 ```
+
 Or download the latest release for your platform [here](https://github.com/tsirysndr/superviseur/releases).
 
 ## 📦 Downloads
