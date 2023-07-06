@@ -59,6 +59,8 @@
             pkgs.pkgconfig
             pkgs.gnumake
             pkgs.protobuf
+            pkgs.nodejs_18
+            pkgs.bun
           ] ++ lib.optionals pkgs.stdenv.isDarwin [
             # Additional darwin specific inputs can be set here
             pkgs.libiconv
