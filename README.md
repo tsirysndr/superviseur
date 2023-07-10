@@ -18,7 +18,7 @@
   <a href="https://github.com/tsirysndr/superviseur/actions/workflows/release.yml" target="_blank">
     <img alt="release" src="https://github.com/tsirysndr/superviseur/actions/workflows/release.yml/badge.svg" />
   </a>
-  <a href="https://discord.gg/FeGJerUC" target="_blank">
+  <a href="https://discord.gg/EVcBy2fVa3" target="_blank">
     <img alt="discord-server" src="https://img.shields.io/discord/1103720908104929321?label=discord&logo=discord&color=5865F2">
   </a>
 </p>
