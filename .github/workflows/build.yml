@@ -1,7 +1,9 @@
-name: release
+name: build
 on:
-  release:
-    types: [created]
+  push:
+    branches:
+      - master
+  workflow_dispatch:
 
 jobs:
   build:
@@ -32,9 +34,3 @@ jobs:
         env:
           TAG: ${{ env.RELEASE_VERSION }}
           TARGET: ${{ matrix.target }}
-      - name: Upload release assets
-        run: fluentci run github_pipeline release_upload
-        env:
-          TAG: ${{ env.RELEASE_VERSION }}
-          FILE: /assets/superviseur_${{ env.RELEASE_VERSION }}_${{ matrix.target }}.${{ matrix.extensions }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
