@@ -15,11 +15,13 @@ jobs:
     # Job steps
     steps:
       - uses: actions/checkout@v1
-      - uses: oven-sh/setup-bun@v1
-        with:
-          bun-version: latest
-      - name: Install dependencies
-        run: cd ./crates/webui/webui && bun install
+      - name: Setup Fluent CI
+        uses: fluentci-io/setup-fluentci@v1
         # 👇 Adds Chromatic as a step in the workflow
       - name: Publish to Chromatic
-        run: cd ./crates/webui/webui && bun run build-storybook && bun run chromatic -- --project-token=${{ secrets.CHROMATIC_PROJECT_TOKEN }} --exit-zero-on-changes
+        run: |
+          cp -r ../../../.git .
+          fluentci run chromatic_pipeline publish
+        working-directory: ./crates/webui/webui
+        env:
+          CHROMATIC_PROJECT_TOKEN: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
