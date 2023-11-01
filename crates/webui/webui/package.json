@@ -4,13 +4,6 @@
   "private": true,
   "dependencies": {
     "@apollo/client": "^3.7.10",
-    "@buf/tsiry_superviseurapis.bufbuild_connect-es": "^0.8.1-20230305211704-dea3def645e0.2",
-    "@buf/tsiry_superviseurapis.bufbuild_connect-web": "^0.8.1-20230305211704-dea3def645e0.1",
-    "@buf/tsiry_superviseurapis.grpc_web": "^1.4.2-20230305211704-dea3def645e0.2",
-    "@bufbuild/connect": "^0.8.1",
-    "@bufbuild/connect-query": "^0.1.1",
-    "@bufbuild/connect-web": "^0.8.1",
-    "@bufbuild/protobuf": "^1.1.0",
     "@emotion/react": "^11.10.6",
     "@emotion/styled": "^11.10.6",
     "@fontsource/ubuntu": "^4.5.11",
