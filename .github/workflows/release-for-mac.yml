@@ -11,10 +11,8 @@ jobs:
       matrix:
         include:
           - target: x86_64-apple-darwin
-            archive: tar.gz tar.xz
             extensions: tar.gz tar.gz.sha256
           - target: aarch64-apple-darwin
-            archive: tar.gz tar.xz
             extensions: tar.gz tar.gz.sha256
 
     steps:
