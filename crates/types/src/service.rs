@@ -35,3 +35,22 @@ fn display_port(port: &Option<u32>) -> String {
         None => "-".to_string(),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_display_command() {
+        assert_eq!(
+            display_command("echo \"Hello World\""),
+            "\"echo \"Hello World\"\""
+        );
+        assert_eq!(
+            display_command("echo \"Hello World\" && sleep 1"),
+            "\"echo \"Hello World\" &...\""
+        );
+        assert_eq!(display_port(&Some(0)), "-".to_string());
+        assert_eq!(display_port(&Some(8080)), "8080".to_string());
+    }
+}

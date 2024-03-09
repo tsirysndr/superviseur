@@ -35,7 +35,6 @@ use superviseur_types::{
     command::SuperviseurCommand,
     configuration::{ConfigurationData, Service},
     events::{ProcessEvent, SuperviseurEvent},
-    log::Log,
     process::{Process, State},
 };
 

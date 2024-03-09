@@ -14,3 +14,6 @@ version = "0.1.0"
 [dependencies]
 superviseur-types = {path = "../types", version = "0.1.0"}
 tantivy = "0.19.2"
+
+[dev-dependencies]
+chrono = "0.4.23"

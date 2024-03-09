@@ -1,5 +1,6 @@
 use std::{fmt, str::FromStr};
 
+#[derive(Debug, PartialEq)]
 pub enum Status {
     Running,
     Stopped,
@@ -31,5 +32,21 @@ impl FromStr for Status {
             "stopped" => Ok(Self::Stopped),
             _ => Err(format!("Unknown status: {}", s)),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_status_from_str() {
+        assert_eq!(Status::from_str("running").unwrap(), Status::Running);
+        assert_eq!(Status::from_str("stopped").unwrap(), Status::Stopped);
+        assert_eq!(
+            Status::from_str("unknown"),
+            Err("Unknown status: unknown".to_string())
+        );
+        assert!(Status::from_str("invalid").is_err());
     }
 }
